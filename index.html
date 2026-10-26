@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>九州親子行程規劃 2027 春節</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+<style>
+:root{--bg:#f4f9ff;--card:#fff;--ink:#3a4660;--sub:#7a86a0;--accent:#6fb7f2;--accent2:#b9a3f0;--pink:#f7b6cf;--line:#e2ebf7;--radius:14px}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;font-size:15px}
+header{background:linear-gradient(120deg,#dff0ff,#efe6ff);padding:10px 14px 8px;position:sticky;top:0;z-index:1000;border-bottom:1px solid var(--line)}
+header h1{margin:0;font-size:17px;letter-spacing:.5px}
+header .sub{font-size:12px;color:var(--sub);margin-top:2px}
+nav.tabs{display:flex;gap:6px;margin-top:8px}
+nav.tabs button{flex:1;border:0;border-radius:999px;padding:8px 0;background:#ffffffaa;color:var(--ink);font-size:15px;font-weight:600}
+nav.tabs button.on{background:var(--accent);color:#fff;box-shadow:0 2px 6px #6fb7f255}
+main{display:block}
+section.pane{display:none;padding:10px 10px 90px}
+section.pane.on{display:block}
+#mapPane{padding:0;position:relative}
+#map{height:calc(100vh - 118px);height:calc(100dvh - 118px);width:100%}
+.btn{border:0;border-radius:10px;padding:7px 11px;background:#e8f3ff;color:#2f6ea8;font-size:14px;font-weight:600}
+.btn.alt{background:#f1ebff;color:#6a4fb8}.btn.warn{background:#ffeef3;color:#b8456e}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.filters{background:var(--card);border-radius:var(--radius);padding:10px;margin-bottom:10px;box-shadow:0 1px 4px #0000000d}
+.filters input[type=search],.filters select{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:10px;font-size:15px;background:#fbfdff;color:var(--ink)}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 10px;font-size:13px;color:var(--ink)}
+.chip.on{background:var(--accent2);border-color:var(--accent2);color:#fff}
+.count{font-size:12px;color:var(--sub);margin:4px 2px 8px}
+.card{background:var(--card);border-radius:var(--radius);padding:10px 12px;margin-bottom:8px;box-shadow:0 1px 4px #0000000d;display:flex;gap:10px;border:2px solid transparent}
+.card.sel{border-color:var(--accent);background:#f7fbff}
+.card input[type=checkbox]{width:24px;height:24px;accent-color:var(--accent);flex:none;margin-top:2px}
+.card .body{flex:1;min-width:0}
+.card .nm{font-weight:700;font-size:15.5px}
+.card .ja{font-size:12px;color:var(--sub)}
+.tags{display:flex;flex-wrap:wrap;gap:4px;margin:5px 0}
+.tag{font-size:11.5px;padding:2px 7px;border-radius:999px;background:#eef5ff;color:#4a6c95}
+.tag.area{background:#fff1f6;color:#a44b70}
+.tag.q{background:#fff6dc;color:#8a6a10}
+.ages{font-size:12.5px;color:var(--ink)}
+.ages b{color:#e7a400;letter-spacing:1px;font-weight:normal}
+.note{font-size:12.5px;color:#56617a;margin-top:4px;line-height:1.45}
+.links{margin-top:6px;display:flex;gap:10px;font-size:13px}
+.links a,.links button{color:#2f6ea8;text-decoration:none;background:none;border:0;padding:0;font-size:13px}
+.day{background:var(--card);border-radius:var(--radius);margin-bottom:10px;box-shadow:0 1px 4px #0000000d;overflow:hidden}
+.day h3{margin:0;padding:8px 10px;font-size:15px;display:flex;align-items:center;gap:6px;color:#fff}
+.day h3 .lbl{flex:1}
+.day h3 button{background:#ffffff33;border:0;color:#fff;border-radius:8px;padding:3px 8px;font-size:13px}
+.day ul{list-style:none;margin:0;padding:6px;min-height:44px}
+.day ul:empty::after{content:"把景點拖到這裡";display:block;text-align:center;color:#b2bccd;font-size:13px;padding:10px}
+.it{display:flex;align-items:center;gap:6px;padding:7px 6px;border-radius:10px;background:#f8fbff;margin-bottom:5px;border:1px solid var(--line)}
+.it .h{cursor:grab;touch-action:none;font-size:20px;color:#9fb0c8;padding:2px 6px;user-select:none}
+.it .n{width:22px;height:22px;border-radius:50%;color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;flex:none;font-weight:700}
+.it .t{flex:1;min-width:0;font-size:14px}
+.it .t small{display:block;color:var(--sub);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.it select{font-size:12px;border:1px solid var(--line);border-radius:8px;padding:3px;max-width:78px;background:#fff;color:var(--ink)}
+.it .x{border:0;background:none;color:#c77;font-size:18px;padding:0 4px}
+.sortable-ghost{opacity:.35}.sortable-chosen{background:#e6f2ff}
+.toolbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.hint{font-size:12px;color:var(--sub);margin:0 2px 10px;line-height:1.5}
+.mapbar{position:absolute;z-index:500;top:10px;right:10px;background:#fff;border-radius:12px;padding:6px 10px;box-shadow:0 2px 8px #0002;font-size:13px;display:flex;flex-direction:column;gap:6px}
+.mapbar label{display:flex;gap:6px;align-items:center}
+.legend{position:absolute;z-index:500;left:10px;bottom:22px;background:#ffffffee;border-radius:12px;padding:6px 8px;font-size:12px;box-shadow:0 2px 8px #0002;max-width:60%}
+.legend span{display:inline-flex;align-items:center;gap:4px;margin:2px 6px 2px 0}
+.legend i{width:11px;height:11px;border-radius:50%;display:inline-block}
+.pin{width:26px;height:26px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-shadow:0 1px 4px #0005}
+.pin span{transform:rotate(45deg);color:#fff;font-weight:700;font-size:12px}
+.leaflet-popup-content{font-size:13.5px;line-height:1.45;margin:10px 12px}
+.modal{position:fixed;inset:0;background:#0005;z-index:3000;display:none;align-items:center;justify-content:center;padding:14px}
+.modal.on{display:flex}
+.modal .box{background:#fff;border-radius:16px;padding:14px;width:100%;max-width:560px}
+.modal textarea{width:100%;height:46vh;font-family:ui-monospace,Menlo,monospace;font-size:12px;border:1px solid var(--line);border-radius:10px;padding:8px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#3a4660;color:#fff;padding:8px 14px;border-radius:999px;font-size:14px;z-index:4000;opacity:0;transition:opacity .25s;pointer-events:none}
+.toast.on{opacity:.95}
+.trip{font-size:12px;background:#fff;border-radius:12px;padding:8px 10px;margin-bottom:10px;color:#56617a;line-height:1.5;box-shadow:0 1px 4px #0000000d}
+@media (min-width:980px){
+  nav.tabs{display:none}
+  main{display:grid;grid-template-columns:380px 340px 1fr;height:calc(100vh - 58px)}
+  section.pane{display:block!important;overflow:auto;padding-bottom:20px}
+  #mapPane{position:relative}
+  #map{height:100%}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>☁️ 九州親子行程規劃 · 2027 春節</h1>
+  <div class="sub">2 大 + 6 歲（愛大耳狗・酷洛米）+ 2 歲 ｜ 2/7 抵福岡 → 2/13 大分回台</div>
+  <nav class="tabs">
+    <button data-tab="listPane" class="on">清單</button>
+    <button data-tab="planPane">行程</button>
+    <button data-tab="mapPane">地圖</button>
+  </nav>
+</header>
+<main>
+<section id="listPane" class="pane on">
+  <div class="filters">
+    <input type="search" id="q" placeholder="搜尋景點（中文／日文）">
+    <div class="row" style="margin-top:8px">
+      <select id="area" style="flex:1"></select>
+      <select id="age" style="flex:1">
+        <option value="">年齡適合度：全部</option>
+        <option value="a2">2 歲 ★★ 以上</option>
+        <option value="a6">6 歲 ★★ 以上</option>
+        <option value="both">兩人都 ★★ 以上</option>
+      </select>
+    </div>
+    <div class="chips" id="tagChips"></div>
+    <div class="chips"><button class="chip" id="onlySel">只看已選</button><button class="chip" id="clearF">清除篩選</button></div>
+  </div>
+  <div class="count" id="count"></div>
+  <div id="cards"></div>
+  <p class="hint">★ = 適合度（★☆☆ 普通、★★☆ 適合、★★★ 非常適合）。營業時間／票價標「約」者為行前搜尋所得，可能變動，出發前請再到官網確認。標示「⚠️待確認」為資訊較不確定的項目。</p>
+</section>
+
+<section id="planPane" class="pane">
+  <div class="trip">✈️ 2/7(日) AirAsia TPE 12:00 → FUK 15:20 ｜ 🏨 福岡市區 2/7–2/10 ｜ 🚗 2/11 開車往大分・別府 ｜ ✈️ 2/13(六) 台灣虎航 OIT 16:30 → TPE 18:10</div>
+  <div class="toolbar">
+    <button class="btn" id="addDay">＋ 新增一天</button>
+    <button class="btn alt" id="copyTxt">📋 複製行程文字</button>
+    <button class="btn alt" id="exportBtn">⬇️ 匯出 JSON</button>
+    <button class="btn alt" id="importBtn">⬆️ 匯入 JSON</button>
+    <button class="btn" id="sampleBtn">✨ 載入建議行程</button>
+    <button class="btn warn" id="clearBtn">🗑 清空</button>
+  </div>
+  <p class="hint">按住 ☰ 拖曳即可排序或移到別天；也可以用右側選單直接換天。行程會自動存在這支手機（localStorage）。</p>
+  <div id="days"></div>
+</section>
+
+<section id="mapPane" class="pane">
+  <div id="map"></div>
+  <div class="mapbar">
+    <label><input type="checkbox" id="showAll"> 顯示全部景點（灰）</label>
+    <button class="btn" id="fitBtn" style="padding:4px 8px">🔍 縮放到已選</button>
+  </div>
+  <div class="legend" id="legend"></div>
+</section>
+</main>
+
+<div class="modal" id="modal"><div class="box">
+  <div style="font-weight:700;margin-bottom:6px" id="mTitle"></div>
+  <textarea id="mText"></textarea>
+  <div class="row" style="margin-top:8px;justify-content:flex-end">
+    <button class="btn alt" id="mCopy">複製</button>
+    <button class="btn" id="mOk">確定</button>
+    <button class="btn warn" id="mCancel">關閉</button>
+  </div>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+<script>
+// ===== 景點資料 =====
+// [id, 中文名, 日文名(Google搜尋用), 地區, 標籤[], 2歲★, 6歲★, 備註, lat, lng, 不確定?]
+const A = [
+// —— 福岡市區 ——
+["canal","博多運河城","キャナルシティ博多","福岡市區",["室內","購物","美食"],2,3,"大型購物中心，有噴水秀；雨天備案。",33.5898,130.4108],
+["sanriogal","Sanrio Gallery 博多（運河城 OPA B1）","サンリオギャラリー キャナルシティ博多","福岡市區",["室內","卡通角色","購物"],2,3,"大耳狗・酷洛米周邊；位於 Canal City OPA B1。營業時間請以官網為準。",33.5893,130.4113],
+["anpanman","福岡麵包超人兒童博物館","福岡アンパンマンこどもミュージアムinモール","福岡市區",["室內","卡通角色","館區"],3,2,"博多リバレイン內，10:00 開館。約 ¥2,000–2,200／人（1 歲以上），請再確認；6 歲可能略嫌幼。",33.5953,130.4062],
+["lalaport","LaLaport 福岡（實物大鋼彈）","ららぽーと福岡","福岡市區",["室內","購物","美食"],2,2,"平日停車免費；鋼彈立像演出約 19:00（請再確認場次）。",33.5687,130.4375],
+["zoo","福岡市動植物園","福岡市動植物園","福岡市區",["戶外","動物"],2,3,"週一休園。成人約 ¥600、兒童免費（請再確認）。坡道多，推車 OK 但會累。",33.5738,130.3925],
+["teamlab","teamLab Forest 福岡（BOSS E・ZO）","チームラボフォレスト 福岡","福岡市區",["室內","館區"],2,3,"不可推嬰兒車。成人約 ¥2,400、4–15 歲約 ¥1,000–1,200、3 歲以下免費；最後入場約 18:30（請再確認）。",33.5949,130.3627],
+["umino","海之中道海濱公園","国営海の中道海浜公園","福岡市區",["戶外","動物","遊樂園"],3,3,"2 月逢週二休園。成人約 ¥450、國中以下免費（請再確認）。園區很大，可租自行車／搭園內巴士。",33.6620,130.3580],
+["marine","海之中道海洋世界","マリンワールド海の中道","福岡市區",["室內","動物","館區"],3,3,"成人約 ¥2,500、國小約 ¥1,200（請再確認）。⚠️海豚／海獅秀 1/12–4/9 暫停。",33.6575,130.3565],
+["science","福岡市科學館","福岡市科学館","福岡市區",["室內","館區"],2,3,"週二休館。成人約 ¥510、小學生約 ¥200、學齡前免費；有幼兒遊戲區。地鐵六本松站即到。",33.5776,130.3780],
+["tower","福岡塔","福岡タワー","福岡市區",["室內","景觀"],2,3,"成人約 ¥1,000、小學生約 ¥500、幼兒免費（請再確認）。看夕陽＋夜景。",33.5933,130.3515],
+["momochi","百道海濱公園","シーサイドももち海浜公園","福岡市區",["戶外","景觀"],3,3,"福岡塔旁的人工沙灘，免費；2 月傍晚風大要保暖。",33.5950,130.3530],
+["marizon","Marizon 海上婚禮島","マリゾン","福岡市區",["戶外","景觀","美食"],2,2,"百道海濱上的歐風小島，拍照散步；餐廳營業請再確認。",33.5962,130.3507],
+["ohori","大濠公園","大濠公園","福岡市區",["戶外","景觀"],3,3,"免費，環湖步道平坦好推車；有兒童遊戲場、天鵝船（冬季營運請確認）。",33.5862,130.3764],
+["castle","福岡城跡（舞鶴公園）","福岡城跡","福岡市區",["戶外","景觀"],2,2,"免費散步，緊鄰大濠公園；天守台有階梯。",33.5845,130.3832],
+["rooftop","博多站屋頂「燕之杜廣場」","つばめの杜ひろば","福岡市區",["戶外","景觀"],3,3,"JR 博多城頂樓，免費，開放約至 22:00；有小火車（班次／費用請確認）。",33.5900,130.4205],
+["hankyu","博多阪急 Sanrio 專區","博多阪急 サンリオ","福岡市區",["室內","卡通角色","購物"],2,3,"博多站，約 7F；營業約至 20:00（請再確認）。⚠️待確認確切樓層。",33.5897,130.4203,1],
+["tenjinsanrio","天神地下街 Sanrio 店","天神地下街 サンリオ","福岡市區",["室內","卡通角色","購物"],2,3,"大耳狗・酷洛米周邊。⚠️待確認店名與位置（地下街內）。",33.5905,130.3990,1],
+["aikuru","福岡市兒童會館 Aikuru","福岡市立中央児童会館 あいくる","福岡市區",["室內","館區"],3,3,"天神免費室內兒童館，雨天備案。⚠️開放時間／休館日請確認。",33.5888,130.3935,1],
+["yatai","中洲屋台街","中洲 屋台","福岡市區",["美食","戶外"],2,2,"約 18:00 後營業；週日不少攤休息。建議 18:30 前去避人潮。",33.5915,130.4052],
+["kushida","櫛田神社＋川端商店街","櫛田神社","福岡市區",["戶外","景觀","美食"],2,2,"免費；神社內展示博多祇園山笠裝飾山車。",33.5930,130.4105],
+["nokonoshima","能古島 Island Park","のこのしまアイランドパーク","福岡市區",["戶外","動物","景觀"],2,3,"姪濱渡輪約 10 分＋巴士；2 月有油菜花。⚠️票價請確認。",33.6345,130.3015,1],
+["fukair","福岡機場","福岡空港","福岡市區",["交通"],1,1,"2/7 AirAsia 15:20 抵達；地鐵到博多站約 5 分。",33.5859,130.4510],
+// —— 太宰府 ——
+["dazaifu","太宰府天滿宮","太宰府天満宮","太宰府",["戶外","景觀","美食"],2,2,"免費參拜，參道吃梅枝餅；西鐵約 40 分。春節人多。",33.5195,130.5350],
+["kyuhaku","九州國立博物館（あじっぱ體驗區）","九州国立博物館","太宰府",["室內","館區"],2,3,"週一休館。「あじっぱ」親子互動區免費（開放時段請確認）。",33.5186,130.5380],
+["yuenchi","太宰府遊園地","だざいふ遊園地","太宰府",["戶外","遊樂園"],3,3,"入園成人約 ¥700、兒童約 ¥500，遊樂設施另計。⚠️2 月休園日尚未公布，請再確認。",33.5215,130.5363,1],
+// —— 柳川 ——
+["yanagawa","柳川遊船（松月乘船場）","柳川川下り 松月乗船場","柳川",["戶外","景觀"],2,3,"約 60 分；成人約 ¥2,200、6–11 歲約 ¥1,100、未滿 6 歲免費；12–2 月有暖桌（こたつ）船。",33.1670,130.4165],
+["motoyoshiya","元祖本吉屋（蒸籠鰻魚飯）","元祖本吉屋","柳川",["美食","室內"],1,2,"柳川名物鰻魚蒸籠，約 ¥4,800／份（請再確認）；假日排隊。",33.1625,130.4045],
+// —— 糸島 ——
+["futamigaura","糸島 櫻井二見浦（夫婦岩）","桜井二見ヶ浦","糸島",["戶外","景觀"],2,2,"海上白鳥居夕陽景點；大眾運輸不便，適合開車。冬季海風強。",33.6430,130.1913],
+["itosai","糸島 伊都菜彩（農產直賣所）","伊都菜彩","糸島",["美食","購物"],1,2,"JA 農產直銷所，草莓季。營業時間請確認。",33.5550,130.1960,1],
+// —— 北九州 ——
+["mojiko","門司港懷舊區","門司港レトロ","北九州",["戶外","景觀","美食"],2,2,"散步＋燒咖哩；博多出發 JR 約 1.5 小時，冬天海風強。",33.9455,130.9620],
+["dramaship","關門海峽博物館（原海峽 Dramaship）","関門海峡ミュージアム","北九州",["室內","館區"],2,3,"門司港懷舊區內；有兒童遊戲區。票價／休館日請確認。",33.9462,130.9633],
+["railmuseum","九州鐵道紀念館","九州鉄道記念館","北九州",["室內","戶外","館區"],3,3,"門司港站旁；有可駕駛的迷你列車（另計）。休館日請確認。",33.9440,130.9610],
+["inochi","生命之旅博物館（恐龍）","北九州市立いのちのたび博物館","北九州",["室內","館區"],2,3,"巨大恐龍骨骼，6 歲很愛。休館日／票價請確認。",33.8696,130.8100],
+["spacelabo","Space LABO 北九州市科學館","スペースLABO","北九州",["室內","館區"],2,3,"天文館＋科學體驗；與恐龍館同在東田地區。",33.8711,130.8113],
+["innovation","北九州創新畫廊","北九州イノベーションギャラリー","北九州",["室內","館區"],1,2,"產業科技展示館，常有兒童工作坊。⚠️較冷門，開放日請確認。",33.8691,130.8086,1],
+// —— 大分・別府 ——
+["harmony","三麗鷗 Harmonyland","サンリオキャラクターパーク ハーモニーランド","大分・別府",["戶外","卡通角色","遊樂園"],3,3,"10:00–17:00（最後入園 16:00）。2027/2 休園：2/3,4,17,18,24,25（2/7–2/13 全開）。見面會 11:00–16:00；免費整理券 10:00 起用手機連「FUN STUDIO Wi-Fi」領取，一組一次一張，大耳狗常很快領完。電話 0977-73-1111。",33.3837,131.5505],
+["safari","九州自然動物公園 African Safari","九州自然動物公園アフリカンサファリ","大分・別府",["戶外","動物"],3,3,"可坐叢林巴士餵動物（需預約／另計，請確認）；山區冬天注意路面。",33.4580,131.3905],
+["umitamago","大分海洋宮水族館 Umitamago","大分マリーンパレス水族館 うみたまご","大分・別府",["室內","動物","館區"],3,3,"可近距離摸海洋動物；票價請確認。在高崎山對面。",33.2577,131.5413],
+["takasaki","高崎山自然動物園（野生猴）","高崎山自然動物園","大分・別府",["戶外","動物"],2,3,"上千隻野生猴，有單軌接駁；猴子出現時間不固定。",33.2551,131.5387],
+["kijima","城島高原樂園","城島高原パーク","大分・別府",["戶外","遊樂園"],2,3,"標高約 700 m，冬季有溜冰場；可能下雪結冰。⚠️冬季營業日請確認。",33.2700,131.4290,1],
+["hyotan","鐵輪 Hyotan 溫泉（家族湯）","ひょうたん温泉","大分・別府",["溫泉","室內"],2,3,"有包租家族湯，電話 0977-67-3010，建議約一週前預約。",33.3190,131.4800],
+["jigoku","別府地獄巡禮（海地獄等）","別府地獄めぐり 海地獄","大分・別府",["戶外","溫泉","景觀"],2,3,"7 個地獄可買共通券（票價請確認）；鐵輪區步行可達多處。",33.3170,131.4730],
+["mushi","地獄蒸工房 鐵輪","地獄蒸し工房 鉄輪","大分・別府",["美食","溫泉"],2,3,"自己用溫泉蒸氣蒸食材，孩子很有參與感。",33.3165,131.4778],
+["ropeway","別府空中纜車（鶴見岳）","別府ロープウェイ","大分・別府",["戶外","景觀"],2,2,"山頂冬季可能積雪、天候不佳停駛，出發前確認。",33.2924,131.4413,1],
+["yufuin","由布院 Floral Village","湯布院フローラルヴィレッジ","由布院",["戶外","購物","動物"],2,3,"童話風小村，有小動物；免費入村（部分設施收費）。",33.2650,131.3670],
+["kinrin","由布院 金鱗湖＋湯之坪街道","金鱗湖","由布院",["戶外","景觀","美食"],2,2,"冬天清晨湖面起霧；街道人多，推車要小心。",33.2665,131.3690],
+["oitair","大分機場","大分空港","大分・別府",["交通"],1,1,"2/13(六) 台灣虎航 16:30 起飛；還車＋報到請預留時間。",33.4795,131.7370]
+];
+const ATTR = A.map(a=>({id:a[0],zh:a[1],ja:a[2],area:a[3],tags:a[4],a2:a[5],a6:a[6],note:a[7],lat:a[8],lng:a[9],q:!!a[10]}));
+const BY = Object.fromEntries(ATTR.map(a=>[a.id,a]));
+const gmap = a => "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(a.ja);
+const COLORS = ["#ff8fab","#6fb7f2","#9b7cf0","#3cc4a0","#f5a524","#ef6f6c","#4f7fd9","#c06fd6","#58b368","#e08a3c"];
+const KEY = "kyushuPlanner.v1";
+const DEFAULT_LABELS = ["2/7(日)","2/8(一)","2/9(二)","2/10(三)","2/11(四)","2/12(五)","2/13(六)"];
+const SAMPLE = [
+  ["fukair","rooftop","hankyu"],
+  ["science","tower","momochi","yatai"],
+  ["dazaifu","kyuhaku","yuenchi","tenjinsanrio"],
+  ["yanagawa","motoyoshiya","ohori"],
+  ["jigoku","mushi","hyotan"],
+  ["harmony"],
+  ["umitamago","takasaki","oitair"]
+];
+const uid = () => "d"+Math.random().toString(36).slice(2,8);
+function blank(){return {days:DEFAULT_LABELS.map(l=>({id:uid(),label:l,items:[]})),pool:[]};}
+function sample(){const s=blank();s.days.forEach((d,i)=>d.items=[...SAMPLE[i]]);return s;}
+let S;
+try{S=JSON.parse(localStorage.getItem(KEY));}catch(e){}
+if(!valid(S)) S=sample();
+function valid(s){return s&&Array.isArray(s.days)&&Array.isArray(s.pool)&&s.days.every(d=>Array.isArray(d.items));}
+function clean(s){const seen=new Set();const f=ids=>ids.filter(id=>BY[id]&&!seen.has(id)&&seen.add(id));s.days.forEach(d=>{d.items=f(d.items);if(!d.id)d.id=uid();if(!d.label)d.label="新的一天";});s.pool=f(s.pool);return s;}
+S=clean(S);
+function save(){localStorage.setItem(KEY,JSON.stringify(S));}
+function selected(){const s=new Set(S.pool);S.days.forEach(d=>d.items.forEach(i=>s.add(i)));return s;}
+function where(id){if(S.pool.includes(id))return -1;return S.days.findIndex(d=>d.items.includes(id));}
+function removeId(id){S.pool=S.pool.filter(x=>x!==id);S.days.forEach(d=>d.items=d.items.filter(x=>x!==id));}
+function moveTo(id,dayIdx,pos){removeId(id);const arr=dayIdx<0?S.pool:S.days[dayIdx].items;if(pos==null||pos>arr.length)pos=arr.length;arr.splice(pos,0,id);}
+function update(){save();renderList();renderDays();renderMap();}
+function toast(t){const e=document.getElementById("toast");e.textContent=t;e.classList.add("on");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove("on"),1600);}
+
+// ===== 清單 =====
+const AREAS=[...new Set(ATTR.map(a=>a.area))];
+const TAGS=[...new Set(ATTR.flatMap(a=>a.tags))];
+const F={q:"",area:"",age:"",tags:new Set(),only:false};
+const areaSel=document.getElementById("area");
+areaSel.innerHTML='<option value="">地區：全部</option>'+AREAS.map(a=>`<option>${a}</option>`).join("");
+document.getElementById("tagChips").innerHTML=TAGS.map(t=>`<button class="chip" data-tag="${t}">${t}</button>`).join("");
+document.getElementById("tagChips").onclick=e=>{const t=e.target.dataset.tag;if(!t)return;F.tags.has(t)?F.tags.delete(t):F.tags.add(t);e.target.classList.toggle("on");renderList();};
+document.getElementById("q").oninput=e=>{F.q=e.target.value.trim().toLowerCase();renderList();};
+areaSel.onchange=e=>{F.area=e.target.value;renderList();};
+document.getElementById("age").onchange=e=>{F.age=e.target.value;renderList();};
+document.getElementById("onlySel").onclick=e=>{F.only=!F.only;e.target.classList.toggle("on",F.only);renderList();};
+document.getElementById("clearF").onclick=()=>{F.q="";F.area="";F.age="";F.tags.clear();F.only=false;document.getElementById("q").value="";areaSel.value="";document.getElementById("age").value="";document.querySelectorAll(".chip.on").forEach(c=>c.classList.remove("on"));renderList();};
+const stars=n=>"★".repeat(n)+"☆".repeat(3-n);
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function renderList(){
+  const sel=selected();
+  const list=ATTR.filter(a=>{
+    if(F.only&&!sel.has(a.id))return false;
+    if(F.area&&a.area!==F.area)return false;
+    if(F.q&&!(a.zh+a.ja+a.note).toLowerCase().includes(F.q))return false;
+    if(F.tags.size&&![...F.tags].every(t=>a.tags.includes(t)))return false;
+    if(F.age==="a2"&&a.a2<2)return false;
+    if(F.age==="a6"&&a.a6<2)return false;
+    if(F.age==="both"&&(a.a2<2||a.a6<2))return false;
+    return true;});
+  document.getElementById("count").textContent=`顯示 ${list.length} / ${ATTR.length} 個景點 ・ 已選 ${sel.size} 個`;
+  document.getElementById("cards").innerHTML=list.map(a=>{
+    const w=where(a.id);const dl=w>=0?S.days[w].label:(w===-1&&sel.has(a.id)?"未排入":"");
+    return `<label class="card${sel.has(a.id)?" sel":""}">
+    <input type="checkbox" data-id="${a.id}" ${sel.has(a.id)?"checked":""}>
+    <div class="body"><div class="nm">${esc(a.zh)}</div><div class="ja">${esc(a.ja)}</div>
+    <div class="tags"><span class="tag area">${a.area}</span>${a.tags.map(t=>`<span class="tag">${t}</span>`).join("")}${a.q?'<span class="tag q">⚠️待確認</span>':""}${dl?`<span class="tag" style="background:#e3f6ee;color:#25785a">📅 ${esc(dl)}</span>`:""}</div>
+    <div class="ages">2 歲 <b>${stars(a.a2)}</b>　6 歲 <b>${stars(a.a6)}</b></div>
+    ${a.note?`<div class="note">${esc(a.note)}</div>`:""}
+    <div class="links"><a href="${gmap(a)}" target="_blank" rel="noopener">🗺 Google 地圖</a><button type="button" data-show="${a.id}">📍 在地圖上看</button></div></div></label>`;}).join("");
+}
+document.getElementById("cards").addEventListener("click",e=>{
+  const s=e.target.dataset.show;if(s){e.preventDefault();showOnMap(s);}
+});
+document.getElementById("cards").addEventListener("change",e=>{
+  const id=e.target.dataset.id;if(!id)return;
+  if(e.target.checked){S.pool.push(id);toast("已加入「未排入」，到「行程」分頁安排日期");}else removeId(id);
+  update();
+});
+
+// ===== 行程 =====
+let sortables=[];
+function dayBlock(title,color,idx,items,isPool){
+  return `<div class="day" data-idx="${idx}"><h3 style="background:${color}"><span class="lbl">${esc(title)}</span>
+  <span style="font-size:12px;opacity:.9">${items.length} 個</span>
+  ${isPool?"":`<button data-ren="${idx}">✎</button><button data-del="${idx}">✕</button>`}</h3>
+  <ul data-idx="${idx}">${items.map((id,i)=>{const a=BY[id];return `<li class="it" data-id="${id}">
+    <span class="h">☰</span><span class="n" style="background:${isPool?"#a9b6c9":color}">${isPool?"•":i+1}</span>
+    <span class="t">${esc(a.zh)}<small>${esc(a.area)}・${esc(a.note||a.ja)}</small></span>
+    <select data-mv="${id}"><option value="-1"${isPool?" selected":""}>未排入</option>${S.days.map((d,j)=>`<option value="${j}"${j===idx?" selected":""}>${esc(d.label)}</option>`).join("")}</select>
+    <button class="x" data-rm="${id}" title="移除">×</button></li>`;}).join("")}</ul></div>`;
+}
+function renderDays(){
+  sortables.forEach(s=>s.destroy());sortables=[];
+  const el=document.getElementById("days");
+  el.innerHTML=dayBlock("🧺 未排入行程（已勾選）","#a9b6c9",-1,S.pool,true)+S.days.map((d,i)=>dayBlock(d.label,COLORS[i%COLORS.length],i,d.items,false)).join("");
+  if(window.Sortable) el.querySelectorAll("ul").forEach(ul=>sortables.push(Sortable.create(ul,{group:"plan",handle:".h",animation:150,delay:0,touchStartThreshold:4,fallbackOnBody:true,forceFallback:true,onEnd:syncFromDom})));
+}
+function syncFromDom(){
+  document.querySelectorAll("#days ul").forEach(ul=>{const idx=+ul.dataset.idx;const ids=[...ul.querySelectorAll("li")].map(li=>li.dataset.id);if(idx<0)S.pool=ids;else S.days[idx].items=ids;});
+  update();
+}
+document.getElementById("days").addEventListener("change",e=>{const id=e.target.dataset.mv;if(id){moveTo(id,+e.target.value);update();}});
+document.getElementById("days").addEventListener("click",e=>{
+  const t=e.target;
+  if(t.dataset.rm){removeId(t.dataset.rm);update();}
+  else if(t.dataset.ren!=null){const i=+t.dataset.ren;const v=prompt("這一天的名稱",S.days[i].label);if(v){S.days[i].label=v;update();}}
+  else if(t.dataset.del!=null){const i=+t.dataset.del;if(confirm(`刪除「${S.days[i].label}」？當天景點會移回「未排入」`)){S.pool.push(...S.days[i].items);S.days.splice(i,1);update();}}
+});
+document.getElementById("addDay").onclick=()=>{S.days.push({id:uid(),label:`第 ${S.days.length+1} 天`,items:[]});update();toast("已新增一天");};
+document.getElementById("sampleBtn").onclick=()=>{if(confirm("載入建議行程？會覆蓋目前的安排")){S=sample();update();fit();}};
+document.getElementById("clearBtn").onclick=()=>{if(confirm("清空所有已選景點與天數？")){S=blank();update();}};
+function planText(){
+  let out="九州親子行程 2027 春節\n";
+  S.days.forEach(d=>{out+=`\n【${d.label}】\n`;if(!d.items.length)out+="  （尚未安排）\n";d.items.forEach((id,i)=>{const a=BY[id];out+=`  ${i+1}. ${a.zh}（${a.ja}）\n     ${gmap(a)}\n`;});});
+  if(S.pool.length){out+="\n【未排入】\n";S.pool.forEach(id=>out+=`  ・${BY[id].zh}\n`);}
+  return out;
+}
+async function copy(t){try{await navigator.clipboard.writeText(t);toast("已複製");}catch(e){openModal("複製下面文字",t,null);}}
+document.getElementById("copyTxt").onclick=()=>copy(planText());
+const modal=document.getElementById("modal");let modalOk=null;
+function openModal(title,text,onOk){document.getElementById("mTitle").textContent=title;document.getElementById("mText").value=text;modalOk=onOk;document.getElementById("mOk").style.display=onOk?"":"none";modal.classList.add("on");}
+document.getElementById("mCancel").onclick=()=>modal.classList.remove("on");
+document.getElementById("mCopy").onclick=()=>{const t=document.getElementById("mText");t.select();try{navigator.clipboard.writeText(t.value);}catch(e){document.execCommand("copy");}toast("已複製");};
+document.getElementById("mOk").onclick=()=>{if(modalOk&&modalOk(document.getElementById("mText").value)!==false)modal.classList.remove("on");};
+document.getElementById("exportBtn").onclick=()=>openModal("行程 JSON（可複製保存或傳給家人）",JSON.stringify({v:1,days:S.days.map(d=>({label:d.label,items:d.items})),pool:S.pool},null,1),null);
+document.getElementById("importBtn").onclick=()=>openModal("貼上 JSON 後按「確定」","",txt=>importJSON(txt));
+function importJSON(txt){try{const o=JSON.parse(txt);if(!valid(o))throw 0;S=clean({days:o.days.map(d=>({id:uid(),label:d.label,items:d.items})),pool:o.pool});update();fit();toast("匯入成功");return true;}catch(e){alert("JSON 格式不正確");return false;}}
+
+// ===== 地圖 =====
+let map,layer,allLayer,markers={};
+function initMap(){
+  if(!window.L){document.getElementById("map").innerHTML='<p style="padding:20px">地圖載入失敗（需要網路連線載入 Leaflet）。</p>';return;}
+  map=L.map("map",{zoomControl:true}).setView([33.45,130.9],8);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
+  allLayer=L.layerGroup().addTo(map);layer=L.layerGroup().addTo(map);
+  document.getElementById("showAll").onchange=renderMap;
+  document.getElementById("fitBtn").onclick=fit;
+  renderMap();fit();
+}
+function popup(a,extra){return `<b>${esc(a.zh)}</b><br><span style="color:#7a86a0">${esc(a.ja)}</span>${extra?`<br>📅 ${esc(extra)}`:""}${a.note?`<br><span style="font-size:12px">${esc(a.note)}</span>`:""}<br><a href="${gmap(a)}" target="_blank" rel="noopener">🗺 用 Google 地圖開啟／導航</a>`;}
+function pin(color,txt){return L.divIcon({className:"",html:`<div class="pin" style="background:${color}"><span>${txt}</span></div>`,iconSize:[26,26],iconAnchor:[13,26],popupAnchor:[0,-24]});}
+function renderMap(){
+  if(!map)return;
+  layer.clearLayers();allLayer.clearLayers();markers={};
+  const sel=selected();
+  if(document.getElementById("showAll").checked) ATTR.filter(a=>!sel.has(a.id)).forEach(a=>{markers[a.id]=L.circleMarker([a.lat,a.lng],{radius:6,color:"#8d97a8",fillColor:"#c3cad6",fillOpacity:.9,weight:1}).bindPopup(popup(a)).addTo(allLayer);});
+  S.pool.forEach(id=>{const a=BY[id];markers[id]=L.marker([a.lat,a.lng],{icon:pin("#a9b6c9","•")}).bindPopup(popup(a,"未排入")).addTo(layer);});
+  S.days.forEach((d,i)=>{const c=COLORS[i%COLORS.length];const pts=[];
+    d.items.forEach((id,k)=>{const a=BY[id];pts.push([a.lat,a.lng]);markers[id]=L.marker([a.lat,a.lng],{icon:pin(c,k+1),zIndexOffset:100}).bindPopup(popup(a,`${d.label} 第 ${k+1} 站`)).addTo(layer);});
+    if(pts.length>1)L.polyline(pts,{color:c,weight:4,opacity:.8,dashArray:"6 6"}).addTo(layer);});
+  document.getElementById("legend").innerHTML=S.days.map((d,i)=>`<span><i style="background:${COLORS[i%COLORS.length]}"></i>${esc(d.label)}</span>`).join("")+(S.pool.length?'<span><i style="background:#a9b6c9"></i>未排入</span>':"");
+}
+function fit(){if(!map)return;const pts=[...selected()].map(id=>[BY[id].lat,BY[id].lng]);if(pts.length===1)map.setView(pts[0],14);else if(pts.length)map.fitBounds(pts,{padding:[30,30]});}
+function showOnMap(id){tab("mapPane");const a=BY[id];if(!markers[id]){document.getElementById("showAll").checked=true;renderMap();}map.setView([a.lat,a.lng],14);setTimeout(()=>markers[id]&&markers[id].openPopup(),200);}
+
+// ===== 分頁 =====
+function tab(id){document.querySelectorAll("nav.tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tab===id));document.querySelectorAll("section.pane").forEach(p=>p.classList.toggle("on",p.id===id));if(id==="mapPane"&&map)setTimeout(()=>{map.invalidateSize();},50);window.scrollTo(0,0);}
+document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>{tab(b.dataset.tab);if(b.dataset.tab==="mapPane")setTimeout(fit,80);});
+
+renderList();renderDays();initMap();
+// 測試／除錯用
+window.planner={get state(){return S;},moveTo:(id,d,p)=>{moveTo(id,d,p);update();},select:id=>{if(!selected().has(id)){S.pool.push(id);update();}},unselect:id=>{removeId(id);update();},planText,ATTR,tab,fit};
+</script>
+</body>
+</html>
