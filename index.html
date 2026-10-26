@@ -11,6 +11,9 @@
 html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;font-size:15px}
 header{background:linear-gradient(120deg,#dff0ff,#efe6ff);padding:10px 14px 8px;position:sticky;top:0;z-index:1000;border-bottom:1px solid var(--line)}
 header h1{margin:0;font-size:17px;letter-spacing:.5px}
+.sw{display:flex;gap:0;margin-bottom:6px;background:#ffffff99;border-radius:999px;padding:2px;width:max-content}
+.sw a{padding:3px 14px;border-radius:999px;font-size:13px;font-weight:700;color:#4a6c95;text-decoration:none}
+.sw a.on{background:#6fb7f2;color:#fff}
 header .sub{font-size:12px;color:var(--sub);margin-top:2px}
 nav.tabs{display:flex;gap:6px;margin-top:8px}
 nav.tabs button{flex:1;border:0;border-radius:999px;padding:8px 0;background:#ffffffaa;color:var(--ink);font-size:15px;font-weight:600}
@@ -86,6 +89,7 @@ section.pane.on{display:block}
 </head>
 <body>
 <header>
+  <nav class="sw"><a class="on" href="https://yang8073.github.io/kyushu-family-planner/">九州</a><a href="https://yang8073.github.io/tokyo-family-planner/">東京</a></nav>
   <h1>☁️ 九州親子行程規劃 · 2027 春節</h1>
   <div class="sub">2 大 + 6 歲（愛大耳狗・酷洛米）+ 2 歲 ｜ 2/7 抵福岡 → 2/13 大分回台</div>
   <nav class="tabs">
