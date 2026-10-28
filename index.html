@@ -91,7 +91,7 @@ section.pane.on{display:block}
 <header>
   <nav class="sw"><a class="on" href="https://yang8073.github.io/kyushu-family-planner/">九州</a><a href="https://yang8073.github.io/tokyo-family-planner/">東京</a></nav>
   <h1>☁️ 九州親子行程規劃 · 2027 春節</h1>
-  <div class="sub">2 大 + 6 歲（愛大耳狗・酷洛米）+ 2 歲 ｜ 2/7(日)–2/13(六) 福岡進・福岡出（航班待定）</div>
+  <div class="sub">2 大 + 6 歲（愛大耳狗・酷洛米）+ 2 歲 ｜ 2/8(一)–2/13(六) 福岡進・福岡出（航班待定）</div>
   <nav class="tabs">
     <button data-tab="listPane" class="on">清單</button>
     <button data-tab="planPane">行程</button>
@@ -120,7 +120,7 @@ section.pane.on{display:block}
 </section>
 
 <section id="planPane" class="pane">
-  <div class="trip">✈️ 福岡進・福岡出（航班與時間待定） ｜ 🗓 2/7(日)–2/13(六) ｜ 🏨 以福岡市區為主，可加由布院・別府一晚 ｜ 🚐 交通方式（包車／大眾運輸）待定</div>
+  <div class="trip">✈️ 福岡進・福岡出（航班與時間待定） ｜ 🗓 2/8(一)–2/13(六) ｜ 🏨 以福岡市區為主，可加由布院・別府一晚 ｜ 🚐 交通方式（包車／大眾運輸）待定</div>
   <div class="toolbar">
     <button class="btn" id="addDay">＋ 新增一天</button>
     <button class="btn alt" id="copyTxt">📋 複製行程文字</button>
@@ -217,7 +217,7 @@ const A = [
 ["spacelabo","Space LABO 北九州市科學館","スペースLABO","北九州",["室內","館區"],2,3,"天文館＋科學體驗；與恐龍館同在東田地區。",33.8711,130.8113],
 ["innovation","北九州創新畫廊","北九州イノベーションギャラリー","北九州",["室內","館區"],1,2,"產業科技展示館，常有兒童工作坊。⚠️較冷門，開放日請確認。",33.8691,130.8086,1],
 // —— 大分・別府 ——
-["harmony","三麗鷗 Harmonyland","サンリオキャラクターパーク ハーモニーランド","大分・別府",["戶外","卡通角色","遊樂園"],3,3,"10:00–17:00（最後入園 16:00）。2027/2 休園：2/3,4,17,18,24,25（2/7–2/13 全開）。見面會 11:00–16:00；免費整理券 10:00 起用手機連「FUN STUDIO Wi-Fi」領取，一組一次一張，大耳狗常很快領完。電話 0977-73-1111。",33.3837,131.5505],
+["harmony","三麗鷗 Harmonyland","サンリオキャラクターパーク ハーモニーランド","大分・別府",["戶外","卡通角色","遊樂園"],3,3,"10:00–17:00（最後入園 16:00）。2027/2 休園：2/3,4,17,18,24,25（2/8–2/13 全開）。見面會 11:00–16:00；免費整理券 10:00 起用手機連「FUN STUDIO Wi-Fi」領取，一組一次一張，大耳狗常很快領完。電話 0977-73-1111。",33.3837,131.5505],
 ["safari","九州自然動物公園 African Safari","九州自然動物公園アフリカンサファリ","大分・別府",["戶外","動物"],3,3,"可坐叢林巴士餵動物（需預約／另計，請確認）；山區冬天注意路面。",33.4580,131.3905],
 ["umitamago","大分海洋宮水族館 Umitamago","大分マリーンパレス水族館 うみたまご","大分・別府",["室內","動物","館區"],3,3,"可近距離摸海洋動物；票價請確認。在高崎山對面。",33.2577,131.5413],
 ["takasaki","高崎山自然動物園（野生猴）","高崎山自然動物園","大分・別府",["戶外","動物"],2,3,"上千隻野生猴，有單軌接駁；猴子出現時間不固定。",33.2551,131.5387],
@@ -245,11 +245,10 @@ const BY = Object.fromEntries(ATTR.map(a=>[a.id,a]));
 const gmap = a => "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(a.ja);
 const COLORS = ["#ff8fab","#6fb7f2","#9b7cf0","#3cc4a0","#f5a524","#ef6f6c","#4f7fd9","#c06fd6","#58b368","#e08a3c"];
 const KEY = "kyushuPlanner.v2", OLDKEY = "kyushuPlanner.v1";
-const DATES = ["2/7(日)","2/8(一)","2/9(二)","2/10(三)","2/11(四)","2/12(五)","2/13(六)"];
-const DEFAULT_LABELS = ["2/7(日) 抵達福岡機場（時間待定）","2/8(一) 福岡市區・百道","2/9(二) 太宰府","2/10(三) 博多・中洲","2/11(四) 由布院 → 別府（住一晚）","2/12(五) Harmonyland → 回福岡","2/13(六) 博多・機場周邊，從福岡機場回台（時間待定）"];
+const DATES = ["2/8(一)","2/9(二)","2/10(三)","2/11(四)","2/12(五)","2/13(六)"];
+const DEFAULT_LABELS = ["2/8(一) 抵達福岡機場（時間待定）","2/9(二) 太宰府","2/10(三) 博多・中洲","2/11(四・日本國定假日) 由布院 → 別府（住一晚）","2/12(五) Harmonyland → 回福岡","2/13(六) 博多・機場周邊，從福岡機場回台（時間待定）"];
 const SAMPLE = [
   ["fukair","rooftop","hankyu"],
-  ["science","tower","momochi","yatai"],
   ["dazaifu","kyuhaku","yuenchi","tenjinsanrio"],
   ["anpanman","canal","sanriogal","kushida"],
   ["kinrin","miffy","snoopy","hyotan"],
@@ -259,11 +258,11 @@ const SAMPLE = [
 const uid = () => "d"+Math.random().toString(36).slice(2,8);
 function blank(){return {days:DEFAULT_LABELS.map(l=>({id:uid(),label:l,items:[]})),pool:[]};}
 function sample(){const s=blank();s.days.forEach((d,i)=>d.items=[...SAMPLE[i]]);return s;}
-// 舊版存檔／舊 JSON：只保留 2/7–2/13 的天數，其他日期的景點移回「未排入」
+// 舊版存檔／舊 JSON：只保留 2/8–2/13 的天數，其他日期的景點移回「未排入」
 function norm(o){
   const s=blank(),pool=[...(o.pool||[])],extra=[];
   (o.days||[]).forEach(d=>{const items=Array.isArray(d.items)?d.items:[];const m=String(d.label||"").match(/^\s*2\/(\d{1,2})(?!\d)/);
-    if(m){const i=+m[1]-7;if(i>=0&&i<7){s.days[i].items.push(...items);if(o.v===2&&d.label)s.days[i].label=d.label;}else pool.push(...items);}
+    if(m){const i=+m[1]-8;if(i>=0&&i<DATES.length){s.days[i].items.push(...items);if(o.v===2&&d.label)s.days[i].label=d.label;}else pool.push(...items);}
     else if(/^\s*\d{1,2}\/\d/.test(String(d.label||"")))pool.push(...items);
     else extra.push({id:uid(),label:d.label||"新的一天",items});});
   s.days.push(...extra);s.pool=pool;return s;}
