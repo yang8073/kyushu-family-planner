@@ -91,7 +91,7 @@ section.pane.on{display:block}
 <header>
   <nav class="sw"><a class="on" href="https://yang8073.github.io/kyushu-family-planner/">九州</a><a href="https://yang8073.github.io/tokyo-family-planner/">東京</a></nav>
   <h1>☁️ 九州親子行程規劃 · 2027 春節</h1>
-  <div class="sub">2 大 + 6 歲（愛大耳狗・酷洛米）+ 2 歲 ｜ 2/7 抵福岡 → 2/13 大分回台</div>
+  <div class="sub">2 大 + 6 歲（愛大耳狗・酷洛米）+ 2 歲 ｜ 2/7(日)–2/13(六) 福岡進・福岡出（航班待定）</div>
   <nav class="tabs">
     <button data-tab="listPane" class="on">清單</button>
     <button data-tab="planPane">行程</button>
@@ -120,7 +120,7 @@ section.pane.on{display:block}
 </section>
 
 <section id="planPane" class="pane">
-  <div class="trip">✈️ 2/7(日) AirAsia TPE 12:00 → FUK 15:20 ｜ 🏨 福岡市區 2/7–2/10 ｜ 🚗 2/11 開車往大分・別府 ｜ ✈️ 2/13(六) 台灣虎航 OIT 16:30 → TPE 18:10</div>
+  <div class="trip">✈️ 福岡進・福岡出（航班與時間待定） ｜ 🗓 2/7(日)–2/13(六) ｜ 🏨 以福岡市區為主，可加由布院・別府一晚 ｜ 🚐 交通方式（包車／大眾運輸）待定</div>
   <div class="toolbar">
     <button class="btn" id="addDay">＋ 新增一天</button>
     <button class="btn alt" id="copyTxt">📋 複製行程文字</button>
@@ -128,6 +128,7 @@ section.pane.on{display:block}
     <button class="btn alt" id="importBtn">⬆️ 匯入 JSON</button>
     <button class="btn" id="sampleBtn">✨ 載入建議行程</button>
     <button class="btn warn" id="clearBtn">🗑 清空</button>
+    <button class="btn alt" id="oldBtn" style="display:none">↩️ 載入舊版存檔</button>
   </div>
   <p class="hint">按住 ☰ 拖曳即可排序或移到別天；也可以用右側選單直接換天。行程會自動存在這支手機（localStorage）。</p>
   <div id="days"></div>
@@ -182,7 +183,7 @@ const A = [
 ["yatai","中洲屋台街","中洲 屋台","福岡市區",["美食","戶外"],2,2,"約 18:00 後營業；週日不少攤休息。建議 18:30 前去避人潮。",33.5915,130.4052],
 ["kushida","櫛田神社＋川端商店街","櫛田神社","福岡市區",["戶外","景觀","美食"],2,2,"免費；神社內展示博多祇園山笠裝飾山車。",33.5930,130.4105],
 ["nokonoshima","能古島 Island Park","のこのしまアイランドパーク","福岡市區",["戶外","動物","景觀"],2,3,"姪濱渡輪約 10 分＋巴士；2 月有油菜花。⚠️票價請確認。",33.6345,130.3015,1],
-["fukair","福岡機場","福岡空港","福岡市區",["室內","交通"],1,1,"2/7 AirAsia 15:20 抵達；地鐵到博多站約 5 分。",33.5859,130.4510],
+["fukair","福岡機場","福岡空港","福岡市區",["室內","交通"],1,1,"福岡進出的機場（航班與時間待定）；地鐵到博多站約 5 分。",33.5859,130.4510],
 // —— 福岡 追加（親子向け；附來源連結） ——
 ["parcochara", "天神角色樂園（福岡PARCO 8F）", "天神キャラパーク 福岡PARCO", "福岡市區", ["室內", "卡通角色", "購物", "雨天備案", "免費"], 2, 3, "KIDDY LAND、Snoopy Town、拉拉熊、吉伊卡哇樂園等角色店集中一層（KIDDY LAND 有三麗鷗商品）。10:00–20:30，無固定休。地鐵天神站西7出口直通。⚠️福岡PARCO預定2027年2月底結束營業，2/7–2/10 仍營業，但閉店前可能人潮多；熱門日吉伊卡哇店需LINE整理券。", 33.5908, 130.3986, 1, "https://fukuoka.parco.jp/shop/detail/?cd=006228"],
 ["tenjinpark", "天神中央公園＋赤煉瓦文化館", "天神中央公園 赤煉瓦文化館", "福岡市區", ["戶外", "免費"], 2, 1, "公園免費、全年開放，有大草坪、噴水廣場、那珂川河畔與舊福岡縣公會堂貴賓館；無專門遊具，適合逛天神時放電與推車散步。赤煉瓦文化館（1909年紅磚建築，外觀拍照）免費 9:00–22:00，每月最後一個週一休（2027年2月為2/22），2/7–2/10 都開。", 33.5918, 130.4025, 0, "https://yokanavi.com/spots/26950"],
@@ -237,27 +238,35 @@ const A = [
 ["yufuichigo","由布院草莓園","由布院いちご園","由布院",["室內","美食","體驗","溫室"],3,3,"約 1 月中–5 月中。不限時，約 大人 ¥2,500、7–17 歲 ¥1,500、4–6 歲 ¥1,000、3 歲以下免費；可網路預約（2 週內）。10:00 起，⚠️週二、三休。由布院站步行約 13 分（ゆふいんフローラハウス旁）。位置為概略，2027 年資訊待確認。",33.2565,131.3600,1],
 ["snoopy","史努比茶屋 由布院店","SNOOPY茶屋 由布院店","由布院",["室內","美食","卡通角色"],2,3,"湯之坪街道。茶屋約 10:00–17:00，商店約 9:30–17:30，全年無休（請再確認）。",33.2671,131.3642],
 ["miffy","米飛兔森林廚房 由布院","みっふぃー森のきっちん 湯布院店","由布院",["室內","美食","卡通角色","購物"],3,3,"湯之坪街道，米飛造型麵包；2F 可內用。商店約 9:30–17:30，年中無休（請再確認）。",33.2667,131.3650],
-["donguri","橡子共和國 由布院（龍貓）","どんぐりの森 湯布院店","由布院",["室內","卡通角色","購物"],2,3,"湯之坪街道。約 平日 10:00–17:00，六日假日 9:30–17:00。",33.2662,131.3612],
-["oitair","大分機場","大分空港","大分・別府",["室內","交通"],1,1,"2/13(六) 台灣虎航 16:30 起飛；還車＋報到請預留時間。",33.4795,131.7370]
+["donguri","橡子共和國 由布院（龍貓）","どんぐりの森 湯布院店","由布院",["室內","卡通角色","購物"],2,3,"湯之坪街道。約 平日 10:00–17:00，六日假日 9:30–17:00。",33.2662,131.3612]
 ];
 const ATTR = A.map(a=>({id:a[0],zh:a[1],ja:a[2],area:a[3],tags:a[4],a2:a[5],a6:a[6],note:a[7],lat:a[8],lng:a[9],q:!!a[10],src:a[11]||""}));
 const BY = Object.fromEntries(ATTR.map(a=>[a.id,a]));
 const gmap = a => "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(a.ja);
 const COLORS = ["#ff8fab","#6fb7f2","#9b7cf0","#3cc4a0","#f5a524","#ef6f6c","#4f7fd9","#c06fd6","#58b368","#e08a3c"];
-const KEY = "kyushuPlanner.v1";
-const DEFAULT_LABELS = ["2/7(日)","2/8(一)","2/9(二)","2/10(三)","2/11(四)","2/12(五)","2/13(六)"];
+const KEY = "kyushuPlanner.v2", OLDKEY = "kyushuPlanner.v1";
+const DATES = ["2/7(日)","2/8(一)","2/9(二)","2/10(三)","2/11(四)","2/12(五)","2/13(六)"];
+const DEFAULT_LABELS = ["2/7(日) 抵達福岡機場（時間待定）","2/8(一) 福岡市區・百道","2/9(二) 太宰府","2/10(三) 博多・中洲","2/11(四) 由布院 → 別府（住一晚）","2/12(五) Harmonyland → 回福岡","2/13(六) 博多・機場周邊，從福岡機場回台（時間待定）"];
 const SAMPLE = [
   ["fukair","rooftop","hankyu"],
   ["science","tower","momochi","yatai"],
   ["dazaifu","kyuhaku","yuenchi","tenjinsanrio"],
-  ["yanagawa","motoyoshiya","ohori"],
-  ["jigoku","mushi","hyotan"],
+  ["anpanman","canal","sanriogal","kushida"],
+  ["kinrin","miffy","snoopy","hyotan"],
   ["harmony"],
-  ["umitamago","takasaki","oitair"]
+  ["pokemon","higashihirao"]
 ];
 const uid = () => "d"+Math.random().toString(36).slice(2,8);
 function blank(){return {days:DEFAULT_LABELS.map(l=>({id:uid(),label:l,items:[]})),pool:[]};}
 function sample(){const s=blank();s.days.forEach((d,i)=>d.items=[...SAMPLE[i]]);return s;}
+// 舊版存檔／舊 JSON：只保留 2/7–2/13 的天數，其他日期的景點移回「未排入」
+function norm(o){
+  const s=blank(),pool=[...(o.pool||[])],extra=[];
+  (o.days||[]).forEach(d=>{const items=Array.isArray(d.items)?d.items:[];const m=String(d.label||"").match(/^\s*2\/(\d{1,2})(?!\d)/);
+    if(m){const i=+m[1]-7;if(i>=0&&i<7){s.days[i].items.push(...items);if(o.v===2&&d.label)s.days[i].label=d.label;}else pool.push(...items);}
+    else if(/^\s*\d{1,2}\/\d/.test(String(d.label||"")))pool.push(...items);
+    else extra.push({id:uid(),label:d.label||"新的一天",items});});
+  s.days.push(...extra);s.pool=pool;return s;}
 let S;
 try{S=JSON.parse(localStorage.getItem(KEY));}catch(e){}
 if(!valid(S)) S=sample();
@@ -349,6 +358,9 @@ document.getElementById("days").addEventListener("click",e=>{
 });
 document.getElementById("addDay").onclick=()=>{S.days.push({id:uid(),label:`第 ${S.days.length+1} 天`,items:[]});update();toast("已新增一天");};
 document.getElementById("sampleBtn").onclick=()=>{if(confirm("載入建議行程？會覆蓋目前的安排")){S=sample();update();fit();}};
+(function(){let old=null;try{old=JSON.parse(localStorage.getItem(OLDKEY));}catch(e){}
+  if(old&&Array.isArray(old.days)){const b=document.getElementById("oldBtn");b.style.display="";
+    b.onclick=()=>{if(confirm("載入這支手機上舊版（航班變更前）自動儲存的行程？會覆蓋目前的安排")){S=clean(norm(old));update();fit();toast("已載入舊版存檔");}};}})();
 document.getElementById("clearBtn").onclick=()=>{if(confirm("清空所有已選景點與天數？")){S=blank();update();}};
 function planText(){
   let out="九州親子行程 2027 春節\n";
@@ -363,9 +375,9 @@ function openModal(title,text,onOk){document.getElementById("mTitle").textConten
 document.getElementById("mCancel").onclick=()=>modal.classList.remove("on");
 document.getElementById("mCopy").onclick=()=>{const t=document.getElementById("mText");t.select();try{navigator.clipboard.writeText(t.value);}catch(e){document.execCommand("copy");}toast("已複製");};
 document.getElementById("mOk").onclick=()=>{if(modalOk&&modalOk(document.getElementById("mText").value)!==false)modal.classList.remove("on");};
-document.getElementById("exportBtn").onclick=()=>openModal("行程 JSON（可複製保存或傳給家人）",JSON.stringify({v:1,days:S.days.map(d=>({label:d.label,items:d.items})),pool:S.pool},null,1),null);
+document.getElementById("exportBtn").onclick=()=>openModal("行程 JSON（可複製保存或傳給家人）",JSON.stringify({v:2,days:S.days.map(d=>({label:d.label,items:d.items})),pool:S.pool},null,1),null);
 document.getElementById("importBtn").onclick=()=>openModal("貼上 JSON 後按「確定」","",txt=>importJSON(txt));
-function importJSON(txt){try{const o=JSON.parse(txt);if(!valid(o))throw 0;S=clean({days:o.days.map(d=>({id:uid(),label:d.label,items:d.items})),pool:o.pool});update();fit();toast("匯入成功");return true;}catch(e){alert("JSON 格式不正確");return false;}}
+function importJSON(txt){try{const o=JSON.parse(txt);if(!o||!Array.isArray(o.days))throw 0;S=clean(norm(o));update();fit();toast("匯入成功");return true;}catch(e){alert("JSON 格式不正確");return false;}}
 
 // ===== 地圖 =====
 let map,layer,allLayer,markers={};
