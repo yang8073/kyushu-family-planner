@@ -48,13 +48,19 @@ const initial=async p=>{await waitFor(()=>p.run('sync.ready'));await p.run('flus
  p.run('toggleWish("canal","maybe");toggleWish("canal","meh")');await p.run('flushPending()');assert.equal(p.run('sync.rev'),2);const version1=p.run('JSON.stringify(stored(HISTORYKEY,[])[0])');assert.equal(p.run('stored(HISTORYKEY,[])[0].wishes.canal[ME.id].pool'),'want');
  p.run('toggleWish("canal","meh")');await p.run('flushPending()');assert.equal(p.run('sync.rev'),3);assert.match(p.run('sync.current.summary'),/取消許願/);
  p.run('planner.select("tower");planner.moveTo("tower",1)');await sleep(650);assert.equal(p.run('sync.rev'),4);assert.match(p.run('sync.current.summary'),/新增 福岡塔 到 2\/9/);assert.equal(p.run('JSON.stringify(stored(HISTORYKEY,[])[0])'),version1);
- p.run('openDetail("canal")');assert.match(p.els.detailBody.innerHTML,/detailTitle/);p.run('closeDetail()');p.run('document.getElementById("exportBtn").onclick()');assert(Object.hasOwn(JSON.parse(p.els.mText.value),'wishes'));assert.match(p.run('planText()'),/住宿/);
+ p.run('openDetail("canal")');assert.match(p.els.detailBody.innerHTML,/detailTitle/);p.run('closeDetail()');p.run('document.getElementById("exportBtn").onclick()');assert(Object.hasOwn(JSON.parse(p.els.mText.value),'wishes'));assert.match(p.run('planText()'),/住宿（已訂）/);
  await p.run('openHistory()');assert.match(p.els.historyBody.innerHTML,/#4/);assert.match(p.els.historyBody.innerHTML,/台北/);await p.run('previewVersion(1)');assert.match(p.els.historyBody.innerHTML,/與目前行程比較/);assert.match(p.els.historyBody.innerHTML,/移除 福岡塔/);
  await p.els.historyBody.onclick({target:{closest:()=>({dataset:{},hasAttribute:key=>key==='data-history-restore'})}});await p.run('flushPending()');assert.equal(p.run('sync.rev'),5);assert.equal(p.run('sync.current.summary'),'還原至第 1 版');assert.equal(p.run('WISH.canal[ME.id].pool'),'want');assert(!p.run('selected().has("tower")'));assert.equal(p.run('JSON.stringify(stored(HISTORYKEY,[])[0])'),version1);
  p.run('importJSON(JSON.stringify({v:2,days:[],pool:[]}))');await p.run('flushPending()');assert.equal(p.run('sync.current.summary'),'匯入 JSON');assert.equal(p.run('S.days.length'),6);p.run('document.getElementById("sampleBtn").onclick()');await p.run('flushPending()');assert.equal(p.run('sync.current.summary'),'載入預設行程');p.run('document.getElementById("clearBtn").onclick()');await p.run('flushPending()');assert.equal(p.run('sync.current.summary'),'清空行程');
  for(let i=0;i<102;i++){p.run('S.days[0].label="測試 "+'+i+';update()');await p.run('flushPending()');}assert.equal(p.run('stored(HISTORYKEY,[]).length'),100);assert.equal(p.run('sync.rev'),110);
  const old=JSON.parse(p.run('OLD_DEFAULTS[0]')),oldPlan={days:old[0].map(([label,items])=>({label,items})),pool:old[1]},oldStore=new Map([['kyushuPlanner.v2',JSON.stringify(oldPlan)]]),upgrade=page({storage:oldStore});assert(upgrade.run('fp(S)===fp(sample())'));oldPlan.days[0].label+=' 自訂';oldStore.set('kyushuPlanner.v2',JSON.stringify(oldPlan));const edited=page({storage:oldStore});assert.match(edited.run('S.days[0].label'),/自訂/);
  const v1=page({storage:new Map([['kyushuPlanner.v1',JSON.stringify({days:[{label:'2/7(日)',items:['tower']},{label:'2/9(二)',items:['dazaifu']}],pool:[]})]])});await initial(v1);v1.run('document.getElementById("oldBtn").onclick()');await v1.run('flushPending()');assert.equal(v1.run('sync.current.summary'),'載入舊版存檔');assert(v1.run('S.pool.includes("tower")'));
+ // Confirmed lodging labels and public-page privacy.
+ assert.match(html,/<div class="sub">🏨 住宿（已訂）：/);
+ assert.equal(p.run('HOTEL.zh'),'住宿（已訂）');
+ assert(!/住宿（暫定）/.test(html));
+ for(const privateValue of ['189,520','189520','1791493524','6222338535','60626719'])assert(!html.includes(privateValue));
+ console.log('PASS confirmed lodging header, export and map labels; no booking amount or private identifiers');
  // Confirmed flight labels upgrade only exact old defaults, with no load-time save/version.
  assert(!/tokyo|東京|TYO/i.test(html));assert(!/\.sw(?:[\s.{]|$)|<nav class="sw"/.test(html));
  assert(!/暫定/.test(html.match(/<div class="sub">([^<]+)/)[1]));
