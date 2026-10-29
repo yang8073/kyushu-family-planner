@@ -11,6 +11,7 @@
         "by": {},
         "byId": {},
         "summary": {},
+        "customs": {},
         "$other": {
           ".validate": false
         },
@@ -64,6 +65,7 @@
           "by": {},
           "byId": {},
           "summary": {},
+          "customs": {},
           "$other": {
             ".validate": false
           },
@@ -118,6 +120,7 @@
           "by": {},
           "byId": {},
           "summary": {},
+          "customs": {},
           "$other": {
             ".validate": false
           },

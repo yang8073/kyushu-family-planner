@@ -67,6 +67,64 @@ const initial=async p=>{await waitFor(()=>p.run('sync.ready'));await p.run('flus
  b.run('dragging=true');const before=b.els.days.innerHTML;reload.run('planner.moveTo("higashihirao",2)');await reload.run('flushPending()');await sleep(30);assert.equal(b.els.days.innerHTML,before);assert(b.run('renderQueued'));b.run('dragging=false;acceptMirror()');assert(b.run('S.days[2].items.includes("higashihirao")'));
  const histories=await reload.run('adapter.history(2)');assert.equal(histories.length,2);assert(histories[0].rev>histories[1].rev);assert(!Object.hasOwn(histories[0],'plan'));assert.deepEqual(db.tree.kyushu2027.history['000001'],original);
  reload.run('document.getElementById("shareBtn").onclick()');assert.equal(reload.owner.clipboard,'http://127.0.0.1:8000/');const prod=page({db,hostname:'yang8073.github.io'});await initial(prod);assert.equal(prod.run('shared()'),false);
- console.log('PASS Firebase initial migration, unified two-device sync, wish conflict merge, plan conflict draft, archive repair, offline batch/reload, pre-share backup, drag deferral, history index, plain share URL, production override guard');
+
+ // 自訂景點（Custom Spots）測試
+ // 1. Old state without customs loads; payload omits customs when empty
+ const legacy=reload.run('normalState({rev:1,at:1000,by:"老友",byId:"olddev123456",summary:"舊行程",plan:{days:[{id:"d1",label:"第1天",items:["canal"]}],pool:[]},wishes:{}})')
+ assert(legacy&&legacy.customs&&Object.keys(legacy.customs).length===0);
+ assert(!Object.hasOwn(db.tree.kyushu2027.state,'customs'));
+
+ // 2. Adding a custom spot creates a version and syncs to a second device
+ const revBeforeAdd=db.tree.kyushu2027.state.rev;
+ const cid=reload.run('saveCustomSpot({zh:"博多一雙拉麵",cat:"購物街/商圈",area:"博多",addr:"福岡市博多區博多駅東3-1-6",lat:33.588,lng:130.422,note:"濃郁豚骨",url:"https://example.com/ramen"})');
+ assert(cid&&cid.startsWith("u_"));
+ await reload.run('flushPending()');
+ assert.equal(db.tree.kyushu2027.state.rev,revBeforeAdd+1);
+ assert.match(db.tree.kyushu2027.state.summary,/新增自訂景點：博多一雙拉麵/);
+ assert.equal(db.tree.kyushu2027.state.customs[cid].zh,"博多一雙拉麵");
+ const plannedRevBase=db.tree.kyushu2027.state.rev;
+
+ await waitFor(()=>b.run('!!planner.customs["'+cid+'"]'));
+ assert.equal(b.run('BY["'+cid+'"].zh'),"博多一雙拉麵");
+ assert.equal(b.run('BY["'+cid+'"].cat'),"購物街/商圈");
+ assert.equal(b.run('BY["'+cid+'"].custom'),true);
+
+ // 3. Custom spot can be added to a day and wished
+ reload.run('planner.moveTo("'+cid+'",1)');
+ reload.run('toggleWish("'+cid+'","want")');
+ await reload.run('flushPending()');
+ await waitFor(()=>b.run('S.days[1].items.includes("'+cid+'")'));
+ await waitFor(()=>b.run('WISH["'+cid+'"]?.ABCDefgh1234?.pool === "want"'));
+ b.run('toggleWish("'+cid+'","maybe")');
+ await b.run('flushPending()');
+ await waitFor(()=>reload.run('WISH["'+cid+'"]?.ZZZZabcd5678?.pool === "maybe"'));
+ const restoreTargetRev=db.tree.kyushu2027.state.rev;
+
+ // 4. Deleting removes it from plan and wishes on both devices
+ reload.run('deleteCustomSpot("'+cid+'")');
+ await reload.run('flushPending()');
+ assert.match(db.tree.kyushu2027.state.summary,/刪除自訂景點：博多一雙拉麵/);
+ assert(!reload.run('S.days[1].items.includes("'+cid+'")'));
+ assert(!reload.run('!!WISH["'+cid+'"]'));
+ assert(!reload.run('!!BY["'+cid+'"]'));
+ await waitFor(()=>b.run('!planner.customs["'+cid+'"]'));
+ assert(!b.run('S.days[1].items.includes("'+cid+'")'));
+ assert(!b.run('!!WISH["'+cid+'"]'));
+ assert(!b.run('!!BY["'+cid+'"]'));
+
+ // 5. Restore of an earlier version brings back a deleted custom spot
+ await reload.run('openHistory()');
+ await reload.run('previewVersion('+restoreTargetRev+')');
+ await reload.els.historyBody.onclick({target:{closest:()=>({dataset:{},hasAttribute:key=>key==="data-history-restore"})}});
+ await reload.run('flushPending()');
+ assert.match(reload.run('sync.current.summary'),new RegExp('還原至第 '+restoreTargetRev+' 版'));
+ assert.equal(reload.run('BY["'+cid+'"]?.zh'),"博多一雙拉麵");
+ assert(reload.run('S.days[1].items.includes("'+cid+'")'));
+ assert.equal(reload.run('WISH["'+cid+'"]?.ABCDefgh1234?.pool'),"want");
+ await waitFor(()=>b.run('!!planner.customs["'+cid+'"]'));
+ assert.equal(b.run('BY["'+cid+'"]?.zh'),"博多一雙拉麵");
+ assert(b.run('S.days[1].items.includes("'+cid+'")'));
+
+ console.log('PASS Firebase initial migration, unified two-device sync, wish conflict merge, plan conflict draft, archive repair, offline batch/reload, pre-share backup, drag deferral, history index, plain share URL, production override guard, custom spots sync/plan/wish/delete/restore/compat');
  for(const x of instances)x.close();
 })().catch(e=>{for(const x of instances)x.close();console.error(e);process.exitCode=1;});

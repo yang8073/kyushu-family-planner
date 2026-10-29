@@ -74,18 +74,59 @@ def main():
                     else:
                         value['summary'] = 'x' * (512 * 1024)
                     assert request('save', {'baseRev': 2, 'state': value})[0] == 400, bad
+
+                # Valid custom spot
+                valid_custom = copy.deepcopy(restored)
+                valid_custom['summary'] = '新增自訂景點：測試景點'
+                valid_custom['customs'] = {
+                    'u_testspot1': {
+                        'zh': '測試自訂景點',
+                        'cat': '親子景點',
+                        'area': '福岡市區',
+                        'addr': '福岡市博多區',
+                        'lat': 33.59,
+                        'lng': 130.41,
+                        'note': '這是一個測試景點',
+                        'url': 'https://example.com/spot',
+                        'by': '小明',
+                        'byId': 'device123456',
+                        'at': 1000
+                    }
+                }
+                status, response = request('save', {'baseRev': 2, 'state': valid_custom})
+                assert status == 200 and response['ok'] and response['state']['rev'] == 3
+                assert response['state']['customs']['u_testspot1']['zh'] == '測試自訂景點'
+                assert request('version&rev=3')[1]['customs']['u_testspot1']['lat'] == 33.59
+
+                # Invalid customs validation checks
+                for bad_c in ['cat', 'lat', 'url', 'extra_field', 'id', 'zh_len']:
+                    bad_state = copy.deepcopy(valid_custom)
+                    if bad_c == 'cat':
+                        bad_state['customs']['u_testspot1']['cat'] = '無效分類'
+                    elif bad_c == 'lat':
+                        bad_state['customs']['u_testspot1']['lat'] = 999.0
+                    elif bad_c == 'url':
+                        bad_state['customs']['u_testspot1']['url'] = 'ftp://evil.com'
+                    elif bad_c == 'extra_field':
+                        bad_state['customs']['u_testspot1']['forbidden'] = True
+                    elif bad_c == 'id':
+                        bad_state['customs']['../bad_id'] = bad_state['customs'].pop('u_testspot1')
+                    elif bad_c == 'zh_len':
+                        bad_state['customs']['u_testspot1']['zh'] = '長' * 61
+                    assert request('save', {'baseRev': 3, 'state': bad_state})[0] == 400, bad_c
+
                 assert request('state', origin='https://evil.example')[0] == 403
                 assert request('state', origin='https://yang8073.github.io')[0] == 200
                 assert request('state', origin='http://localhost:8000')[0] == 200
                 assert request('save', origin='http://127.0.0.1:8000', method='OPTIONS')[0] == 204
                 # Simulate interruption after the write-ahead journal, before any snapshot rename.
                 pending = copy.deepcopy(first)
-                pending.update(rev=3, summary='中斷後復原', at=int(time.time()*1000))
+                pending.update(rev=4, summary='中斷後復原', at=int(time.time()*1000))
                 (data / 'transaction.json').write_text(json.dumps(pending), encoding='utf-8')
                 assert request('state') == (200, pending)
-                assert request('version&rev=3') == (200, pending)
+                assert request('version&rev=4') == (200, pending)
                 assert not (data / 'transaction.json').exists()
-                assert request('rev')[1]['rev'] == 3
+                assert request('rev')[1]['rev'] == 4
                 assert data.stat().st_mode & 0o777 == 0o700
                 assert history_file.stat().st_mode & 0o777 == 0o600
                 # Use a fresh fixed-window counter to check the exact 60-save limit.
