@@ -1,6 +1,6 @@
 // Run: node dev/test-planner.cjs — dependency-free DOM/REST harness.
 const fs=require('fs'),vm=require('vm'),crypto=require('crypto'),assert=require('assert/strict');
-const html=fs.readFileSync(require('path').join(__dirname,'../index.html'),'utf8'),script=[...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)].filter(m=>!m[1].includes('src='))[0][2];
+const html=fs.readFileSync(require('path').join(__dirname,'../index.html'),'utf8'),script=[...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)].filter(m=>!m[1].includes('src='))[0][2].replace(/const SYNC_CFG = \{[^}]*\}/,'const SYNC_CFG = { type: "none", url: "", path: "kyushu2027" }');
 const clone=x=>x==null?x:JSON.parse(JSON.stringify(x)),sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function compact(v){if(Array.isArray(v)){const a=v.map(compact);while(a.length&&a.at(-1)==null)a.pop();return a.length?a:null;}if(v&&typeof v==='object'){const o={};for(const [k,x]of Object.entries(v)){const n=compact(x);if(n!==null)o[k]=n;}return Object.keys(o).length?o:null;}return v==null?null:v;}
 class Database{
