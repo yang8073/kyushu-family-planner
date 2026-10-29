@@ -47,7 +47,7 @@ function fieldsValid(stdClass $object, array $allowed): bool {
     return !array_diff(array_keys(get_object_vars($object)), $allowed);
 }
 function validateState(mixed $state): bool {
-    if (!objectValid($state) || !fieldsValid($state, ['rev','at','by','byId','summary','plan','wishes']) || !nickValid($state->by ?? null) || !deviceValid($state->byId ?? null)) return false;
+    if (!objectValid($state) || !fieldsValid($state, ['rev','at','by','byId','summary','plan','wishes','customs']) || !nickValid($state->by ?? null) || !deviceValid($state->byId ?? null)) return false;
     if (!is_string($state->summary ?? null) || textLength($state->summary) < 1 || textLength($state->summary) > 2000) return false;
     $plan = $state->plan ?? null;
     if (!objectValid($plan) || !fieldsValid($plan, ['days','pool']) || !is_array($plan->days ?? null) || count($plan->days) > 30 || !is_array($plan->pool ?? null)) return false;
@@ -71,6 +71,30 @@ function validateState(mixed $state): bool {
         if (!idValid($spot) || !objectValid($users)) return false;
         foreach (get_object_vars($users) as $device => $wish) {
             if (!deviceValid($device) || !objectValid($wish) || !fieldsValid($wish, ['pool','nick','at']) || !in_array($wish->pool ?? null, ['want','maybe','meh'], true) || !nickValid($wish->nick ?? null) || !is_int($wish->at ?? null) || $wish->at < 0) return false;
+        }
+    }
+    if (isset($state->customs)) {
+        if (!objectValid($state->customs)) return false;
+        $allowedCats = ['親子景點', '購物街/商圈', '安全帽店', '樂高店', 'PS5遊戲片店'];
+        $allowedCustomFields = ['zh', 'cat', 'area', 'addr', 'lat', 'lng', 'note', 'url', 'by', 'byId', 'at', 'editBy', 'editAt'];
+        foreach (get_object_vars($state->customs) as $id => $spot) {
+            if (!idValid($id) || !objectValid($spot) || !fieldsValid($spot, $allowedCustomFields)) return false;
+            if (!is_string($spot->zh ?? null) || trim($spot->zh) === '' || textLength($spot->zh) < 1 || textLength($spot->zh) > 60) return false;
+            if (!is_string($spot->cat ?? null) || !in_array($spot->cat, $allowedCats, true)) return false;
+            if (isset($spot->area) && (!is_string($spot->area) || textLength($spot->area) > 40)) return false;
+            if (isset($spot->addr) && (!is_string($spot->addr) || textLength($spot->addr) > 200)) return false;
+            if (isset($spot->lat) !== isset($spot->lng)) return false;
+            if (isset($spot->lat)) {
+                if ((!is_int($spot->lat) && !is_float($spot->lat)) || !is_finite((float)$spot->lat) || (float)$spot->lat < -90 || (float)$spot->lat > 90) return false;
+            }
+            if (isset($spot->lng)) {
+                if ((!is_int($spot->lng) && !is_float($spot->lng)) || !is_finite((float)$spot->lng) || (float)$spot->lng < -180 || (float)$spot->lng > 180) return false;
+            }
+            if (isset($spot->note) && (!is_string($spot->note) || textLength($spot->note) > 1000)) return false;
+            if (isset($spot->url) && (!is_string($spot->url) || !preg_match('~^https?://~i', $spot->url) || textLength($spot->url) > 2000)) return false;
+            if (!nickValid($spot->by ?? null) || !deviceValid($spot->byId ?? null) || !is_int($spot->at ?? null) || $spot->at < 0) return false;
+            if (isset($spot->editBy) && !nickValid($spot->editBy)) return false;
+            if (isset($spot->editAt) && (!is_int($spot->editAt) || $spot->editAt < 0)) return false;
         }
     }
     return true;
