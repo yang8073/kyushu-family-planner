@@ -63,6 +63,19 @@ section.pane.on{display:block}
 .it .x{border:0;background:none;color:#c77;font-size:18px;padding:0 4px}
 .sortable-ghost{opacity:.35}.sortable-chosen{background:#e6f2ff}
 .toolbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.dd{position:relative;display:inline-flex}
+.dd-toggle{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.dd.open>.dd-toggle{background:#e5dbff}
+.dd-menu{display:none;position:absolute;top:calc(100% + 4px);left:0;min-width:180px;max-width:calc(100vw - 20px);background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 4px 16px rgba(0,0,0,.12);padding:4px 0;z-index:1500;overflow:hidden}
+.dd.open>.dd-menu{display:flex;flex-direction:column}
+.dd-menu.align-right{left:auto;right:0}
+.dd:last-child .dd-menu{left:auto;right:0}
+.dd-item{display:flex;align-items:center;width:100%;min-height:44px;padding:10px 14px;border:0;background:none;color:var(--ink);font-size:15px;font-family:inherit;font-weight:500;text-align:left;white-space:nowrap;cursor:pointer;box-sizing:border-box}
+.dd-item:hover,.dd-item:focus-visible{background:#f1ebff;color:#6a4fb8;outline:none}
+.dd-item.warn{color:#b8456e}
+.dd-item.warn:hover,.dd-item.warn:focus-visible{background:#ffeef3;color:#b8456e}
+.dd-item[hidden]{display:none!important}
+.dd-divider{height:1px;margin:4px 0;background:var(--line);border:0}
 .hint{font-size:12px;color:var(--sub);margin:0 2px 10px;line-height:1.5}
 .mapbar{position:absolute;z-index:500;top:10px;right:10px;background:#fff;border-radius:12px;padding:6px 10px;box-shadow:0 2px 8px #0002;font-size:13px;display:flex;flex-direction:column;gap:6px}
 .mapbar label{display:flex;gap:6px;align-items:center}
@@ -89,8 +102,11 @@ section.pane.on{display:block}
 nav.tabs button{min-height:36px;font-size:14px}
 button,a,summary,input,select{touch-action:manipulation}
 button{cursor:pointer}
-.status{display:inline-flex;align-items:center;border-radius:999px;padding:6px 10px;background:#e3f6ee;color:#25785a;font-size:12px;overflow-wrap:anywhere}
+.status{display:inline-flex;align-items:center;gap:4px;border:0;border-radius:999px;padding:6px 10px;background:#e3f6ee;color:#25785a;font-size:12px;font-family:inherit;font-weight:inherit;line-height:inherit;cursor:pointer;overflow-wrap:anywhere;text-align:left}
+.status:hover{filter:brightness(.96)}
+.status:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .status.off{background:#fff3d8;color:#896610}.status.local{background:#edf1f8;color:#65748c}
+.status-hint{font-size:11px;opacity:.75;flex:none}
 .wish-buttons{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}
 .wish-btn{border:1px solid var(--line);border-radius:9px;background:#f8fbff;color:#65748c;font-size:12px;padding:6px 7px;min-height:32px}
 .wish-btn.on{background:#ffe7f0;border-color:#efafc9;color:#a4436c}.wish-btn[data-wish="maybe"].on{background:#e5f4ff;border-color:#9fcaee;color:#3575a5}.wish-btn[data-wish="meh"].on{background:#eee8ff;border-color:#b6a3e5;color:#71539c}
@@ -160,18 +176,33 @@ button{cursor:pointer}
 <section id="planPane" class="pane">
   <div class="trip"><details id="notes"><summary id="notesSummary">⚠️ 注意事項</summary><div class="notes-body">• ✈️ 航班暫定：去 2/8 華航 CI116 桃園 16:25 → 福岡 19:35；回 2/13 華航 CI117 福岡 20:35 → 桃園 22:20。2027/2 班表尚未公布，可能變動。<br>• 🏨 2/8 晚到：入境＋領行李約 1 小時（估計）。飯店官網：晚上 10 點後才到要先打電話 092-292-6728；夜間大門上鎖，按右側對講機。19:35 後西鐵巴士（國際線→博多站，大人 ¥400）班次未確認。⚠️第三方訂房頁寫櫃台 6:00–23:00、23:00 前未聯絡可能取消（待確認）。<br>• 🛏 房型／人數：訂 2 間 Superior Queen（官網：17㎡、160cm 床＋110cm 雙層床（bunk），每間定員 3 人）。官網：小學生以下每位付費者可免費帶 1 名添い寝；沒有嬰兒床、不出借推車。7 人（4 大 3 小）分 2 間要跟訂房網站確認人數有正確傳給飯店；2 歲不適合睡上舖（估計）；房間小，行李箱攤開會很擠。（<a href="https://quintessahotels.com/fukuoka-hakata/stay/superior/" target="_blank" rel="noopener">客房</a>、<a href="https://quintessahotels.com/fukuoka-hakata/faq/" target="_blank" rel="noopener">FAQ</a>）<br>• 💴 付款／取消：現場付款 JPY 189,520（暫定，入住時付清；現金或信用卡，官網寫不收 debit card）。2027/2/7 前免費取消；入住前 1 天 20%、當天 80%、no-show 100%。<br>• ⚠️ 飯店官網公告（2025/6）：透過 Agoda 等海外網站轉售的訂單，可能沒正確傳到飯店或房型／日期不符，飯店無法確認／變更／取消這類訂單，要找訂房網站處理（<a href="https://quintessahotels.com/fukuoka-hakata/news/224/" target="_blank" rel="noopener">公告</a>）。<br>• 🪪 入住證件：訂房單要求出示與主要住客同名、有照片和居住地址的證件（台灣護照沒有地址欄，可能需加帶其他證件，待確認）。<br>• 🧾 住宿稅入住時另付：福岡市＋縣每人每晚 ¥200（住宿費 2 萬日圓以下），添い寝免費的小孩不課稅。5 晚估約 ¥4,000–7,000（看幾位小孩被算付費，估計）（<a href="https://www.city.fukuoka.lg.jp/zaisei/zeisei/life/syuku001.html" target="_blank" rel="noopener">福岡市</a>、<a href="https://www.city.fukuoka.lg.jp/zaisei/zeisei/life/syukuqa.html" target="_blank" rel="noopener">FAQ</a>）。<br>• 🍳 早餐：1F 6:30–10:00（L.O. 9:30）。小孩早餐可能另收：官網館內設施頁寫大人 ¥1,650／小學生 ¥820／未就學免費，餐廳頁寫大人・小孩 ¥2,000／未就學免費，說法不一，入住時確認。<br>• 🧺 館內：1F 投幣洗衣機＋烘衣機、1F 微波爐、房內電熱水壺；無停車場（附近投幣停車場，包車接送停靠點待確認）。<br>• 🚕 7 人＋約 7 個行李箱：一般計程車坐 4 人、後車廂約 2 個大箱（估計）→ 需 1 台 9 人座 Jumbo（MK：建議 8 人、可放 13 個行李箱，機場↔博多 ¥20,330 起，電話 092-518-0089，<a href="https://www.mk-group.co.jp/fukuoka/" target="_blank" rel="noopener">MK</a>）或 3 台計程車。<br>• 📅 休館／休園：九州國立博物館週一休；海之中道海濱公園冬季每週二休（2/9 休）；海洋世界海豚／海獅秀 2027/1/12–4/9 暫停；太宰府遊園地 2 月休園日未公布。<br>• 🎌 2/11 日本國定假日：景點、交通、餐廳人較多。<br>• 🧾 退稅（2026/11/1 起出境再退）：托運行李前在國際線 3F 出發大廳機台刷「購買人本人」護照；免稅品要隨身、不可拆用，同一張收據少一件整張不退；建議起飛前約 3 小時到機場。（<a href="https://www.customs.go.jp/kaigairyoko/taxrefund/jpn.htm" target="_blank" rel="noopener">日本海關</a>、<a href="https://www.mlit.go.jp/kankocho/tax-free/page01_000001_00021.html" target="_blank" rel="noopener">觀光廳</a>）<br>• 🧳 2/13 退房後行李選項：<br>　– 包車：放車上。<br>　– 本飯店：退房後櫃台可寄放行李（官網 FAQ，沒寫時限，傍晚才取回請入住時確認）；延遲退房每小時 ¥1,000、最晚 14:00。⚠️本館不在 CARGO PASS 合作飯店名單（2026/10 查），不能從飯店直送機場。<br>　– Crosta博多（JR 博多站 2F 新幹線ひかり広場改札旁，9:00–20:00）：12:00 前交、每件 ¥1,500 送機場，14:00 起國際線 1F CARGO PASS 櫃台（8:00–19:30）領；⚠️非合作飯店房客能否使用請先電話確認 070-1815-4806（<a href="https://cargopass.jp/question" target="_blank" rel="noopener">CARGO PASS</a>）。<br>　– 機場：國際線 1F 佐川（101–200cm 每件 ¥1,000／日，7:30–21:40，<a href="https://www.sagawa-exp.co.jp/hands-freetravel/servicecenter/fukuoka_airport.html" target="_blank" rel="noopener">佐川</a>）；置物櫃 大 ¥800、大寬門 ¥1,200（<a href="https://www.fukuoka-airport.jp/service/coin-locker-intl-2.html" target="_blank" rel="noopener">福岡機場</a>）。<br>　– 博多站周邊：ecbo cloak App 預約，行李箱約 ¥800／件／日，各店可放數量有限、重量約 20kg 內（<a href="https://cloak.ecbo.io/ja" target="_blank" rel="noopener">ecbo</a>）；博多站 1F 手荷物寄放 10:30–18:30，¥1,000（繁忙期 ¥1,500，<a href="https://www.jrkyushu.co.jp/trains/yufuinnomori/pdf/baggage-storage-service-information.pdf" target="_blank" rel="noopener">JR九州</a>）。</div></details></div>
   <div class="toolbar">
-    <span class="status local" id="syncStatus" role="status">📴 本機模式（共享尚未設定）</span>
-    <button class="btn alt" id="refreshBtn" hidden>🔄 重新整理</button>
-    <button class="btn alt" id="shareBtn">🔗 複製分享連結</button>
-    <button class="btn alt" id="beforeShareBtn" hidden>↩️ 載入加入共享前的本機行程</button>
-    <button class="btn alt" id="historyBtn">🕘 版本紀錄</button>
-    <button class="btn" id="addDay">＋ 新增一天</button>
-    <button class="btn alt" id="copyTxt">📋 複製行程文字</button>
-    <button class="btn alt" id="exportBtn">⬇️ 匯出 JSON</button>
-    <button class="btn alt" id="importBtn">⬆️ 匯入 JSON</button>
-    <button class="btn" id="sampleBtn">✨ 載入預設行程</button>
-    <button class="btn warn" id="clearBtn">🗑 清空</button>
-    <button class="btn alt" id="oldBtn" style="display:none">↩️ 載入舊版存檔</button>
+    <button type="button" class="status local" id="syncStatus" role="status" aria-live="polite" title="查看版本紀錄" aria-label="查看版本紀錄"><span class="status-text">📴 本機模式（共享尚未設定）</span><span class="status-hint" aria-hidden="true"> 🕘</span></button>
+    <button type="button" class="btn" id="addDay">＋ 新增一天</button>
+    <div class="dd">
+      <button type="button" class="btn alt dd-toggle" aria-haspopup="menu" aria-expanded="false">📋 複製 ▾</button>
+      <div class="dd-menu" role="menu">
+        <button type="button" role="menuitem" class="dd-item" id="shareBtn">🔗 複製分享連結</button>
+        <button type="button" role="menuitem" class="dd-item" id="copyTxt">📋 複製行程文字</button>
+      </div>
+    </div>
+    <div class="dd">
+      <button type="button" class="btn alt dd-toggle" aria-haspopup="menu" aria-expanded="false">⇅ 匯入／匯出 ▾</button>
+      <div class="dd-menu" role="menu">
+        <button type="button" role="menuitem" class="dd-item" id="exportBtn">⬇️ 匯出 JSON</button>
+        <button type="button" role="menuitem" class="dd-item" id="importBtn">⬆️ 匯入 JSON</button>
+      </div>
+    </div>
+    <div class="dd">
+      <button type="button" class="btn alt dd-toggle" aria-haspopup="menu" aria-expanded="false">⋯ 更多 ▾</button>
+      <div class="dd-menu" role="menu">
+        <button type="button" role="menuitem" class="dd-item" id="refreshBtn" hidden>🔄 重新整理</button>
+        <button type="button" role="menuitem" class="dd-item" id="sampleBtn">✨ 載入預設行程</button>
+        <button type="button" role="menuitem" class="dd-item" id="beforeShareBtn" hidden>↩️ 載入加入共享前的本機行程</button>
+        <button type="button" role="menuitem" class="dd-item" id="oldBtn" style="display:none">↩️ 載入舊版存檔</button>
+        <hr class="dd-divider">
+        <button type="button" role="menuitem" class="dd-item warn" id="clearBtn">🗑 清空</button>
+      </div>
+    </div>
   </div>
   <p class="hint" id="planHint">按住 ☰ 拖曳即可排序或移到別天；也可以用右側選單直接換天。行程會自動存在這支手機（localStorage）。</p>
   <div id="days"></div>
@@ -501,7 +532,8 @@ function persistSync(){localStorage.setItem("kyushuPlanner.sync",JSON.stringify(
 function cacheWishes(){localStorage.setItem(WISHKEY,JSON.stringify(WISH));}
 function cachePlan(){localStorage.setItem(KEY,JSON.stringify(S));}
 function renderAll(){if(dragging){renderQueued=true;return;}renderQueued=false;renderList();renderDays();renderMap();renderWishes();renderDetail();renderSync();if(historyPreview)renderHistoryPreview();}
-function renderSync(){const pill=document.getElementById("syncStatus");pill.className="status";if(!shared()){pill.textContent="📴 本機模式・版本紀錄存於此裝置";pill.classList.add("local");}else if(sync.offline){pill.textContent="⚠️ 離線，變更會在連線後上傳";pill.classList.add("off");}else{const p=sync.current,time=p?.at?new Intl.DateTimeFormat("zh-TW",{timeZone:"Asia/Taipei",hour:"2-digit",minute:"2-digit",hour12:false}).format(p.at):"";pill.textContent=p?.by?`🟢 共享中・第 ${p.rev} 版・${p.by} ${time}`:"🟢 共享中・等待同步";}
+function renderSync(){const pill=document.getElementById("syncStatus");pill.className="status";let text;if(!shared()){text="📴 本機模式・版本紀錄存於此裝置";pill.classList.add("local");}else if(sync.offline){text="⚠️ 離線，變更會在連線後上傳";pill.classList.add("off");}else{const p=sync.current,time=p?.at?new Intl.DateTimeFormat("zh-TW",{timeZone:"Asia/Taipei",hour:"2-digit",minute:"2-digit",hour12:false}).format(p.at):"";text=p?.by?`🟢 共享中・第 ${p.rev} 版・${p.by} ${time}`:"🟢 共享中・等待同步";}
+  const span=pill.querySelector?.(".status-text");if(span)span.textContent=text;else pill.textContent=text+" 🕘";
   document.getElementById("refreshBtn").hidden=!shared();document.getElementById("beforeShareBtn").hidden=!localStorage.getItem(KEY+".beforeShare");document.getElementById("planHint").textContent="按住 ☰ 拖曳即可排序或移到別天；也可以用右側選單直接換天。"+(shared()?"目前與家人共享，修改會自動同步並保留版本紀錄。":"行程會自動存在這支手機（localStorage），保留最近 100 個版本。");}
 function markChange(planChanged=false,summary=""){if(!sync.stage)sync.stage={before:clone(sync.head),baseRev:sync.rev,planChanged:false,summary:"",state:null};sync.stage.planChanged ||= planChanged;if(summary)sync.stage.summary=summary;sync.stage.state=snapshot();sync.head=snapshot();cachePlan();cacheWishes();persistSync();scheduleFlush();}
 function markPlan(summary=""){markChange(true,summary);}
@@ -560,7 +592,7 @@ function renderHistoryPreview(){if(!historyPreview)return;const entry=historyPre
   const wishRows=Object.entries(entry.wishes||{}).map(([id,users])=>`<li>${name(id)}：${Object.entries(POOLS).map(([pool,label])=>`${label} ${Object.values(users).filter(w=>w.pool===pool).length}`).join("／")}</li>`).join("");
   document.getElementById("historyBody").innerHTML=`<button class="btn alt" data-history-list>← 返回版本紀錄</button><h2>${entry.draft?"本機衝突備份":"第 "+Number(entry.rev)+" 版"}</h2><p class="hint">${esc(taipeiTime(entry.at))} ${historyWho(entry)}</p><p>${esc(entry.summary)}</p><button class="btn" data-history-restore>${entry.draft?"↩️ 載入這份本機變更":"↩️ 還原到這個版本"}</button><h3>與目前行程比較（還原後的變更）</h3>${diff.length?`<ul>${diff.map(s=>`<li>${esc(s)}</li>`).join("")}</ul>`:'<p class="hint">行程與許願相同</p>'}<h3>行程快照</h3>${entry.plan.days.map(d=>`<section class="history-day"><b>${esc(d.label)}</b><p>${spots(d.items)}</p></section>`).join("")}<section class="history-day"><b>未排入</b><p>${spots(entry.plan.pool)}</p></section><h3>許願人數</h3>${wishRows?`<ul>${wishRows}</ul>`:'<p class="hint">尚無許願</p>'}`;
 }
-document.getElementById("historyBtn").onclick=openHistory;document.getElementById("historyClose").onclick=closeHistory;
+document.getElementById("syncStatus").onclick=openHistory;document.getElementById("historyClose").onclick=closeHistory;
 document.getElementById("historyBody").onclick=async e=>{const target=e.target.closest("button");if(!target)return;if(target.hasAttribute("data-history-list")){historyList();return;}if(target.dataset.version){previewVersion(Number(target.dataset.version));return;}if(target.dataset.draft){const draft=stored("kyushuPlanner.conflicts",[]).find(d=>d.id===target.dataset.draft&&d.scope===scope());if(draft){historyRequest++;historyPreview={...clone(draft),draft:true};renderHistoryPreview();}return;}if(target.hasAttribute("data-history-restore")&&historyPreview){const entry=clone(historyPreview);if(!confirm(entry.draft?"載入這份本機變更並建立新版本？" : `還原至第 ${entry.rev} 版？這會建立新版本${shared()?"，並改變所有人看到的行程與許願":""}。`))return;S=clone(entry.plan);WISH=clone(entry.wishes);update(entry.draft?"載入衝突時的本機變更":`還原至第 ${entry.rev} 版`);fit();closeHistory();toast("已載入快照，將另存為新版本");}};
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&document.getElementById("historyPanel").classList.contains("on"))closeHistory();});window.addEventListener("resize",positionHistory);
 
@@ -743,7 +775,89 @@ function showOnMap(id){tab("mapPane");const a=BY[id];if(!map||!hasCoords(a)){toa
 function tab(id){document.querySelectorAll("nav.tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tab===id));document.querySelectorAll("section.pane").forEach(p=>p.classList.toggle("on",p.id===id));if(id==="mapPane"&&map)setTimeout(()=>{map.invalidateSize();},50);window.scrollTo(0,0);}
 document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>{tab(b.dataset.tab);if(b.dataset.tab==="mapPane")setTimeout(fit,80);});
 
-renderList();renderDays();renderWishes();initMap();initSharing();
+// ===== 工具列下拉選單 =====
+function initDropdowns(){
+  if(typeof document==="undefined"||!document.addEventListener)return;
+  function closeAllDropdowns(){
+    if(!document.querySelectorAll)return;
+    try{
+      document.querySelectorAll(".dd.open")?.forEach?.(dd=>{
+        dd.classList.remove("open");
+        dd.querySelector?.(".dd-toggle")?.setAttribute?.("aria-expanded","false");
+      });
+    }catch(e){}
+  }
+  function openDropdown(dd){
+    closeAllDropdowns();
+    const toggle=dd?.querySelector?.(".dd-toggle"),menu=dd?.querySelector?.(".dd-menu");
+    if(!toggle||!menu)return;
+    dd.classList.add("open");
+    toggle.setAttribute?.("aria-expanded","true");
+    try{
+      const rect=dd.getBoundingClientRect?.();
+      const vw=window.innerWidth||document.documentElement?.clientWidth||390;
+      if(rect&&rect.right>vw/2){
+        menu.classList.add("align-right");
+      }else{
+        menu.classList.remove("align-right");
+      }
+    }catch(e){}
+  }
+
+  document.addEventListener("click",e=>{
+    const target=e?.target;
+    if(!target)return;
+    const toggle=target.closest?.(".dd-toggle");
+    const item=target.closest?.(".dd-item");
+    if(toggle){
+      const dd=toggle.closest?.(".dd");
+      const wasOpen=dd?.classList?.contains?.("open");
+      closeAllDropdowns();
+      if(!wasOpen&&dd)openDropdown(dd);
+      return;
+    }
+    if(item){
+      closeAllDropdowns();
+      return;
+    }
+    if(!target.closest?.(".dd")){
+      closeAllDropdowns();
+    }
+  });
+
+  document.addEventListener("pointerdown",e=>{
+    const target=e?.target;
+    if(target&&!target.closest?.(".dd")){
+      closeAllDropdowns();
+    }
+  });
+
+  document.addEventListener("keydown",e=>{
+    const openDd=document.querySelector?.(".dd.open");
+    if(e?.key==="Escape"&&openDd){
+      e.stopPropagation?.();
+      const toggle=openDd.querySelector?.(".dd-toggle");
+      closeAllDropdowns();
+      toggle?.focus?.();
+      return;
+    }
+    if((e?.key==="ArrowDown"||e?.key==="ArrowUp")&&openDd){
+      const items=[...openDd.querySelectorAll?.(".dd-item")||[]].filter(el=>!el.hidden&&el.style.display!=="none");
+      if(!items.length)return;
+      e.preventDefault?.();
+      const idx=items.indexOf(document.activeElement);
+      if(e.key==="ArrowDown"){
+        const next=idx<0?0:(idx+1)%items.length;
+        items[next]?.focus?.();
+      }else{
+        const prev=idx<=0?items.length-1:idx-1;
+        items[prev]?.focus?.();
+      }
+    }
+  });
+}
+
+renderList();renderDays();renderWishes();initMap();initSharing();initDropdowns();
 // 測試／除錯用
 window.planner={get state(){return S;},moveTo:(id,d,p)=>{moveTo(id,d,p);update();},select:id=>{if(!selected().has(id)){S.pool.push(id);update();}},unselect:id=>{removeId(id);update();},planText,ATTR,tab,fit,openDetail,toggleWish,get wishes(){return WISH;}};
 </script>
