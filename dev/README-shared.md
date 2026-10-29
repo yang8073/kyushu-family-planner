@@ -1,33 +1,77 @@
-# 家人共享行程設定
+# 家人共享行程與版本紀錄
 
-頁面沒有建置步驟，不使用 Firebase SDK，也不需要在程式裡放 API 金鑰。`SYNC_CFG.dbURL` 留空時，行程與許願都只存於目前裝置。
+頁面沒有建置步驟，不用 SDK 或 API 金鑰。只有一份共享行程，沒有行程代碼、密碼或加入操作。按「🔗 複製分享連結」只會複製頁面本身的 URL，家人開啟後填暱稱即可一起編輯。
 
-Yang 需要完成這 5 步：
+**任何知道頁面與後端 URL 的人都能查看、修改。** 暱稱與裝置 ID 只供辨識紀錄，並非身分驗證；誤改可透過完整版本紀錄與還原復原。不要放秘密或個人訂房資料。
 
-1. 前往 Firebase Console，建立一個專案。
-2. 在專案內建立 **Realtime Database**（不是 Firestore），地區選 **asia-southeast1（新加坡）**，先選 **鎖定模式**。
-3. 在 Realtime Database 的「規則」頁，貼上本資料夾的 `firebase-rules.json` 全部內容並發布。
-4. 複製資料庫 URL（例如 `https://<project>-default-rtdb.asia-southeast1.firebasedatabase.app`），填入 `index.html` 腳本上方的 `SYNC_CFG.dbURL`，再更新 GitHub Pages。
-5. 開啟頁面，填暱稱，到「行程」按「建立新的共享行程」，再按「🔗 複製分享連結」把連結交給家人。家人在自己的裝置開啟連結並填暱稱即可使用。
+## 三種設定
 
-識別身分只靠暱稱與裝置代碼，沒有帳號驗證；**任何拿到分享連結或行程代碼的人，都能讀取與修改行程、許願及成員資料**。請私下傳給家人，不要公開分享，也不要存個人訂房資料或其他機密。資料庫 URL 本身不是密碼；隨機行程代碼只是降低被猜到的機率。程式會把連結中的代碼存於裝置，並移除網址列的 `#trip=…`；之後仍能按按鈕複製分享連結。
+在 `index.html` 的腳本開頭選擇後端：
 
-首次加入已有內容的共享行程時，若本機行程有編輯且與共享內容不同，會備份到 `kyushuPlanner.v2.beforeShare`。「↩️ 載入加入共享前的本機行程」會在確認後覆蓋共享行程。共享行程為空時，會以上述裝置目前的行程初始化。
+```js
+const SYNC_CFG = { type: "none", url: "", path: "kyushu2027" };
+```
 
-離線時仍可修改，會保留行程、許願及待上傳項目，恢復連線後重試。若離線期間其他人先改了行程，會以遠端最新版本為準並顯示通知。許願依景點與裝置分別寫入。即時連線多次失敗時改用每 20 秒輪詢，也可手動重新整理。清除瀏覽器資料會失去本機暱稱、裝置身分及未上傳修改。
+`none` 為本機模式，行程保留在原有 `kyushuPlanner.v2`，許願在 `kyushuPlanner.wishes`，版本快照存於 `kyushuPlanner.history`（最近 100 版）。離線也能開啟版本紀錄。舊預設升級與 v1 載入按鈕維持原有行為。
+
+### Firebase REST
+
+1. 建立 Firebase 專案與 **Realtime Database**（非 Firestore），可選新加坡，從鎖定模式開始。
+2. 在資料庫的「規則」頁貼上 `dev/firebase-rules.json` 並發布。
+3. 填入資料庫 URL：
+
+```js
+const SYNC_CFG = { type: "firebase", url: "https://<project>-default-rtdb.asia-southeast1.firebasedatabase.app", path: "kyushu2027" };
+```
+
+資料存於 `/kyushu2027/state`、`/kyushu2027/history/000001` 與 `/kyushu2027/historyIndex/000001`。目前狀態使用 ETag 條件寫入；歷史與摘要索引僅允許首次寫入。讀取使用輕量索引與 `$key` 查詢，不把 `shallow` 和 `orderBy` 混用。歷史寫入遭網路中斷時，後續 load／save／history 會先修補目前版本，下一個版本才可前進。SSE 監聽 state，20 秒輪詢作為備援。
+
+規則根目錄不可讀寫；`kyushu2027` 可讀；只允許寫入 state 與新增 history／historyIndex。請在 Firebase Console 測試有效快照可儲存、rev 不遞增被拒絕、歷史覆寫與刪除被拒絕、空暱稱與非法許願分類被拒絕、未知子節點被拒絕。模擬器不執行規則。
+
+### PHP jsonfile
+
+使用 Namecheap 的 PHP 8.4 與網站根目錄外的 JSON 檔案。部署提案、目錄權限、CORS、限流與備份方式見 [server/README.md](server/README.md)，目前尚未部署。
+
+```js
+const SYNC_CFG = { type: "jsonfile", url: "https://trip.yi-jia-zi.com/api.php", path: "kyushu2027" };
+```
+
+每 8 秒只查詢輕量 rev 端點；版號改變才讀取完整快照，視窗重新聚焦或頁面恢復可見時也會檢查。
+
+## 儲存、衝突與還原
+
+每次行程變動、許願或還原都一起存成 `{rev,at,by,byId,summary,plan:{days,pool},wishes}`，600 ms 內連續編輯合為一版。摘要由前後快照比較產生。共享歷史永久保留，本機模式才有 100 版上限。
+
+「🕘 版本紀錄」顯示台北時間、暱稱、裝置 ID 前 4 碼及摘要；點選可預覽每天景點、未排入項目、許願人數與相對目前狀態的差異。還原會確認並**建立新版本**「還原至第 N 版」，不覆寫或刪除舊歷史。JSON 匯入、載入預設、清空、v1 載入也會建立版本。
+
+首次遠端為空時，以上線裝置的本機行程與全部許願建立第 1 版，摘要為「建立共享行程（由 <暱稱> 的本機行程上傳）」。首次連到已有共享內容時，編輯過且不同的本機行程會備份至 `kyushuPlanner.v2.beforeShare`；「↩️ 載入加入共享前的本機行程」會另建新版本。
+
+離線時立即快取行程、許願與待上傳批次；恢復連線後依序上傳。如果另一裝置先儲存，純許願批次會在最新狀態重套原本的許願操作並重試。行程變更則以遠端為準，顯示通知，並在版本面板的「未儲存的本機變更（衝突備份）」保留該裝置的候選快照，可預覽或載入成新版本。這些備份不是已儲存的共享版號。清除瀏覽器資料會失去本機歷史、暱稱、裝置身分、衝突備份與未上傳修改。
 
 ## 本機測試
 
-在專案目錄分別啟動兩個終端機：
-
-```sh
-python3 dev/mock-rtdb.py 9000
-```
+啟動頁面：
 
 ```sh
 python3 -m http.server 8000 --bind 127.0.0.1
 ```
 
-開啟 `http://127.0.0.1:8000/?db=http://127.0.0.1:9000`，填暱稱並建立共享行程。另一個瀏覽器或無痕視窗使用相同的 `?db=http://127.0.0.1:9000#trip=行程代碼` 可模擬第二位成員；本機分享按鈕產生的連結需手動補上 `?db=…` 才會使用模擬器。只有 `localhost` 和 `127.0.0.1` 允許 `?db=` 覆寫，正式網站會忽略此參數。
+Firebase 模擬器：
 
-模擬器僅綁定 `127.0.0.1`，資料存於記憶體，重啟即清空；支援 REST 讀寫、條件式 ETag 寫入及 SSE，不驗證 Firebase 規則。正式上線前應在 Firebase Console 的規則測試工具測試規則：無代碼根路徑不可讀寫，合法代碼的 trip 可讀寫，錯誤的許願分類、空暱稱及未知的 trip 子節點應被拒絕。不要把模擬器部署成正式服務。
+```sh
+python3 dev/mock-rtdb.py 9000
+```
+
+開啟 `http://127.0.0.1:8000/?backend=firebase&db=http://127.0.0.1:9000`。另一個瀏覽器／無痕視窗使用相同網址，即可測試兩個裝置。模擬器只綁定本機，支援 ETag、SSE、`orderBy="$key"&limitToLast=N`，忽略其他 query 參數；資料只存記憶體，重啟即消失。
+
+PHP 測試：
+
+```sh
+KYUSHU_DATA_DIR=/tmp/kyushu-api-test php -S 127.0.0.1:8899 -t dev/server
+```
+
+開啟 `http://127.0.0.1:8000/?backend=jsonfile&db=http://127.0.0.1:8899/api.php`。測試完停止服務並刪除測試資料。
+
+只有頁面 hostname 為 `localhost` 或 `127.0.0.1` 才會接受 `?backend=firebase|jsonfile&db=<url>`；正式網站忽略這些覆寫參數。本機分享連結仍只複製頁面 URL，測試時請自行使用完整參數網址。
+
+語法檢查：抽出 inline script 執行 `node --check`、`php -l dev/server/api.php`、`python3 -m py_compile dev/mock-rtdb.py`。API smoke test 應涵蓋第 1 版、過期版號 409、history、version，再確認還原會建立新版本。

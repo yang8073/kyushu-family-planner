@@ -10,7 +10,7 @@ import queue
 import sys
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import unquote, urlsplit
+from urllib.parse import parse_qs, unquote, urlsplit
 
 LOCK = threading.RLock()
 TREE = None
@@ -125,6 +125,18 @@ class Handler(BaseHTTPRequestHandler):
         else:
             with LOCK:
                 value = read(path)
+            query = parse_qs(urlsplit(self.path).query)
+            if query.get("orderBy") == ['"$key"'] and isinstance(value, dict):
+                ordered = sorted(value)
+                try:
+                    limit = int(query.get("limitToLast", [str(len(ordered))])[0])
+                except ValueError:
+                    self.reply(400, {"error": "limitToLast 必須是正整數"})
+                    return
+                if limit < 1:
+                    self.reply(400, {"error": "limitToLast 必須是正整數"})
+                    return
+                value = {key: value[key] for key in ordered[-limit:]}
             self.reply(200, value, self.headers.get("X-Firebase-ETag", "").lower() == "true")
 
     def stream(self, path):

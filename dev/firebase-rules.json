@@ -2,33 +2,131 @@
   "rules": {
     ".read": false,
     ".write": false,
-    "trips": {
-      "$code": {
-        ".read": "$code.matches(/^[A-Za-z0-9_-]{16,64}$/)",
-        ".write": "$code.matches(/^[A-Za-z0-9_-]{16,64}$/)",
+    "kyushu2027": {
+      ".read": true,
+      "state": {
+        ".validate": "newData.hasChildren(['rev','at','by','byId','summary']) && newData.child('rev').isNumber() && newData.child('rev').val() >= 1 && newData.child('rev').val() % 1 === 0 && newData.child('at').isNumber() && newData.child('by').isString() && newData.child('by').val().length >= 1 && newData.child('by').val().length <= 12 && newData.child('byId').isString() && newData.child('byId').val().matches(/^[A-Za-z0-9_-]{1,64}$/) && newData.child('summary').isString() && newData.child('summary').val().length >= 1 && newData.child('summary').val().length <= 2000 && newData.child('plan').hasChildren(['days'])",
+        "rev": {},
+        "at": {},
+        "by": {},
+        "byId": {},
+        "summary": {},
+        "$other": {
+          ".validate": false
+        },
         "plan": {
-          ".validate": "newData.hasChildren(['days'])"
+          ".validate": "newData.hasChildren(['days'])",
+          "days": {
+            "$day": {
+              ".validate": "newData.hasChildren(['id','label']) && newData.child('id').isString() && newData.child('label').isString() && newData.child('label').val().length >= 1 && newData.child('label').val().length <= 2000",
+              "id": {},
+              "label": {},
+              "items": {
+                "$item": {
+                  ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9_]{1,40}$/)"
+                }
+              },
+              "$other": {
+                ".validate": false
+              }
+            }
+          },
+          "pool": {
+            "$item": {
+              ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9_]{1,40}$/)"
+            }
+          },
+          "$other": {
+            ".validate": false
+          }
         },
         "wishes": {
           "$spot": {
-            "$dev": {
-              ".validate": "newData.hasChildren(['pool', 'nick', 'at']) && (newData.child('pool').val() === 'want' || newData.child('pool').val() === 'maybe' || newData.child('pool').val() === 'meh') && newData.child('nick').isString() && newData.child('nick').val().length >= 1 && newData.child('nick').val().length <= 12 && newData.child('at').isNumber()",
+            ".validate": "$spot.matches(/^[a-z0-9_]{1,40}$/) && $spot !== '__proto__' && $spot !== 'constructor' && $spot !== 'prototype'",
+            "$device": {
+              ".validate": "$device.matches(/^[A-Za-z0-9_-]{1,64}$/) && $device !== '__proto__' && $device !== 'constructor' && $device !== 'prototype' && newData.hasChildren(['pool','nick','at']) && newData.child('pool').isString() && (newData.child('pool').val() === 'want' || newData.child('pool').val() === 'maybe' || newData.child('pool').val() === 'meh') && newData.child('nick').isString() && newData.child('nick').val().length >= 1 && newData.child('nick').val().length <= 12 && newData.child('at').isNumber()",
               "pool": {},
               "nick": {},
               "at": {},
-              "$other": { ".validate": false }
+              "$other": {
+                ".validate": false
+              }
             }
           }
         },
-        "members": {
-          "$dev": {
-            ".validate": "newData.hasChildren(['nick', 'at']) && newData.child('nick').isString() && newData.child('nick').val().length >= 1 && newData.child('nick').val().length <= 12 && newData.child('at').isNumber()",
-            "nick": {},
-            "at": {},
-            "$other": { ".validate": false }
-          }
-        },
-        "$other": { ".validate": false }
+        ".write": "newData.exists() && ((!data.exists() && newData.child('rev').val() === 1) || (data.exists() && newData.child('rev').val() === data.child('rev').val() + 1))"
+      },
+      "history": {
+        "$rev": {
+          ".validate": "newData.hasChildren(['rev','at','by','byId','summary']) && newData.child('rev').isNumber() && newData.child('rev').val() >= 1 && newData.child('rev').val() % 1 === 0 && newData.child('at').isNumber() && newData.child('by').isString() && newData.child('by').val().length >= 1 && newData.child('by').val().length <= 12 && newData.child('byId').isString() && newData.child('byId').val().matches(/^[A-Za-z0-9_-]{1,64}$/) && newData.child('summary').isString() && newData.child('summary').val().length >= 1 && newData.child('summary').val().length <= 2000 && newData.child('plan').hasChildren(['days'])",
+          "rev": {},
+          "at": {},
+          "by": {},
+          "byId": {},
+          "summary": {},
+          "$other": {
+            ".validate": false
+          },
+          "plan": {
+            ".validate": "newData.hasChildren(['days'])",
+            "days": {
+              "$day": {
+                ".validate": "newData.hasChildren(['id','label']) && newData.child('id').isString() && newData.child('label').isString() && newData.child('label').val().length >= 1 && newData.child('label').val().length <= 2000",
+                "id": {},
+                "label": {},
+                "items": {
+                  "$item": {
+                    ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9_]{1,40}$/)"
+                  }
+                },
+                "$other": {
+                  ".validate": false
+                }
+              }
+            },
+            "pool": {
+              "$item": {
+                ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9_]{1,40}$/)"
+              }
+            },
+            "$other": {
+              ".validate": false
+            }
+          },
+          "wishes": {
+            "$spot": {
+              ".validate": "$spot.matches(/^[a-z0-9_]{1,40}$/) && $spot !== '__proto__' && $spot !== 'constructor' && $spot !== 'prototype'",
+              "$device": {
+                ".validate": "$device.matches(/^[A-Za-z0-9_-]{1,64}$/) && $device !== '__proto__' && $device !== 'constructor' && $device !== 'prototype' && newData.hasChildren(['pool','nick','at']) && newData.child('pool').isString() && (newData.child('pool').val() === 'want' || newData.child('pool').val() === 'maybe' || newData.child('pool').val() === 'meh') && newData.child('nick').isString() && newData.child('nick').val().length >= 1 && newData.child('nick').val().length <= 12 && newData.child('at').isNumber()",
+                "pool": {},
+                "nick": {},
+                "at": {},
+                "$other": {
+                  ".validate": false
+                }
+              }
+            }
+          },
+          ".write": "!data.exists() && newData.exists() && $rev.matches(/^[0-9]{6,}$/)"
+        }
+      },
+      "historyIndex": {
+        "$rev": {
+          ".validate": "newData.hasChildren(['rev','at','by','byId','summary']) && newData.child('rev').isNumber() && newData.child('rev').val() >= 1 && newData.child('rev').val() % 1 === 0 && newData.child('at').isNumber() && newData.child('by').isString() && newData.child('by').val().length >= 1 && newData.child('by').val().length <= 12 && newData.child('byId').isString() && newData.child('byId').val().matches(/^[A-Za-z0-9_-]{1,64}$/) && newData.child('summary').isString() && newData.child('summary').val().length >= 1 && newData.child('summary').val().length <= 2000",
+          "rev": {},
+          "at": {},
+          "by": {},
+          "byId": {},
+          "summary": {},
+          "$other": {
+            ".validate": false
+          },
+          ".write": "!data.exists() && newData.exists() && $rev.matches(/^[0-9]{6,}$/)"
+        }
+      },
+      "$other": {
+        ".write": false,
+        ".validate": false
       }
     }
   }

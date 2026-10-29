@@ -91,9 +91,6 @@ button,a,summary,input,select{touch-action:manipulation}
 button{cursor:pointer}
 .status{display:inline-flex;align-items:center;border-radius:999px;padding:6px 10px;background:#e3f6ee;color:#25785a;font-size:12px;overflow-wrap:anywhere}
 .status.off{background:#fff3d8;color:#896610}.status.local{background:#edf1f8;color:#65748c}
-.share-box{background:#f0ebff;border:1px solid #dfd4f8;border-radius:12px;padding:10px;margin-bottom:10px;font-size:13px}
-.share-box input,.nick-input{min-width:0;border:1px solid var(--line);border-radius:9px;padding:9px;font:inherit;color:var(--ink);background:#fff}
-.share-box input{flex:1;width:150px}.share-box p{margin:0 0 8px}
 .wish-buttons{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}
 .wish-btn{border:1px solid var(--line);border-radius:9px;background:#f8fbff;color:#65748c;font-size:12px;padding:6px 7px;min-height:32px}
 .wish-btn.on{background:#ffe7f0;border-color:#efafc9;color:#a4436c}.wish-btn[data-wish="maybe"].on{background:#e5f4ff;border-color:#9fcaee;color:#3575a5}.wish-btn[data-wish="meh"].on{background:#eee8ff;border-color:#b6a3e5;color:#71539c}
@@ -104,7 +101,7 @@ button{cursor:pointer}
 .wish-section h2{font-size:16px;margin:0 0 10px}.wish-row{padding:10px 0;border-top:1px solid var(--line);cursor:pointer;outline-offset:2px}
 .wish-row .meta{font-size:12px;color:var(--sub);margin:4px 0}.nick-chip{display:inline-block;border-radius:999px;background:#f0ebff;padding:2px 7px;margin:2px;font-size:12px;overflow-wrap:anywhere}
 .wish-row .btn{margin-top:6px;font-size:12px}.wish-count{float:right;font-size:12px;color:#a04f76}
-#nickModal .box{max-width:390px}#nickModal label{display:block;font-weight:700;line-height:1.6}.nick-input{width:100%;margin:10px 0}
+#nickModal .box{max-width:390px}#nickModal label{display:block;font-weight:700;line-height:1.6}.nick-input{width:100%;margin:10px 0;border:1px solid var(--line);border-radius:9px;padding:9px;font:inherit;color:var(--ink);background:#fff}
 .detail-panel{display:none;position:fixed;z-index:2200;background:#fff;box-shadow:0 8px 40px #35446740;border:1px solid var(--line);border-radius:16px;width:380px;max-width:calc(100vw - 20px);max-height:80vh;overflow:hidden}
 .detail-panel.on{display:flex;flex-direction:column}.detail-head{display:flex;align-items:center;padding:10px 12px;background:linear-gradient(120deg,#dff0ff,#efe6ff);gap:10px;cursor:move;touch-action:none;flex:none}
 .detail-head strong{flex:1;min-width:0}.detail-close{border:0;background:#ffffffaa;border-radius:50%;width:36px;height:36px;flex:none;color:var(--ink);font-size:20px}
@@ -113,7 +110,8 @@ button{cursor:pointer}
 .detail-body a{color:#2f6ea8}.detail-body ul{padding-left:18px;margin:4px 0}.detail-body .sources{font-size:11px}.detail-body select{max-width:100%;padding:8px;border:1px solid var(--line);border-radius:9px;background:#fbfdff;color:var(--ink)}
 .category-pin{border:2px solid #fff;border-radius:10px;background:#ece8fa;box-shadow:0 1px 5px #0004;text-align:center;line-height:27px;font-size:18px}
 .tag.cat{background:#eee8ff;color:#71539c}.toast{max-width:calc(100vw - 24px);width:max-content;border-radius:14px;text-align:center}
-@media(max-width:699px){.detail-panel{left:0!important;top:auto!important;bottom:0;width:100%;max-width:100%;max-height:80vh;max-height:80dvh;border-radius:20px 20px 0 0;padding-bottom:env(safe-area-inset-bottom)}.detail-head{cursor:default}.identity{max-width:130px;font-size:12px}}
+#historyPanel{width:560px;max-height:85vh;max-height:85dvh}.history-entry{display:block;width:100%;text-align:left;border:1px solid var(--line);border-radius:10px;background:#f8fbff;color:var(--ink);padding:10px;margin:8px 0;line-height:1.6;overflow-wrap:anywhere;font:inherit;font-size:13px}.history-entry span{display:block}.history-entry.draft{background:#fff4e4}.device-id{font-size:11px;color:var(--sub)}#historyBody{overflow-wrap:anywhere}#historyBody h2,#historyBody h3{margin:14px 0 8px}#historyBody h3{font-size:15px}.history-day{border-top:1px solid var(--line);padding:10px 0}.history-day p{font-size:13px;line-height:1.6;margin:6px 0}#historyPanel .detail-head{cursor:default;touch-action:auto}
+@media(max-width:699px){#historyPanel{width:100%;max-height:85vh;max-height:85dvh}.detail-panel{left:0!important;top:auto!important;bottom:0;width:100%;max-width:100%;max-height:80vh;max-height:80dvh;border-radius:20px 20px 0 0;padding-bottom:env(safe-area-inset-bottom)}.detail-head{cursor:default}.identity{max-width:130px;font-size:12px}}
 @media (min-width:980px){
   nav.tabs{max-width:600px}
   section.pane{padding:16px 24px 40px}
@@ -164,8 +162,9 @@ button{cursor:pointer}
   <div class="toolbar">
     <span class="status local" id="syncStatus" role="status">📴 本機模式（共享尚未設定）</span>
     <button class="btn alt" id="refreshBtn" hidden>🔄 重新整理</button>
-    <button class="btn alt" id="shareBtn" hidden>🔗 複製分享連結</button>
+    <button class="btn alt" id="shareBtn">🔗 複製分享連結</button>
     <button class="btn alt" id="beforeShareBtn" hidden>↩️ 載入加入共享前的本機行程</button>
+    <button class="btn alt" id="historyBtn">🕘 版本紀錄</button>
     <button class="btn" id="addDay">＋ 新增一天</button>
     <button class="btn alt" id="copyTxt">📋 複製行程文字</button>
     <button class="btn alt" id="exportBtn">⬇️ 匯出 JSON</button>
@@ -174,7 +173,6 @@ button{cursor:pointer}
     <button class="btn warn" id="clearBtn">🗑 清空</button>
     <button class="btn alt" id="oldBtn" style="display:none">↩️ 載入舊版存檔</button>
   </div>
-  <div class="share-box" id="joinBox" hidden><p>尚未加入共享行程：請向家人索取分享連結或輸入行程代碼</p><form id="joinForm" class="row"><input id="tripInput" aria-label="行程代碼" placeholder="行程代碼" required pattern="[A-Za-z0-9_-]{16,64}" autocomplete="off"><button class="btn" type="submit">加入</button><button class="btn alt" type="button" id="createTrip">建立新的共享行程</button></form></div>
   <p class="hint" id="planHint">按住 ☰ 拖曳即可排序或移到別天；也可以用右側選單直接換天。行程會自動存在這支手機（localStorage）。</p>
   <div id="days"></div>
 </section>
@@ -193,6 +191,8 @@ button{cursor:pointer}
 <div class="modal" id="nickModal" role="dialog" aria-modal="true" aria-labelledby="nickLabel"><form class="box" id="nickForm"><label id="nickLabel" for="nickInput">請輸入你的暱稱（顯示在許願池與修改紀錄）</label><input class="nick-input" id="nickInput" maxlength="12" required autocomplete="nickname"><div class="row" style="justify-content:flex-end"><button class="btn" type="submit">確定</button></div></form></div>
 <aside class="detail-panel" id="detailPanel" role="dialog" aria-labelledby="detailTitle"><div class="detail-head" id="detailHead"><strong>景點詳情</strong><button class="detail-close" id="detailClose" aria-label="關閉景點詳情">✕</button></div><div class="detail-body" id="detailBody"></div></aside>
 
+<aside class="detail-panel" id="historyPanel" role="dialog" aria-labelledby="historyTitle"><div class="detail-head"><strong id="historyTitle">🕘 版本紀錄</strong><button class="detail-close" id="historyClose" aria-label="關閉版本紀錄">✕</button></div><div class="detail-body" id="historyBody"></div></aside>
+
 <div class="modal" id="modal"><div class="box">
   <div style="font-weight:700;margin-bottom:6px" id="mTitle"></div>
   <textarea id="mText"></textarea>
@@ -207,7 +207,7 @@ button{cursor:pointer}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 <script>
-const SYNC_CFG = { dbURL: "" };  // e.g. "https://<project>-default-rtdb.asia-southeast1.firebasedatabase.app"
+const SYNC_CFG = { type: "none", url: "", path: "kyushu2027" };  // type: "none" | "firebase" | "jsonfile"
 
 // ===== 景點資料 =====
 // [id, 中文名, 日文名(Google搜尋用), 地區, 標籤[], 2歲★, 6歲★, 備註, lat, lng, 不確定?, 來源URL?]
@@ -332,106 +332,149 @@ try{S=JSON.parse(localStorage.getItem(KEY));}catch(e){}
 if(!valid(S)) S=sample();
 else{try{if(OLD_DEFAULTS.includes(fp(S)))S=sample();}catch(e){}}
 function valid(s){return s&&Array.isArray(s.days)&&Array.isArray(s.pool)&&s.days.every(d=>Array.isArray(d.items));}
-function clean(s){const seen=new Set();const f=ids=>ids.filter(id=>BY[id]&&!seen.has(id)&&seen.add(id));s.days.forEach(d=>{d.items=f(d.items);if(!d.id)d.id=uid();if(!d.label)d.label="新的一天";});s.pool=f(s.pool);return s;}
+function clean(s){const seen=new Set();const f=ids=>ids.filter(id=>typeof id==="string"&&Object.hasOwn(BY,id)&&!seen.has(id)&&seen.add(id));s.days.forEach(d=>{d.items=f(d.items);if(typeof d.id!=="string"||!/^[A-Za-z0-9_-]{1,64}$/.test(d.id))d.id=uid();d.label=String(d.label||"新的一天").slice(0,2000);});s.pool=f(s.pool);return s;}
 S=clean(S);
-// ===== 裝置、共享與離線快取（Firebase REST，無 SDK） =====
-const UIKEY="kyushuPlanner.ui", MEKEY="kyushuPlanner.me", WISHKEY="kyushuPlanner.wishes";
+// ===== 裝置、版本化共享與離線快取 =====
+const UIKEY="kyushuPlanner.ui",MEKEY="kyushuPlanner.me",WISHKEY="kyushuPlanner.wishes",HISTORYKEY="kyushuPlanner.history";
+const clone=value=>JSON.parse(JSON.stringify(value));
 function stored(key,fallback){try{return JSON.parse(localStorage.getItem(key))??fallback;}catch{return fallback;}}
-function randomCode(n){const chars="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-",bytes=new Uint8Array(n);crypto.getRandomValues(bytes);return [...bytes].map(b=>chars[b&63]).join("");}
+function nickname(value){return [...String(value||"").trim()].slice(0,12).join("");}
+function deviceId(){return [...crypto.getRandomValues(new Uint8Array(12))].map(b=>(b%36).toString(36)).join("");}
 let UI=stored(UIKEY,{});if(!UI||typeof UI!=="object")UI={};
-let ME=stored(MEKEY,{});if(!ME||!/^[A-Za-z0-9_-]{12}$/.test(ME.id||""))ME={id:randomCode(12),nick:""};
-ME.nick=String(ME.nick||"").trim().slice(0,12);localStorage.setItem(MEKEY,JSON.stringify(ME));
+let ME=stored(MEKEY,{});if(!ME||!/^[A-Za-z0-9_-]{12}$/.test(ME.id||""))ME={id:deviceId(),nick:""};
+ME.nick=nickname(ME.nick);localStorage.setItem(MEKEY,JSON.stringify(ME));
 const POOLS={want:"💖 好想去",maybe:"👍 順便去",meh:"🙅 不太想去"};
-const CODE_RE=/^[A-Za-z0-9_-]{16,64}$/;
-let tripCode=localStorage.getItem("kyushuPlanner.trip")||"";
-const hashTrip=new URLSearchParams(location.hash.slice(1)).get("trip");
-if(hashTrip!==null){if(CODE_RE.test(hashTrip)){tripCode=hashTrip;localStorage.setItem("kyushuPlanner.trip",tripCode);}else setTimeout(()=>toast("行程代碼格式不正確"),0);history.replaceState(null,"",location.pathname+location.search);}
-if(!CODE_RE.test(tripCode))tripCode="";
-const localDB=["localhost","127.0.0.1"].includes(location.hostname)?new URLSearchParams(location.search).get("db"):null;
-const dbURL=String(localDB||SYNC_CFG.dbURL||"").replace(/\/+$/,"");
-const shared=()=>!!(dbURL&&tripCode);
-const scope=()=>shared()?dbURL+"/trips/"+tripCode:"local";
-function sanitizeWishes(raw){const out={};if(!raw||typeof raw!=="object")return out;Object.entries(raw).forEach(([spot,users])=>{if(!Object.hasOwn(BY,spot)||!users||typeof users!=="object")return;Object.entries(users).forEach(([dev,v])=>{if(!/^[A-Za-z0-9_-]{1,64}$/.test(dev)||["__proto__","constructor","prototype"].includes(dev)||!v||!Object.hasOwn(POOLS,v.pool)||typeof v.nick!=="string"||!v.nick.trim())return;(out[spot]??={})[dev]={pool:v.pool,nick:v.nick.trim().slice(0,12),at:Number(v.at)||0};});});return out;}
+const backendCfg={...SYNC_CFG};
+if(["localhost","127.0.0.1"].includes(location.hostname)){const params=new URLSearchParams(location.search),type=params.get("backend");if(["firebase","jsonfile"].includes(type)&&params.get("db")){backendCfg.type=type;backendCfg.url=params.get("db");}}
+const shared=()=>["firebase","jsonfile"].includes(backendCfg.type)&&!!backendCfg.url;
+const scope=()=>shared()?backendCfg.type+":"+backendCfg.url+":"+(backendCfg.path||"kyushu2027"):"local";
+function sanitizeWishes(raw){const out={};if(!raw||typeof raw!=="object")return out;Object.entries(raw).forEach(([spot,users])=>{if(!Object.hasOwn(BY,spot)||!users||typeof users!=="object")return;Object.entries(users).forEach(([dev,v])=>{if(!/^[A-Za-z0-9_-]{1,64}$/.test(dev)||["__proto__","constructor","prototype"].includes(dev)||!v||!Object.hasOwn(POOLS,v.pool)||typeof v.nick!=="string"||!v.nick.trim())return;(out[spot]??={})[dev]={pool:v.pool,nick:nickname(v.nick),at:Number(v.at)||0};});});Object.keys(out).forEach(id=>{if(!Object.keys(out[id]).length)delete out[id];});return out;}
+function normalPlan(p){if(!p||typeof p!=="object"||!Object.hasOwn(p,"days"))return null;const list=x=>Array.isArray(x)?x:(x&&typeof x==="object"?Object.values(x):[]);return clean({days:list(p.days).filter(d=>d&&typeof d==="object").map(d=>({id:typeof d.id==="string"?d.id:uid(),label:String(d.label||"新的一天"),items:list(d.items)})),pool:list(p.pool)});}
+function normalState(raw){if(!raw||!raw.plan)return null;const plan=normalPlan(raw.plan);return plan?{rev:Number(raw.rev)||0,at:Number(raw.at)||0,by:nickname(raw.by),byId:String(raw.byId||""),summary:String(raw.summary||""),plan,wishes:sanitizeWishes(raw.wishes)}:null;}
 let WISH=sanitizeWishes(stored(WISHKEY,{})),dragging=false,renderQueued=false,detailId=null;
-let sync={mirror:{},rev:0,etag:null,ready:false,offline:false,dirty:false,version:0,baseRev:0,pending:{},memberDirty:true,busy:false,source:null,poll:null,errors:0};
+function snapshot(){return {plan:clone(S),wishes:clone(WISH)};}
+function wishOps(before,after){const ops={};for(const spot of new Set([...Object.keys(before),...Object.keys(after)]))for(const dev of new Set([...Object.keys(before[spot]||{}),...Object.keys(after[spot]||{})])){const a=before[spot]?.[dev]||null,b=after[spot]?.[dev]||null;if(JSON.stringify(a)!==JSON.stringify(b))ops[spot+"/"+dev]=b;}return ops;}
+function applyWishOps(wishes,ops){const next=clone(wishes||{});for(const [path,value] of Object.entries(ops)){const [spot,dev]=path.split("/");if(!Object.hasOwn(BY,spot)||["__proto__","constructor","prototype"].includes(dev))continue;if(value)(next[spot]??={})[dev]=clone(value);else if(next[spot])delete next[spot][dev];}return sanitizeWishes(next);}
+function diffState(before,after){const changes=[],a=before?.plan||{days:[],pool:[]},b=after?.plan||{days:[],pool:[]};
+  const places=plan=>{const out=new Map();plan.pool.forEach(id=>out.set(id,{key:"pool",label:"未排入"}));plan.days.forEach((d,i)=>d.items.forEach(id=>out.set(id,{key:d.id||"day"+i,label:d.label.match(/^\S+/)?.[0]||d.label})));return out;},old=places(a),next=places(b),name=id=>BY[id]?.zh||id;
+  for(const [id,to] of next){const from=old.get(id);if(!from)changes.push(`新增 ${name(id)} 到 ${to.label}`);else if(from.key!==to.key)changes.push(`將 ${name(id)} 從 ${from.label} 移到 ${to.label}`);}
+  for(const [id,from] of old)if(!next.has(id))changes.push(`移除 ${name(id)}（${from.label}）`);
+  b.days.forEach((d,i)=>{const prev=a.days.find(x=>x.id===d.id);if(!prev)changes.push("新增一天："+d.label);else{if(prev.label!==d.label)changes.push(`修改日標題 ${prev.label} → ${d.label}`);const keep=prev.items.filter(id=>d.items.includes(id)),ordered=d.items.filter(id=>prev.items.includes(id));if(JSON.stringify(keep)!==JSON.stringify(ordered))changes.push(`調整 ${d.label.match(/^\S+/)?.[0]||d.label} 順序`);}});
+  a.days.forEach(d=>{if(!b.days.some(x=>x.id===d.id))changes.push("刪除一天："+d.label);});
+  if(JSON.stringify(a.pool.filter(id=>b.pool.includes(id)))!==JSON.stringify(b.pool.filter(id=>a.pool.includes(id))))changes.push("調整 未排入 順序");
+  if(JSON.stringify(a.days.map(d=>d.id).filter(id=>b.days.some(d=>d.id===id)))!==JSON.stringify(b.days.map(d=>d.id).filter(id=>a.days.some(d=>d.id===id))))changes.push("調整天數順序");
+  for(const [path,value] of Object.entries(wishOps(before?.wishes||{},after?.wishes||{}))){const [spot,dev]=path.split("/"),prev=before?.wishes?.[spot]?.[dev];if(!value)changes.push(`取消許願 ${prev?.nick||"家人"}：${name(spot)}`);else if(prev&&prev.pool===value.pool)changes.push(`修改許願暱稱 ${prev.nick} → ${value.nick}：${name(spot)}`);else changes.push(`許願：${value.nick} ${POOLS[value.pool].split(" ")[1]} ${name(spot)}`);}
+  return changes;
+}
+function summarize(changes){return changes.slice(0,3).map(s=>[...s].length>120?[...s].slice(0,119).join("")+"…":s).join("；")+(changes.length>3?`…等 ${changes.length} 項`:"")||"儲存行程";}
+function metadata(entry){const {rev,at,by,byId,summary}=entry;return {rev,at,by,byId,summary};}
+async function fetchJSON(url,opts={}){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);try{const response=await fetch(url,{...opts,signal:controller.signal,cache:"no-store",headers:{...(opts.body?{"Content-Type":"application/json"}:{}),...opts.headers}});const data=await response.json();if(!response.ok&&![409,412].includes(response.status))throw new Error("HTTP "+response.status);return {data,status:response.status,token:response.headers.get("ETag")};}finally{clearTimeout(timer);}}
+function watchFocus(check){const visible=()=>{if(document.visibilityState!=="hidden")check();};window.addEventListener("focus",check);document.addEventListener("visibilitychange",visible);return ()=>{window.removeEventListener("focus",check);document.removeEventListener("visibilitychange",visible);};}
+function localAdapter(){const entries=()=>stored(HISTORYKEY,[]);return {
+  async load(){const list=entries();return {state:normalState(list.at(-1)),token:null};},
+  async save(baseRev,state){const list=entries(),rev=Number(list.at(-1)?.rev)||0;if(baseRev!==rev)return {conflict:true,state:normalState(list.at(-1))};const entry={...clone(state),rev:rev+1,at:Date.now()};localStorage.setItem(HISTORYKEY,JSON.stringify([...list,entry].slice(-100)));return {ok:true,state:entry};},
+  async history(limit=200){return entries().slice(-limit).reverse().map(metadata);},async version(rev){return entries().find(e=>e.rev===rev)||null;},
+  subscribe(onState){const handler=e=>{if(e.key===HISTORYKEY)this.load().then(r=>onState(r.state));};window.addEventListener("storage",handler);return ()=>window.removeEventListener("storage",handler);}
+};}
+function firebaseAdapter(){const root=backendCfg.url.replace(/\/+$/,"")+"/"+(backendCfg.path||"kyushu2027").replace(/^\/+|\/+$/g,"");const url=path=>root+"/"+path+".json",key=rev=>String(rev).padStart(6,"0");
+  // Repair an interrupted state→archive write on every load and before advancing state.
+  async function archive(entry){if(!entry?.rev)return;for(const [path,value] of [["history/"+key(entry.rev),entry],["historyIndex/"+key(entry.rev),metadata(entry)]]){const old=await fetchJSON(url(path),{headers:{"X-Firebase-ETag":"true"}});if(old.data!==null)continue;if(!old.token)throw new Error("缺少 ETag");const r=await fetchJSON(url(path),{method:"PUT",headers:{"if-match":old.token},body:JSON.stringify(value)});if(r.status===412)continue;}}
+  return {
+    async load(){const r=await fetchJSON(url("state"),{headers:{"X-Firebase-ETag":"true"}});if(r.data)await archive(r.data);return {state:normalState(r.data),token:r.token};},
+    async save(baseRev,state){const latest=await this.load();if((latest.state?.rev||0)!==baseRev)return {conflict:true,state:latest.state};if(!latest.token)throw new Error("缺少 ETag");const entry={...clone(state),rev:baseRev+1,at:Date.now()},r=await fetchJSON(url("state"),{method:"PUT",headers:{"if-match":latest.token},body:JSON.stringify(entry)});if(r.status===412)return {conflict:true,state:(await this.load()).state};
+      // The accepted state is durable even if the following connection drops.
+      try{await archive(entry);}catch{ /* load/save/history repairs this entry before the next revision */ }
+      return {ok:true,state:entry};},
+    async history(limit=200){await this.load();const r=await fetchJSON(url("historyIndex")+'?orderBy="%24key"&limitToLast='+Math.min(200,limit));return Object.values(r.data||{}).sort((a,b)=>b.rev-a.rev);},
+    async version(rev){await this.load();return normalState((await fetchJSON(url("history/"+key(rev)))).data);},
+    subscribe(onState){let source=null,stopped=false,busy=false;const check=async()=>{if(busy||stopped)return;busy=true;try{onState((await this.load()).state);}catch{offline();}finally{busy=false;}};const poll=setInterval(check,20000),unfocus=watchFocus(check);
+      if(window.EventSource){source=new EventSource(url("state"));for(const type of ["put","patch"])source.addEventListener(type,check);source.onerror=()=>{ /* polling remains active during SSE reconnects */ };for(const type of ["cancel","auth_revoked"])source.addEventListener(type,()=>{source.close();source=null;});}
+      return ()=>{stopped=true;source?.close();clearInterval(poll);unfocus();};}
+  };
+}
+function jsonfileAdapter(){const url=(op,params={})=>{const u=new URL(backendCfg.url,location.href);u.searchParams.set("op",op);Object.entries(params).forEach(([k,v])=>u.searchParams.set(k,v));return u.href;};return {
+  async load(){return {state:normalState((await fetchJSON(url("state"))).data),token:null};},
+  async save(baseRev,state){const r=await fetchJSON(url("save"),{method:"POST",body:JSON.stringify({baseRev,state})});return r.status===409?{conflict:true,state:normalState(r.data.state)}:{ok:true,state:normalState(r.data.state)};},
+  async history(limit=200){return (await fetchJSON(url("history",{limit}))).data;},async version(rev){return normalState((await fetchJSON(url("version",{rev}))).data);},
+  subscribe(onState){let stopped=false,busy=false,last=-1;const check=async()=>{if(stopped||busy)return;busy=true;try{const rev=(await fetchJSON(url("rev"))).data.rev;if(rev!==last){const r=await this.load();last=r.state?.rev||0;onState(r.state);}else if(sync.offline){sync.offline=false;renderSync();}if(sync.queue.length||sync.stage)flushPending();}catch{offline();}finally{busy=false;}};const timer=setInterval(check,8000),unfocus=watchFocus(check);return ()=>{stopped=true;clearInterval(timer);unfocus();};}
+};}
+const adapter=shared()?(backendCfg.type==="firebase"?firebaseAdapter():jsonfileAdapter()):localAdapter();
+const cachedSync=stored("kyushuPlanner.sync",{}),sameScope=cachedSync.scope===scope();
+let sync={current:sameScope?normalState(cachedSync.current):null,rev:sameScope?Number(cachedSync.rev)||0:0,queue:sameScope&&Array.isArray(cachedSync.queue)?cachedSync.queue:[],stage:sameScope?cachedSync.stage||null:null,head:snapshot(),ready:false,offline:false,busy:false,deferred:null,unsubscribe:null};
 let flushTimer,refreshing=false;
-const savedSync=stored("kyushuPlanner.sync",{});
-if(savedSync.scope===scope()){sync.rev=Number(savedSync.rev)||0;sync.dirty=!!savedSync.dirty;sync.baseRev=Number(savedSync.baseRev)||0;sync.pending=savedSync.pending||{};}
-function persistSync(){localStorage.setItem("kyushuPlanner.sync",JSON.stringify({scope:scope(),rev:sync.rev,dirty:sync.dirty,baseRev:sync.baseRev,pending:sync.pending}));}
+function persistSync(){localStorage.setItem("kyushuPlanner.sync",JSON.stringify({scope:scope(),rev:sync.rev,current:sync.current,queue:sync.queue,stage:sync.stage}));}
 function cacheWishes(){localStorage.setItem(WISHKEY,JSON.stringify(WISH));}
 function cachePlan(){localStorage.setItem(KEY,JSON.stringify(S));}
-function normalPlan(p){if(!p||typeof p!=="object"||(!Object.hasOwn(p,"days")&&!Object.hasOwn(p,"rev")))return null;const list=x=>Array.isArray(x)?x:(x&&typeof x==="object"?Object.values(x):[]);return clean({days:list(p.days).filter(d=>d&&typeof d==="object").map(d=>({id:typeof d.id==="string"?d.id:uid(),label:String(d.label||"新的一天"),items:list(d.items)})),pool:list(p.pool)});}
-function renderAll(){if(dragging){renderQueued=true;return;}renderQueued=false;renderList();renderDays();renderMap();renderWishes();renderDetail();renderSync();}
-function renderSync(){const pill=document.getElementById("syncStatus");pill.className="status";if(!dbURL){pill.textContent="📴 本機模式（共享尚未設定）";pill.classList.add("local");}else if(!tripCode){pill.textContent="尚未加入共享行程";pill.classList.add("local");}else if(sync.offline){pill.textContent="⚠️ 離線，變更會在連線後上傳";pill.classList.add("off");}else{const p=sync.mirror.plan;const time=p?.at?new Date(p.at).toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit",hour12:false}):"";pill.textContent=p?.by?`🟢 共享中・最後修改：${p.by} ${time}`:"🟢 共享中・等待同步";}
-  document.getElementById("joinBox").hidden=!dbURL||!!tripCode;document.getElementById("shareBtn").hidden=!shared();document.getElementById("refreshBtn").hidden=!shared();document.getElementById("beforeShareBtn").hidden=!localStorage.getItem(KEY+".beforeShare");
-  document.getElementById("planHint").textContent="按住 ☰ 拖曳即可排序或移到別天；也可以用右側選單直接換天。"+(shared()?"目前與家人共享，修改會自動同步並保留本機快取。":"行程會自動存在這支手機（localStorage）。");
-}
-function markPlan(){if(!shared())return;if(!sync.dirty)sync.baseRev=sync.rev;sync.dirty=true;sync.version++;persistSync();scheduleFlush();}
-function scheduleFlush(){clearTimeout(flushTimer);if(shared())flushTimer=setTimeout(flushPending,600);}
-async function request(path,opts={}){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000);try{const r=await fetch(scope()+path+".json",{...opts,signal:controller.signal,headers:{...(opts.body?{"Content-Type":"application/json"}:{}),...opts.headers}});if(!r.ok&&r.status!==412)throw new Error("HTTP "+r.status);const data=await r.json();return {data,etag:r.headers.get("ETag"),status:r.status};}finally{clearTimeout(timer);}}
-function offline(){sync.offline=true;renderSync();startPoll();}
-function queueWish(spot,dev,value){sync.pending[spot+"/"+dev]={value};persistSync();scheduleFlush();}
-function applyWishes(raw){WISH=sanitizeWishes(raw);Object.entries(sync.pending).forEach(([path,p])=>{const [spot,dev]=path.split("/");if(!BY[spot])return;if(p.value)(WISH[spot]??={})[dev]=p.value;else if(WISH[spot])delete WISH[spot][dev];});
-  if(ME.nick)Object.entries(WISH).forEach(([spot,users])=>{if(users[ME.id]&&users[ME.id].nick!==ME.nick){users[ME.id]={...users[ME.id],nick:ME.nick,at:Date.now()};queueWish(spot,ME.id,users[ME.id]);}});cacheWishes();}
-function acceptMirror(){if(dragging){renderQueued=true;return;}const p=normalPlan(sync.mirror.plan);sync.rev=Number(sync.mirror.plan?.rev)||0;if(p&&!sync.dirty){S=p;cachePlan();}applyWishes(sync.mirror.wishes);persistSync();renderAll();}
-function conflict(remote){if(dragging){sync.deferredConflict=remote;renderQueued=true;return;}clearTimeout(flushTimer);sync.dirty=false;sync.mirror.plan=remote;sync.rev=Number(remote?.rev)||0;const p=normalPlan(remote);if(p)S=p;else S=blank();cachePlan();persistSync();toast("其他人剛修改了行程，已載入最新版本");renderAll();}
-async function refreshShared(){if(!shared()||refreshing)return;refreshing=true;try{
-  const results=await Promise.allSettled([request("/plan",{headers:{"X-Firebase-ETag":"true"}}),request("/wishes")]);
-  if(results.some(r=>r.status==="rejected"))throw new Error("讀取失敗");
-  const [plan,wishes]=results.map(r=>r.value),remote=normalPlan(plan.data);sync.etag=plan.etag;
-  const joined=stored("kyushuPlanner.joined",{}),first=!joined[scope()];
-  if(!sync.ready&&first&&remote&&fp(S)!==fp(sample())&&fp(S)!==fp(remote)){localStorage.setItem(KEY+".beforeShare",JSON.stringify(S));toast("加入前的本機行程已備份，可用還原按鈕載入");}
-  sync.mirror.plan=plan.data;sync.mirror.wishes=wishes.data;sync.rev=Number(plan.data?.rev)||0;sync.offline=false;
-  if(!sync.ready){if(!remote&&!sync.dirty){sync.dirty=true;sync.version++;sync.baseRev=sync.rev;}
-    if(first){Object.entries(WISH).forEach(([spot,users])=>{if(users[ME.id]&&!wishes.data?.[spot]?.[ME.id]&&!Object.hasOwn(sync.pending,spot+"/"+ME.id))sync.pending[spot+"/"+ME.id]={value:users[ME.id]};});}
-    joined[scope()]=true;localStorage.setItem("kyushuPlanner.joined",JSON.stringify(joined));sync.ready=true;persistSync();openStream();}
-  acceptMirror();scheduleFlush();
+function renderAll(){if(dragging){renderQueued=true;return;}renderQueued=false;renderList();renderDays();renderMap();renderWishes();renderDetail();renderSync();if(historyPreview)renderHistoryPreview();}
+function renderSync(){const pill=document.getElementById("syncStatus");pill.className="status";if(!shared()){pill.textContent="📴 本機模式・版本紀錄存於此裝置";pill.classList.add("local");}else if(sync.offline){pill.textContent="⚠️ 離線，變更會在連線後上傳";pill.classList.add("off");}else{const p=sync.current,time=p?.at?new Intl.DateTimeFormat("zh-TW",{timeZone:"Asia/Taipei",hour:"2-digit",minute:"2-digit",hour12:false}).format(p.at):"";pill.textContent=p?.by?`🟢 共享中・第 ${p.rev} 版・${p.by} ${time}`:"🟢 共享中・等待同步";}
+  document.getElementById("refreshBtn").hidden=!shared();document.getElementById("beforeShareBtn").hidden=!localStorage.getItem(KEY+".beforeShare");document.getElementById("planHint").textContent="按住 ☰ 拖曳即可排序或移到別天；也可以用右側選單直接換天。"+(shared()?"目前與家人共享，修改會自動同步並保留版本紀錄。":"行程會自動存在這支手機（localStorage），保留最近 100 個版本。");}
+function markChange(planChanged=false,summary=""){if(!sync.stage)sync.stage={before:clone(sync.head),baseRev:sync.rev,planChanged:false,summary:"",state:null};sync.stage.planChanged ||= planChanged;if(summary)sync.stage.summary=summary;sync.stage.state=snapshot();sync.head=snapshot();cachePlan();cacheWishes();persistSync();scheduleFlush();}
+function markPlan(summary=""){markChange(true,summary);}
+function queueWish(){markChange(false);}
+function scheduleFlush(){clearTimeout(flushTimer);flushTimer=setTimeout(flushPending,600);}
+function offline(){sync.offline=true;renderSync();}
+function acceptState(raw){const state=normalState(raw);if(!state)return;if(dragging||sync.busy||sync.stage||sync.queue.length){if(!sync.deferred||state.rev>=sync.deferred.rev)sync.deferred=state;renderQueued=true;return;}if(state.rev<sync.rev)return;sync.current=state;sync.rev=state.rev;S=clone(state.plan);WISH=clone(state.wishes);sync.head=snapshot();sync.offline=false;cachePlan();cacheWishes();persistSync();renderAll();}
+function acceptMirror(){const state=sync.deferred||sync.current;sync.deferred=null;if(state)acceptState(state);else renderAll();}
+function conflict(remote){const drafts=stored("kyushuPlanner.conflicts",[]);for(const batch of sync.queue)drafts.push({...clone(batch.state),at:Date.now(),by:ME.nick,byId:ME.id,summary:batch.summary,scope:scope(),id:deviceId()});if(sync.stage)drafts.push({...clone(sync.stage.state),at:Date.now(),by:ME.nick,byId:ME.id,summary:sync.stage.summary||summarize(diffState(sync.stage.before,sync.stage.state)),scope:scope(),id:deviceId()});localStorage.setItem("kyushuPlanner.conflicts",JSON.stringify(drafts));clearTimeout(flushTimer);sync.queue=[];sync.stage=null;sync.current=remote;sync.rev=remote?.rev||0;sync.deferred=null;S=remote?clone(remote.plan):blank();WISH=remote?clone(remote.wishes):{};sync.head=snapshot();cachePlan();cacheWishes();persistSync();toast("其他人剛修改了行程，已載入最新版本；你的變更可在「版本紀錄」找到或重做");}
+async function refreshShared(){if(refreshing||sync.busy)return;refreshing=true;try{const {state}=await adapter.load();sync.offline=false;
+  if(!sync.ready){const joined=stored("kyushuPlanner.joined",{}),first=shared()&&!joined[scope()];if(first&&state&&fp(S)!==fp(sample())&&fp(S)!==fp(state.plan)){localStorage.setItem(KEY+".beforeShare",JSON.stringify(S));toast("加入前的本機行程已備份，可用還原按鈕載入");}
+    sync.ready=true;if(!sync.stage&&!sync.queue.length){sync.current=state;sync.rev=state?.rev||0;if(shared()&&!state){markPlan(`建立共享行程（由 ${ME.nick||"家人"} 的本機行程上傳）`);}else if(shared()&&state)acceptState(state);else{sync.head=snapshot();persistSync();}}
+    if(shared()){joined[scope()]=true;localStorage.setItem("kyushuPlanner.joined",JSON.stringify(joined));}sync.unsubscribe=adapter.subscribe(state=>{if(state){sync.offline=false;acceptState(state);}if(sync.queue.length||sync.stage)scheduleFlush();});
+  }else if(state)acceptState(state);renderSync();if(sync.queue.length||sync.stage)scheduleFlush();
 }catch{offline();}finally{refreshing=false;}}
-async function flushPending(){if(!shared()||!ME.nick||sync.busy||dragging)return;if(!sync.ready){await refreshShared();return;}sync.busy=true;
-  try{if(sync.dirty){const version=sync.version,desired=JSON.parse(JSON.stringify(S));if(!desired.days.length)desired.days=blank().days;const latest=await request("/plan",{headers:{"X-Firebase-ETag":"true"}});sync.etag=latest.etag;
-      if(!latest.etag)throw new Error("缺少 ETag");
-      const latestRev=Number(latest.data?.rev)||0;
-      if(latestRev!==sync.baseRev&&fp(normalPlan(latest.data)||blank())!==fp(desired)){conflict(latest.data);}
-      else{const plan={...desired,rev:latestRev+1,by:ME.nick,byId:ME.id,at:Date.now()};const result=await request("/plan",{method:"PUT",headers:{"if-match":latest.etag},body:JSON.stringify(plan)});sync.etag=result.etag;
-        if(result.status===412){const newest=await request("/plan",{headers:{"X-Firebase-ETag":"true"}});sync.etag=newest.etag;conflict(newest.data);}else{if((Number(sync.mirror.plan?.rev)||0)<=plan.rev)sync.mirror.plan=plan;sync.rev=Number(sync.mirror.plan?.rev)||plan.rev;if(sync.version===version)sync.dirty=false;else sync.baseRev=plan.rev;persistSync();acceptMirror();}}
+async function flushPending(){clearTimeout(flushTimer);
+  if(sync.stage){const stage=sync.stage;sync.stage=null;const changes=diffState(stage.before,stage.state);if(changes.length||stage.summary)sync.queue.push({id:deviceId(),baseRev:sync.queue.length?null:stage.baseRev,planChanged:stage.planChanged,stalePlan:!!stage.stalePlan,ops:wishOps(stage.before.wishes,stage.state.wishes),summary:stage.summary||summarize(changes),state:stage.state});persistSync();}
+  if(sync.busy||dragging||!ME.nick)return;if(!sync.ready){await refreshShared();if(!sync.ready)return;}if(!sync.queue.length)return;sync.busy=true;
+  try{let retries=0;while(sync.queue.length){const batch=sync.queue[0];if(batch.stalePlan){conflict(sync.current);break;}
+      const baseRev=batch.baseRev??sync.rev;
+      if(!batch.planChanged&&sync.current&&(batch.baseRev===null||batch.baseRev===sync.rev)){batch.state={plan:clone(sync.current.plan),wishes:applyWishOps(sync.current.wishes,batch.ops)};batch.summary=summarize(diffState(sync.current,batch.state));}
+      if(shared()&&baseRev===0)batch.summary=`建立共享行程（由 ${ME.nick} 的本機行程上傳）`;
+      const desired={...clone(batch.state),by:ME.nick,byId:ME.id,summary:batch.summary};let result=await adapter.save(baseRev,desired);
+      // A response can be lost after the server commits. Recognize that exact snapshot on retry.
+      if(result.conflict&&result.state?.rev===baseRev+1&&result.state.byId===ME.id&&result.state.summary===desired.summary&&fp(result.state.plan)===fp(desired.plan)&&!Object.keys(wishOps(result.state.wishes,desired.wishes)).length)result={ok:true,state:result.state};
+      if(result.conflict){if(batch.planChanged){conflict(result.state);break;}const latest=result.state||{rev:0,plan:blank(),wishes:{}};batch.state={plan:clone(latest.plan),wishes:applyWishOps(latest.wishes,batch.ops)};batch.baseRev=latest.rev;batch.summary=summarize(diffState(latest,batch.state));sync.current=result.state;sync.rev=latest.rev;for(const later of sync.queue.slice(1))if(later.planChanged)later.stalePlan=true;if(sync.stage?.planChanged)sync.stage.stalePlan=true;persistSync();if(++retries>=5){scheduleFlush();break;}continue;}
+      sync.current=result.state;sync.rev=result.state.rev;sync.queue.shift();persistSync();sync.offline=false;
     }
-    for(const [path,pending] of Object.entries(sync.pending)){const [spot,dev]=path.split("/");if(!BY[spot]||!/^[A-Za-z0-9_-]{1,64}$/.test(dev)){delete sync.pending[path];continue;}await request("/wishes/"+encodeURIComponent(spot)+"/"+dev,{method:pending.value?"PUT":"DELETE",...(pending.value?{body:JSON.stringify(pending.value)}:{})});if(sync.pending[path]===pending){delete sync.pending[path];setMirror("/wishes/"+spot+"/"+dev,pending.value);}persistSync();}
-    if(sync.memberDirty){const nick=ME.nick;await request("/members/"+ME.id,{method:"PUT",body:JSON.stringify({nick,at:Date.now()})});sync.memberDirty=ME.nick!==nick;}
-    sync.offline=false;renderSync();if(sync.dirty||Object.keys(sync.pending).length||sync.memberDirty)scheduleFlush();
-  }catch{offline();}finally{sync.busy=false;}
+  }catch{offline();scheduleRetry();}finally{sync.busy=false;if(!sync.queue.length&&!sync.stage){const state=sync.deferred&&sync.deferred.rev>sync.rev?sync.deferred:sync.current;sync.deferred=null;if(state)acceptState(state);}else renderSync();}
 }
-// SSE 的 path 相對於 trip 根節點；patch 可包含多層路徑。
-function setMirror(path,value){const parts=path.split("/").filter(Boolean);if(parts.some(p=>["__proto__","constructor","prototype"].includes(p)))return;if(!parts.length){sync.mirror=value&&typeof value==="object"?value:{};return;}let node=sync.mirror;for(const part of parts.slice(0,-1)){if(!node[part]||typeof node[part]!=="object")node[part]={};node=node[part];}const last=parts.at(-1);if(value===null)delete node[last];else node[last]=value;}
-function openStream(){if(sync.source||!shared())return;if(!window.EventSource){startPoll();return;}const source=new EventSource(scope()+".json");sync.source=source;
-  const receive=e=>{try{const msg=JSON.parse(e.data);if(e.type==="patch"&&msg.data&&typeof msg.data==="object")Object.entries(msg.data).forEach(([k,v])=>setMirror(msg.path+"/"+k,v));else setMirror(msg.path,msg.data);sync.offline=false;acceptMirror();}catch{}};
-  source.addEventListener("put",receive);source.addEventListener("patch",receive);source.onopen=()=>{sync.offline=false;if(sync.poll){clearInterval(sync.poll);sync.poll=null;}renderSync();scheduleFlush();};
-  source.onerror=()=>{sync.errors++;if(sync.errors>=3){source.close();sync.source=null;offline();}else renderSync();};
-  source.addEventListener("cancel",()=>{source.close();sync.source=null;offline();});
-  source.addEventListener("auth_revoked",()=>{source.close();sync.source=null;offline();});
-}
-function startPoll(){if(!sync.poll&&shared())sync.poll=setInterval(async()=>{await refreshShared();await flushPending();},20000);}
+let retryTimer;
+function scheduleRetry(){clearTimeout(retryTimer);retryTimer=setTimeout(async()=>{await refreshShared();await flushPending();},shared()?8000:2000);}
 function sharedConfirm(localMessage){return confirm(shared()?"這會改變所有人看到的行程，確定？":localMessage);}
-function joinTrip(code){if(!CODE_RE.test(code)){toast("行程代碼需為 16–64 個英數字、底線或連字號");return;}localStorage.setItem("kyushuPlanner.trip",code);location.reload();}
 function openNick(){document.getElementById("nickInput").value=ME.nick;document.getElementById("nickModal").classList.add("on");setTimeout(()=>document.getElementById("nickInput").focus(),50);}
-function renameMe(nick){ME.nick=nick;localStorage.setItem(MEKEY,JSON.stringify(ME));document.getElementById("meBtn").textContent="👤 "+ME.nick;Object.entries(WISH).forEach(([spot,users])=>{if(users[ME.id]){users[ME.id]={...users[ME.id],nick,at:Date.now()};if(shared())queueWish(spot,ME.id,users[ME.id]);}});cacheWishes();sync.memberDirty=true;renderAll();scheduleFlush();}
+function renameMe(nick){ME.nick=nickname(nick);localStorage.setItem(MEKEY,JSON.stringify(ME));document.getElementById("meBtn").textContent="👤 "+ME.nick;let changed=false;Object.values(WISH).forEach(users=>{if(users[ME.id]&&users[ME.id].nick!==ME.nick){users[ME.id]={...users[ME.id],nick:ME.nick,at:Date.now()};changed=true;}});if(changed)queueWish();renderAll();scheduleFlush();}
 function initSharing(){const notes=document.getElementById("notes");document.getElementById("notesSummary").textContent=`⚠️ 注意事項（${(notes.querySelector(".notes-body").textContent.match(/•/g)||[]).length} 項）`;notes.open=UI.notesOpen===true;notes.addEventListener("toggle",()=>{UI.notesOpen=notes.open;localStorage.setItem(UIKEY,JSON.stringify(UI));});
-  document.getElementById("meBtn").textContent="👤 "+(ME.nick||"暱稱");document.getElementById("meBtn").onclick=openNick;
-  document.getElementById("nickForm").onsubmit=e=>{e.preventDefault();const input=document.getElementById("nickInput"),nick=input.value.trim().slice(0,12);if(!nick){input.setCustomValidity("請輸入暱稱");input.reportValidity();return;}input.setCustomValidity("");renameMe(nick);document.getElementById("nickModal").classList.remove("on");document.getElementById("meBtn").focus();};document.getElementById("nickInput").oninput=e=>e.target.setCustomValidity("");
-  document.getElementById("joinForm").onsubmit=e=>{e.preventDefault();joinTrip(document.getElementById("tripInput").value.trim());};document.getElementById("createTrip").onclick=()=>joinTrip(randomCode(22));
-  document.getElementById("shareBtn").onclick=()=>copy(location.origin+location.pathname+"#trip="+tripCode);
+  document.getElementById("meBtn").textContent="👤 "+(ME.nick||"暱稱");document.getElementById("meBtn").onclick=openNick;document.getElementById("nickForm").onsubmit=e=>{e.preventDefault();const input=document.getElementById("nickInput"),nick=nickname(input.value);if(!nick){input.setCustomValidity("請輸入暱稱");input.reportValidity();return;}input.setCustomValidity("");renameMe(nick);document.getElementById("nickModal").classList.remove("on");document.getElementById("meBtn").focus();};document.getElementById("nickInput").oninput=e=>e.target.setCustomValidity("");
+  document.getElementById("shareBtn").onclick=()=>copy(location.origin+location.pathname);
   document.getElementById("refreshBtn").onclick=async()=>{await refreshShared();await flushPending();};
-  document.getElementById("beforeShareBtn").onclick=()=>{const saved=stored(KEY+".beforeShare",null);if(valid(saved)&&sharedConfirm("載入加入共享前的本機行程？會覆蓋目前的安排")){S=clean(saved);update();fit();}};
-  window.addEventListener("online",async()=>{await refreshShared();await flushPending();});window.addEventListener("offline",()=>{if(shared())offline();});
-  if(window.ResizeObserver)new ResizeObserver(()=>document.documentElement.style.setProperty("--header-height",document.querySelector("header").offsetHeight+"px")).observe(document.querySelector("header"));
-  renderSync();cachePlan();cacheWishes();if(!ME.nick)openNick();if(shared())refreshShared();
-}
+  document.getElementById("beforeShareBtn").onclick=()=>{const saved=stored(KEY+".beforeShare",null);if(valid(saved)&&sharedConfirm("載入加入共享前的本機行程？會覆蓋目前的安排")){S=clean(saved);update("載入加入共享前的本機行程");fit();}};
+  window.addEventListener("online",async()=>{await refreshShared();await flushPending();});window.addEventListener("offline",()=>{if(shared())offline();});window.addEventListener("pagehide",()=>{if(sync.stage)flushPending();});
+  if(window.ResizeObserver)new ResizeObserver(()=>document.documentElement.style.setProperty("--header-height",document.querySelector("header").offsetHeight+"px")).observe(document.querySelector("header"));renderSync();cachePlan();cacheWishes();if(!ME.nick)openNick();refreshShared();}
 
-function save(){cachePlan();markPlan();}
+// ===== 版本紀錄：歷史快照永不覆寫，還原一律建立新版本 =====
+let historyPreview=null,historyReturn=null,historyRequest=0;
+const taipeiTime=at=>{const parts=new Intl.DateTimeFormat("zh-TW",{timeZone:"Asia/Taipei",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date(at));const p=Object.fromEntries(parts.map(x=>[x.type,x.value]));return `${p.year}/${p.month}/${p.day} ${p.hour}:${p.minute}（台北）`;};
+function closeHistory(){historyRequest++;historyPreview=null;document.getElementById("historyPanel").classList.remove("on");if(historyReturn?.isConnected)historyReturn.focus({preventScroll:true});}
+function historyWho(e){return `${esc(e.by)} <small class="device-id">${esc(String(e.byId||"").slice(0,4))}</small>`;}
+function positionHistory(){if(innerWidth>=700){const panel=document.getElementById("historyPanel");panel.style.left=Math.max(10,innerWidth-Math.min(560,innerWidth-20)-20)+"px";panel.style.top="20px";}}
+async function openHistory(){historyReturn=document.activeElement;historyPreview=null;document.getElementById("historyPanel").classList.add("on");positionHistory();document.getElementById("historyClose").focus({preventScroll:true});await historyList();}
+async function historyList(){const request=++historyRequest,body=document.getElementById("historyBody");historyPreview=null;body.textContent="讀取版本紀錄…";try{await flushPending();const entries=await adapter.history(200);if(request!==historyRequest)return;const drafts=stored("kyushuPlanner.conflicts",[]).filter(e=>e.scope===scope()).reverse();
+  body.innerHTML=(sync.queue.length||sync.stage?'<p class="hint">還有變更等待上傳；連線後會建立版本。</p>':"")+(drafts.length?`<h3>未儲存的本機變更（衝突備份）</h3>${drafts.map(e=>`<button class="history-entry draft" data-draft="${esc(e.id)}">${esc(taipeiTime(e.at))} ${historyWho(e)}<span>${esc(e.summary)}</span></button>`).join("")}`:"")+`<p class="hint">${shared()?"共享版本永久保留；還原會另建一個新版本。":"本機保留最近 100 個版本；清除瀏覽器資料也會清除紀錄。"}</p>`+(entries.map(e=>`<button class="history-entry" data-version="${Number(e.rev)}"><b>#${Number(e.rev)}</b> ${esc(taipeiTime(e.at))} ${historyWho(e)}<span>・ ${esc(e.summary)}</span></button>`).join("")||'<p class="hint">尚無版本；修改行程或許願後會自動建立。</p>');
+}catch{if(request===historyRequest)body.innerHTML='<p>目前無法讀取版本紀錄，請連線後重試。</p><button class="btn" data-history-list>重新載入</button>';}}
+async function previewVersion(rev){const request=++historyRequest;document.getElementById("historyBody").textContent="讀取快照…";try{const entry=await adapter.version(rev);if(request!==historyRequest)return;if(!entry)throw new Error("不存在");historyPreview={...entry,draft:false};renderHistoryPreview();}catch{if(request===historyRequest)document.getElementById("historyBody").innerHTML='<p>無法讀取這個版本。</p><button class="btn" data-history-list>返回版本紀錄</button>';}}
+function renderHistoryPreview(){if(!historyPreview)return;const entry=historyPreview,diff=diffState(snapshot(),entry),name=id=>esc(BY[id]?.zh||id),spots=ids=>ids.length?ids.map(name).join(" → "):"（尚未安排）";
+  const wishRows=Object.entries(entry.wishes||{}).map(([id,users])=>`<li>${name(id)}：${Object.entries(POOLS).map(([pool,label])=>`${label} ${Object.values(users).filter(w=>w.pool===pool).length}`).join("／")}</li>`).join("");
+  document.getElementById("historyBody").innerHTML=`<button class="btn alt" data-history-list>← 返回版本紀錄</button><h2>${entry.draft?"本機衝突備份":"第 "+Number(entry.rev)+" 版"}</h2><p class="hint">${esc(taipeiTime(entry.at))} ${historyWho(entry)}</p><p>${esc(entry.summary)}</p><button class="btn" data-history-restore>${entry.draft?"↩️ 載入這份本機變更":"↩️ 還原到這個版本"}</button><h3>與目前行程比較（還原後的變更）</h3>${diff.length?`<ul>${diff.map(s=>`<li>${esc(s)}</li>`).join("")}</ul>`:'<p class="hint">行程與許願相同</p>'}<h3>行程快照</h3>${entry.plan.days.map(d=>`<section class="history-day"><b>${esc(d.label)}</b><p>${spots(d.items)}</p></section>`).join("")}<section class="history-day"><b>未排入</b><p>${spots(entry.plan.pool)}</p></section><h3>許願人數</h3>${wishRows?`<ul>${wishRows}</ul>`:'<p class="hint">尚無許願</p>'}`;
+}
+document.getElementById("historyBtn").onclick=openHistory;document.getElementById("historyClose").onclick=closeHistory;
+document.getElementById("historyBody").onclick=async e=>{const target=e.target.closest("button");if(!target)return;if(target.hasAttribute("data-history-list")){historyList();return;}if(target.dataset.version){previewVersion(Number(target.dataset.version));return;}if(target.dataset.draft){const draft=stored("kyushuPlanner.conflicts",[]).find(d=>d.id===target.dataset.draft&&d.scope===scope());if(draft){historyRequest++;historyPreview={...clone(draft),draft:true};renderHistoryPreview();}return;}if(target.hasAttribute("data-history-restore")&&historyPreview){const entry=clone(historyPreview);if(!confirm(entry.draft?"載入這份本機變更並建立新版本？" : `還原至第 ${entry.rev} 版？這會建立新版本${shared()?"，並改變所有人看到的行程與許願":""}。`))return;S=clone(entry.plan);WISH=clone(entry.wishes);update(entry.draft?"載入衝突時的本機變更":`還原至第 ${entry.rev} 版`);fit();closeHistory();toast("已載入快照，將另存為新版本");}};
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&document.getElementById("historyPanel").classList.contains("on"))closeHistory();});window.addEventListener("resize",positionHistory);
+
+function save(summary=""){cachePlan();markPlan(summary);}
 function selected(){const s=new Set(S.pool);S.days.forEach(d=>d.items.forEach(i=>s.add(i)));return s;}
 function where(id){if(S.pool.includes(id))return -1;return S.days.findIndex(d=>d.items.includes(id));}
 function removeId(id){S.pool=S.pool.filter(x=>x!==id);S.days.forEach(d=>d.items=d.items.filter(x=>x!==id));}
 function moveTo(id,dayIdx,pos){removeId(id);const arr=dayIdx<0?S.pool:S.days[dayIdx].items;if(pos==null||pos>arr.length)pos=arr.length;arr.splice(pos,0,id);}
-function update(){save();renderAll();}
+function update(summary=""){save(summary);renderAll();}
 function toast(t){const e=document.getElementById("toast");e.textContent=t;e.classList.add("on");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove("on"),1600);}
 
 // ===== 清單 =====
@@ -503,22 +546,22 @@ function renderDays(){
 function syncFromDom(){
   const queued=renderQueued;
   document.querySelectorAll("#days ul").forEach(ul=>{const idx=+ul.dataset.idx;const ids=[...ul.querySelectorAll("li")].map(li=>li.dataset.id);if(idx<0)S.pool=ids;else S.days[idx].items=ids;});
-  dragging=false;update();if(Object.hasOwn(sync,"deferredConflict")){const remote=sync.deferredConflict;delete sync.deferredConflict;conflict(remote);}else if(queued)acceptMirror();
+  dragging=false;update();if(queued)acceptMirror();
 }
 document.getElementById("days").addEventListener("change",e=>{const id=e.target.dataset.mv;if(id){moveTo(id,+e.target.value);update();}});
 document.getElementById("days").addEventListener("click",e=>{
   const t=e.target;
   const item=t.closest(".it");if(item&&!t.closest(".h,select,button")){openDetail(item.dataset.id);return;}
   if(t.dataset.rm){removeId(t.dataset.rm);update();}
-  else if(t.dataset.ren!=null){const i=+t.dataset.ren;const v=prompt("這一天的名稱",S.days[i].label);if(v){S.days[i].label=v;update();}}
+  else if(t.dataset.ren!=null){const i=+t.dataset.ren;const v=prompt("這一天的名稱",S.days[i].label);if(v){S.days[i].label=v.slice(0,2000);update();}}
   else if(t.dataset.del!=null){const i=+t.dataset.del;if(shared()&&S.days.length===1){toast("共享行程至少需保留一天");return;}if(confirm(`刪除「${S.days[i].label}」？當天景點會移回「未排入」`)){S.pool.push(...S.days[i].items);S.days.splice(i,1);update();}}
 });
-document.getElementById("addDay").onclick=()=>{S.days.push({id:uid(),label:`第 ${S.days.length+1} 天`,items:[]});update();toast("已新增一天");};
-document.getElementById("sampleBtn").onclick=()=>{if(sharedConfirm("載入預設行程？會覆蓋目前的安排")){S=sample();update();fit();}};
+document.getElementById("addDay").onclick=()=>{if(S.days.length>=30){toast("最多可安排 30 天");return;}S.days.push({id:uid(),label:`第 ${S.days.length+1} 天`,items:[]});update();toast("已新增一天");};
+document.getElementById("sampleBtn").onclick=()=>{if(sharedConfirm("載入預設行程？會覆蓋目前的安排")){S=sample();update("載入預設行程");fit();}};
 (function(){let old=null;try{old=JSON.parse(localStorage.getItem(OLDKEY));}catch(e){}
   if(old&&Array.isArray(old.days)){const b=document.getElementById("oldBtn");b.style.display="";
-    b.onclick=()=>{if(sharedConfirm("載入這支手機上舊版（航班變更前）自動儲存的行程？會覆蓋目前的安排")){S=clean(norm(old));update();fit();toast("已載入舊版存檔");}};}})();
-document.getElementById("clearBtn").onclick=()=>{if(sharedConfirm("清空所有已選景點與天數？")){S=blank();update();}};
+    b.onclick=()=>{if(sharedConfirm("載入這支手機上舊版（航班變更前）自動儲存的行程？會覆蓋目前的安排")){S=clean(norm(old));update("載入舊版存檔");fit();toast("已載入舊版存檔");}};}})();
+document.getElementById("clearBtn").onclick=()=>{if(sharedConfirm("清空所有已選景點與天數？")){S=blank();update("清空行程");}};
 function planText(){
   let out="九州親子行程 2027 春節\n🏨 住宿（暫定）：クインテッサホテル福岡博多 Relax＆Sleep（博多駅東 2-9-29，☎ +81-92-292-6728，入住 15:00／退房 11:00）\n";
   S.days.forEach(d=>{out+=`\n【${d.label}】\n`;if(!d.items.length)out+="  （尚未安排）\n";d.items.forEach((id,i)=>{const a=BY[id];out+=`  ${i+1}. ${a.zh}（${a.ja}）\n     ${gmap(a)}\n`;});});
@@ -534,11 +577,11 @@ document.getElementById("mCopy").onclick=()=>{const t=document.getElementById("m
 document.getElementById("mOk").onclick=()=>{if(modalOk&&modalOk(document.getElementById("mText").value)!==false)modal.classList.remove("on");};
 document.getElementById("exportBtn").onclick=()=>openModal("行程 JSON（可複製保存或傳給家人）",JSON.stringify({v:2,days:S.days.map(d=>({label:d.label,items:d.items})),pool:S.pool,wishes:WISH},null,1),null);
 document.getElementById("importBtn").onclick=()=>openModal("貼上 JSON 後按「確定」","",txt=>importJSON(txt));
-function importJSON(txt){try{const o=JSON.parse(txt);if(!o||!Array.isArray(o.days))throw 0;const next=clean(norm(o));if(shared()&&!sharedConfirm(""))return false;S=next;if(Object.hasOwn(o,"wishes")){const nextWishes=sanitizeWishes(o.wishes);if(shared()){const all=new Set([...Object.keys(WISH),...Object.keys(nextWishes)]);all.forEach(spot=>{const devs=new Set([...Object.keys(WISH[spot]||{}),...Object.keys(nextWishes[spot]||{})]);devs.forEach(dev=>queueWish(spot,dev,nextWishes[spot]?.[dev]||null));});}WISH=nextWishes;cacheWishes();}update();fit();toast("匯入成功");return true;}catch(e){alert("JSON 格式不正確");return false;}}
+function importJSON(txt){try{const o=JSON.parse(txt);if(!o||!Array.isArray(o.days)||o.days.length>30)throw 0;const next=clean(norm(o));if(next.days.length>30)throw 0;if(shared()&&!sharedConfirm(""))return false;S=next;if(Object.hasOwn(o,"wishes")){WISH=sanitizeWishes(o.wishes);cacheWishes();}update("匯入 JSON");fit();toast("匯入成功");return true;}catch(e){alert("JSON 格式不正確（最多 30 天）");return false;}}
 
 // ===== 許願池與景點詳情 =====
 function wishButtons(id){const mine=WISH[id]?.[ME.id]?.pool;return `<div class="wish-buttons" aria-label="景點許願">${Object.entries(POOLS).map(([pool,label])=>`<button type="button" class="wish-btn${mine===pool?" on":""}" data-wish="${pool}" data-spot="${esc(id)}" aria-pressed="${mine===pool}">${label}</button>`).join("")}</div><div class="wish-names">${Object.keys(POOLS).map(pool=>{const names=Object.values(WISH[id]||{}).filter(w=>w.pool===pool).map(w=>esc(w.nick));return names.length?`${POOLS[pool].split(" ")[0]} ${names.join("、")}`:"";}).filter(Boolean).join("　")||"還沒有人許願"}</div>`;}
-function toggleWish(id,pool){if(!BY[id]||!Object.hasOwn(POOLS,pool))return;if(!ME.nick){openNick();return;}const old=WISH[id]?.[ME.id],value=old?.pool===pool?null:{pool,nick:ME.nick,at:Date.now()};if(value)(WISH[id]??={})[ME.id]=value;else if(WISH[id])delete WISH[id][ME.id];cacheWishes();if(shared())queueWish(id,ME.id,value);renderAll();}
+function toggleWish(id,pool){if(!BY[id]||!Object.hasOwn(POOLS,pool))return;if(!ME.nick){openNick();return;}const old=WISH[id]?.[ME.id],value=old?.pool===pool?null:{pool,nick:ME.nick,at:Date.now()};if(value)(WISH[id]??={})[ME.id]=value;else if(WISH[id])delete WISH[id][ME.id];cacheWishes();queueWish();renderAll();}
 function renderWishes(){const sel=selected();document.getElementById("wishSections").innerHTML=Object.entries(POOLS).map(([pool,title])=>{const spots=ATTR.map(a=>({a,votes:Object.values(WISH[a.id]||{}).filter(w=>w.pool===pool)})).filter(x=>x.votes.length).sort((a,b)=>b.votes.length-a.votes.length||a.a.zh.localeCompare(b.a.zh,"zh-Hant"));return `<section class="wish-section"><h2>${title}</h2>${spots.map(({a,votes})=>`<div class="wish-row" data-detail="${esc(a.id)}" tabindex="0" role="button" aria-label="${esc(a.zh)} 詳情"><span class="wish-count">${votes.length} 人</span><strong>${esc(a.zh)}</strong><div class="meta">${esc(a.area)}／${esc(a.cat)}</div><div>${votes.map(w=>`<span class="nick-chip">${esc(w.nick)}</span>`).join("")}</div>${!sel.has(a.id)?`<button class="btn" type="button" data-add="${esc(a.id)}">＋ 加入行程（未排入）</button>`:""}</div>`).join("")||'<p class="hint">目前還沒有許願</p>'}</section>`;}).join("");}
 function safeURL(value){try{const u=new URL(value);return ["https:","http:"].includes(u.protocol)?u.href:"";}catch{return "";}}
 function linkHTML(url,label){const safe=safeURL(url);return safe?`<a href="${esc(safe)}" target="_blank" rel="noopener noreferrer">${esc(label||safe)}</a>`:"";}
