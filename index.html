@@ -23,7 +23,7 @@ main{display:block}
 section.pane{display:none;padding:10px 10px 90px}
 section.pane.on{display:block}
 #mapPane{padding:0;position:relative}
-#map{height:calc(100vh - 118px);height:calc(100dvh - 118px);width:100%}
+#map{height:calc(100vh - var(--header-height,190px));height:calc(100dvh - var(--header-height,190px));width:100%}
 .btn{border:0;border-radius:10px;padding:7px 11px;background:#e8f3ff;color:#2f6ea8;font-size:14px;font-weight:600}
 .btn.alt{background:#f1ebff;color:#6a4fb8}.btn.warn{background:#ffeef3;color:#b8456e}
 .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
@@ -80,31 +80,68 @@ section.pane.on{display:block}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#3a4660;color:#fff;padding:8px 14px;border-radius:999px;font-size:14px;z-index:4000;opacity:0;transition:opacity .25s;pointer-events:none}
 .toast.on{opacity:.95}
 .trip{font-size:12px;background:#fff;border-radius:12px;padding:8px 10px;margin-bottom:10px;color:#56617a;line-height:1.5;box-shadow:0 1px 4px #0000000d}
+.trip summary{min-height:36px;display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:700;list-style:none}
+.trip summary::-webkit-details-marker{display:none}
+.trip summary::after{content:"⌄";margin-left:auto;font-size:20px;transition:transform .2s}
+.trip details[open] summary::after{transform:rotate(180deg)}
+.trip .notes-body{padding:6px 0}
+.identity{float:right;min-height:36px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+nav.tabs button{min-height:36px;font-size:14px}
+button,a,summary,input,select{touch-action:manipulation}
+button{cursor:pointer}
+.status{display:inline-flex;align-items:center;border-radius:999px;padding:6px 10px;background:#e3f6ee;color:#25785a;font-size:12px;overflow-wrap:anywhere}
+.status.off{background:#fff3d8;color:#896610}.status.local{background:#edf1f8;color:#65748c}
+.share-box{background:#f0ebff;border:1px solid #dfd4f8;border-radius:12px;padding:10px;margin-bottom:10px;font-size:13px}
+.share-box input,.nick-input{min-width:0;border:1px solid var(--line);border-radius:9px;padding:9px;font:inherit;color:var(--ink);background:#fff}
+.share-box input{flex:1;width:150px}.share-box p{margin:0 0 8px}
+.wish-buttons{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}
+.wish-btn{border:1px solid var(--line);border-radius:9px;background:#f8fbff;color:#65748c;font-size:12px;padding:6px 7px;min-height:32px}
+.wish-btn.on{background:#ffe7f0;border-color:#efafc9;color:#a4436c}.wish-btn[data-wish="maybe"].on{background:#e5f4ff;border-color:#9fcaee;color:#3575a5}.wish-btn[data-wish="meh"].on{background:#eee8ff;border-color:#b6a3e5;color:#71539c}
+.wish-names{font-size:12px;line-height:1.6;color:var(--sub);margin-top:4px;overflow-wrap:anywhere}
+.title-button{display:block;text-align:left;color:inherit;background:none;border:0;padding:0;font:inherit;font-weight:700;cursor:pointer}
+.info{font-size:13px;color:#6e9bc5;flex:none}
+.wish-section{background:#fff;border-radius:14px;padding:12px;margin-bottom:12px;min-width:0}
+.wish-section h2{font-size:16px;margin:0 0 10px}.wish-row{padding:10px 0;border-top:1px solid var(--line);cursor:pointer;outline-offset:2px}
+.wish-row .meta{font-size:12px;color:var(--sub);margin:4px 0}.nick-chip{display:inline-block;border-radius:999px;background:#f0ebff;padding:2px 7px;margin:2px;font-size:12px;overflow-wrap:anywhere}
+.wish-row .btn{margin-top:6px;font-size:12px}.wish-count{float:right;font-size:12px;color:#a04f76}
+#nickModal .box{max-width:390px}#nickModal label{display:block;font-weight:700;line-height:1.6}.nick-input{width:100%;margin:10px 0}
+.detail-panel{display:none;position:fixed;z-index:2200;background:#fff;box-shadow:0 8px 40px #35446740;border:1px solid var(--line);border-radius:16px;width:380px;max-width:calc(100vw - 20px);max-height:80vh;overflow:hidden}
+.detail-panel.on{display:flex;flex-direction:column}.detail-head{display:flex;align-items:center;padding:10px 12px;background:linear-gradient(120deg,#dff0ff,#efe6ff);gap:10px;cursor:move;touch-action:none;flex:none}
+.detail-head strong{flex:1;min-width:0}.detail-close{border:0;background:#ffffffaa;border-radius:50%;width:36px;height:36px;flex:none;color:var(--ink);font-size:20px}
+.detail-body{padding:12px;overflow:auto;overscroll-behavior:contain}.detail-body h2{margin:0;font-size:18px}.detail-body .ja{font-size:12px;color:var(--sub);margin:4px 0 10px}
+.detail-body dl{margin:0}.detail-body dt{font-size:12px;color:var(--sub);margin-top:12px}.detail-body dd{margin:4px 0 0;line-height:1.6;font-size:13px;overflow-wrap:anywhere;white-space:pre-line}
+.detail-body a{color:#2f6ea8}.detail-body ul{padding-left:18px;margin:4px 0}.detail-body .sources{font-size:11px}.detail-body select{max-width:100%;padding:8px;border:1px solid var(--line);border-radius:9px;background:#fbfdff;color:var(--ink)}
+.category-pin{border:2px solid #fff;border-radius:10px;background:#ece8fa;box-shadow:0 1px 5px #0004;text-align:center;line-height:27px;font-size:18px}
+.tag.cat{background:#eee8ff;color:#71539c}.toast{max-width:calc(100vw - 24px);width:max-content;border-radius:14px;text-align:center}
+@media(max-width:699px){.detail-panel{left:0!important;top:auto!important;bottom:0;width:100%;max-width:100%;max-height:80vh;max-height:80dvh;border-radius:20px 20px 0 0;padding-bottom:env(safe-area-inset-bottom)}.detail-head{cursor:default}.identity{max-width:130px;font-size:12px}}
 @media (min-width:980px){
-  nav.tabs{display:none}
-  main{display:grid;grid-template-columns:380px 340px 1fr;height:calc(100vh - 58px)}
-  section.pane{display:block!important;overflow:auto;padding-bottom:20px}
-  #mapPane{position:relative}
-  #map{height:100%}
+  nav.tabs{max-width:600px}
+  section.pane{padding:16px 24px 40px}
+  #cards,#days,#wishSections{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:start}
+  #days{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .card{height:100%;margin:0}.filters{max-width:850px}
 }
 </style>
 </head>
 <body>
 <header>
   <nav class="sw"><a class="on" href="https://yang8073.github.io/kyushu-family-planner/">九州</a><a href="https://yang8073.github.io/tokyo-family-planner/">東京</a></nav>
+  <button class="chip identity" id="meBtn">👤 暱稱</button>
   <h1>☁️ 九州親子行程規劃 · 2027 春節</h1>
-  <div class="sub">2 大 + 6 歲（愛大耳狗・酷洛米）+ 2 歲 ｜ 2/8(一)–2/13(六) 福岡進・福岡出（暫定華航：下午去、晚上回，可能變動）</div>
+  <div class="sub">2/8(一)–2/13(六) 福岡進・福岡出（暫定華航：下午去、晚上回，可能變動）</div>
   <div class="sub">🏨 住宿（暫定）：<a href="https://quintessahotels.com/fukuoka-hakata/" target="_blank" rel="noopener">クインテッサホテル福岡博多 Relax＆Sleep</a> ｜ 福岡市博多區博多駅東 2-9-29（JR 博多站筑紫口步行約 6–7 分）｜ ☎ +81-92-292-6728 ｜ 入住 15:00・退房 11:00 ｜ 2/8–2/13 五晚</div>
   <nav class="tabs">
     <button data-tab="listPane" class="on">清單</button>
     <button data-tab="planPane">行程</button>
     <button data-tab="mapPane">地圖</button>
+    <button data-tab="wishPane">許願池</button>
   </nav>
 </header>
 <main>
 <section id="listPane" class="pane on">
   <div class="filters">
     <input type="search" id="q" placeholder="搜尋景點（中文／日文）">
+    <select id="cat" aria-label="類型" style="margin-top:8px"><option value="">類型：全部</option><option>親子景點</option><option>購物街/商圈</option><option>安全帽店</option><option>樂高店</option><option>PS5遊戲片店</option></select>
     <div class="row" style="margin-top:8px">
       <select id="area" style="flex:1"></select>
       <select id="age" style="flex:1">
@@ -123,8 +160,12 @@ section.pane.on{display:block}
 </section>
 
 <section id="planPane" class="pane">
-  <div class="trip"><b>⚠️ 注意事項</b><br>• ✈️ 航班暫定：去 2/8 華航 CI116 桃園 16:25 → 福岡 19:35；回 2/13 華航 CI117 福岡 20:35 → 桃園 22:20。2027/2 班表尚未公布，可能變動。<br>• 🏨 2/8 晚到：入境＋領行李約 1 小時（估計）。飯店官網：晚上 10 點後才到要先打電話 092-292-6728；夜間大門上鎖，按右側對講機。19:35 後西鐵巴士（國際線→博多站，大人 ¥400）班次未確認。⚠️第三方訂房頁寫櫃台 6:00–23:00、23:00 前未聯絡可能取消（待確認）。<br>• 🛏 房型／人數：訂 2 間 Superior Queen（官網：17㎡、160cm 床＋110cm 雙層床（bunk），每間定員 3 人）。官網：小學生以下每位付費者可免費帶 1 名添い寝；沒有嬰兒床、不出借推車。7 人（4 大 3 小）分 2 間要跟訂房網站確認人數有正確傳給飯店；2 歲不適合睡上舖（估計）；房間小，行李箱攤開會很擠。（<a href="https://quintessahotels.com/fukuoka-hakata/stay/superior/" target="_blank" rel="noopener">客房</a>、<a href="https://quintessahotels.com/fukuoka-hakata/faq/" target="_blank" rel="noopener">FAQ</a>）<br>• 💴 付款／取消：現場付款 JPY 189,520（暫定，入住時付清；現金或信用卡，官網寫不收 debit card）。2027/2/7 前免費取消；入住前 1 天 20%、當天 80%、no-show 100%。<br>• ⚠️ 飯店官網公告（2025/6）：透過 Agoda 等海外網站轉售的訂單，可能沒正確傳到飯店或房型／日期不符，飯店無法確認／變更／取消這類訂單，要找訂房網站處理（<a href="https://quintessahotels.com/fukuoka-hakata/news/224/" target="_blank" rel="noopener">公告</a>）。<br>• 🪪 入住證件：訂房單要求出示與主要住客同名、有照片和居住地址的證件（台灣護照沒有地址欄，可能需加帶其他證件，待確認）。<br>• 🧾 住宿稅入住時另付：福岡市＋縣每人每晚 ¥200（住宿費 2 萬日圓以下），添い寝免費的小孩不課稅。5 晚估約 ¥4,000–7,000（看幾位小孩被算付費，估計）（<a href="https://www.city.fukuoka.lg.jp/zaisei/zeisei/life/syuku001.html" target="_blank" rel="noopener">福岡市</a>、<a href="https://www.city.fukuoka.lg.jp/zaisei/zeisei/life/syukuqa.html" target="_blank" rel="noopener">FAQ</a>）。<br>• 🍳 早餐：1F 6:30–10:00（L.O. 9:30）。小孩早餐可能另收：官網館內設施頁寫大人 ¥1,650／小學生 ¥820／未就學免費，餐廳頁寫大人・小孩 ¥2,000／未就學免費，說法不一，入住時確認。<br>• 🧺 館內：1F 投幣洗衣機＋烘衣機、1F 微波爐、房內電熱水壺；無停車場（附近投幣停車場，包車接送停靠點待確認）。<br>• 🚕 7 人＋約 7 個行李箱：一般計程車坐 4 人、後車廂約 2 個大箱（估計）→ 需 1 台 9 人座 Jumbo（MK：建議 8 人、可放 13 個行李箱，機場↔博多 ¥20,330 起，電話 092-518-0089，<a href="https://www.mk-group.co.jp/fukuoka/" target="_blank" rel="noopener">MK</a>）或 3 台計程車。<br>• 📅 休館／休園：九州國立博物館週一休；海之中道海濱公園冬季每週二休（2/9 休）；海洋世界海豚／海獅秀 2027/1/12–4/9 暫停；太宰府遊園地 2 月休園日未公布。<br>• 🎌 2/11 日本國定假日：景點、交通、餐廳人較多。<br>• 🧾 退稅（2026/11/1 起出境再退）：托運行李前在國際線 3F 出發大廳機台刷「購買人本人」護照；免稅品要隨身、不可拆用，同一張收據少一件整張不退；建議起飛前約 3 小時到機場。（<a href="https://www.customs.go.jp/kaigairyoko/taxrefund/jpn.htm" target="_blank" rel="noopener">日本海關</a>、<a href="https://www.mlit.go.jp/kankocho/tax-free/page01_000001_00021.html" target="_blank" rel="noopener">觀光廳</a>）<br>• 🧳 2/13 退房後行李選項：<br>　– 包車：放車上。<br>　– 本飯店：退房後櫃台可寄放行李（官網 FAQ，沒寫時限，傍晚才取回請入住時確認）；延遲退房每小時 ¥1,000、最晚 14:00。⚠️本館不在 CARGO PASS 合作飯店名單（2026/10 查），不能從飯店直送機場。<br>　– Crosta博多（JR 博多站 2F 新幹線ひかり広場改札旁，9:00–20:00）：12:00 前交、每件 ¥1,500 送機場，14:00 起國際線 1F CARGO PASS 櫃台（8:00–19:30）領；⚠️非合作飯店房客能否使用請先電話確認 070-1815-4806（<a href="https://cargopass.jp/question" target="_blank" rel="noopener">CARGO PASS</a>）。<br>　– 機場：國際線 1F 佐川（101–200cm 每件 ¥1,000／日，7:30–21:40，<a href="https://www.sagawa-exp.co.jp/hands-freetravel/servicecenter/fukuoka_airport.html" target="_blank" rel="noopener">佐川</a>）；置物櫃 大 ¥800、大寬門 ¥1,200（<a href="https://www.fukuoka-airport.jp/service/coin-locker-intl-2.html" target="_blank" rel="noopener">福岡機場</a>）。<br>　– 博多站周邊：ecbo cloak App 預約，行李箱約 ¥800／件／日，各店可放數量有限、重量約 20kg 內（<a href="https://cloak.ecbo.io/ja" target="_blank" rel="noopener">ecbo</a>）；博多站 1F 手荷物寄放 10:30–18:30，¥1,000（繁忙期 ¥1,500，<a href="https://www.jrkyushu.co.jp/trains/yufuinnomori/pdf/baggage-storage-service-information.pdf" target="_blank" rel="noopener">JR九州</a>）。</div>
+  <div class="trip"><details id="notes"><summary id="notesSummary">⚠️ 注意事項</summary><div class="notes-body">• ✈️ 航班暫定：去 2/8 華航 CI116 桃園 16:25 → 福岡 19:35；回 2/13 華航 CI117 福岡 20:35 → 桃園 22:20。2027/2 班表尚未公布，可能變動。<br>• 🏨 2/8 晚到：入境＋領行李約 1 小時（估計）。飯店官網：晚上 10 點後才到要先打電話 092-292-6728；夜間大門上鎖，按右側對講機。19:35 後西鐵巴士（國際線→博多站，大人 ¥400）班次未確認。⚠️第三方訂房頁寫櫃台 6:00–23:00、23:00 前未聯絡可能取消（待確認）。<br>• 🛏 房型／人數：訂 2 間 Superior Queen（官網：17㎡、160cm 床＋110cm 雙層床（bunk），每間定員 3 人）。官網：小學生以下每位付費者可免費帶 1 名添い寝；沒有嬰兒床、不出借推車。7 人（4 大 3 小）分 2 間要跟訂房網站確認人數有正確傳給飯店；2 歲不適合睡上舖（估計）；房間小，行李箱攤開會很擠。（<a href="https://quintessahotels.com/fukuoka-hakata/stay/superior/" target="_blank" rel="noopener">客房</a>、<a href="https://quintessahotels.com/fukuoka-hakata/faq/" target="_blank" rel="noopener">FAQ</a>）<br>• 💴 付款／取消：現場付款 JPY 189,520（暫定，入住時付清；現金或信用卡，官網寫不收 debit card）。2027/2/7 前免費取消；入住前 1 天 20%、當天 80%、no-show 100%。<br>• ⚠️ 飯店官網公告（2025/6）：透過 Agoda 等海外網站轉售的訂單，可能沒正確傳到飯店或房型／日期不符，飯店無法確認／變更／取消這類訂單，要找訂房網站處理（<a href="https://quintessahotels.com/fukuoka-hakata/news/224/" target="_blank" rel="noopener">公告</a>）。<br>• 🪪 入住證件：訂房單要求出示與主要住客同名、有照片和居住地址的證件（台灣護照沒有地址欄，可能需加帶其他證件，待確認）。<br>• 🧾 住宿稅入住時另付：福岡市＋縣每人每晚 ¥200（住宿費 2 萬日圓以下），添い寝免費的小孩不課稅。5 晚估約 ¥4,000–7,000（看幾位小孩被算付費，估計）（<a href="https://www.city.fukuoka.lg.jp/zaisei/zeisei/life/syuku001.html" target="_blank" rel="noopener">福岡市</a>、<a href="https://www.city.fukuoka.lg.jp/zaisei/zeisei/life/syukuqa.html" target="_blank" rel="noopener">FAQ</a>）。<br>• 🍳 早餐：1F 6:30–10:00（L.O. 9:30）。小孩早餐可能另收：官網館內設施頁寫大人 ¥1,650／小學生 ¥820／未就學免費，餐廳頁寫大人・小孩 ¥2,000／未就學免費，說法不一，入住時確認。<br>• 🧺 館內：1F 投幣洗衣機＋烘衣機、1F 微波爐、房內電熱水壺；無停車場（附近投幣停車場，包車接送停靠點待確認）。<br>• 🚕 7 人＋約 7 個行李箱：一般計程車坐 4 人、後車廂約 2 個大箱（估計）→ 需 1 台 9 人座 Jumbo（MK：建議 8 人、可放 13 個行李箱，機場↔博多 ¥20,330 起，電話 092-518-0089，<a href="https://www.mk-group.co.jp/fukuoka/" target="_blank" rel="noopener">MK</a>）或 3 台計程車。<br>• 📅 休館／休園：九州國立博物館週一休；海之中道海濱公園冬季每週二休（2/9 休）；海洋世界海豚／海獅秀 2027/1/12–4/9 暫停；太宰府遊園地 2 月休園日未公布。<br>• 🎌 2/11 日本國定假日：景點、交通、餐廳人較多。<br>• 🧾 退稅（2026/11/1 起出境再退）：托運行李前在國際線 3F 出發大廳機台刷「購買人本人」護照；免稅品要隨身、不可拆用，同一張收據少一件整張不退；建議起飛前約 3 小時到機場。（<a href="https://www.customs.go.jp/kaigairyoko/taxrefund/jpn.htm" target="_blank" rel="noopener">日本海關</a>、<a href="https://www.mlit.go.jp/kankocho/tax-free/page01_000001_00021.html" target="_blank" rel="noopener">觀光廳</a>）<br>• 🧳 2/13 退房後行李選項：<br>　– 包車：放車上。<br>　– 本飯店：退房後櫃台可寄放行李（官網 FAQ，沒寫時限，傍晚才取回請入住時確認）；延遲退房每小時 ¥1,000、最晚 14:00。⚠️本館不在 CARGO PASS 合作飯店名單（2026/10 查），不能從飯店直送機場。<br>　– Crosta博多（JR 博多站 2F 新幹線ひかり広場改札旁，9:00–20:00）：12:00 前交、每件 ¥1,500 送機場，14:00 起國際線 1F CARGO PASS 櫃台（8:00–19:30）領；⚠️非合作飯店房客能否使用請先電話確認 070-1815-4806（<a href="https://cargopass.jp/question" target="_blank" rel="noopener">CARGO PASS</a>）。<br>　– 機場：國際線 1F 佐川（101–200cm 每件 ¥1,000／日，7:30–21:40，<a href="https://www.sagawa-exp.co.jp/hands-freetravel/servicecenter/fukuoka_airport.html" target="_blank" rel="noopener">佐川</a>）；置物櫃 大 ¥800、大寬門 ¥1,200（<a href="https://www.fukuoka-airport.jp/service/coin-locker-intl-2.html" target="_blank" rel="noopener">福岡機場</a>）。<br>　– 博多站周邊：ecbo cloak App 預約，行李箱約 ¥800／件／日，各店可放數量有限、重量約 20kg 內（<a href="https://cloak.ecbo.io/ja" target="_blank" rel="noopener">ecbo</a>）；博多站 1F 手荷物寄放 10:30–18:30，¥1,000（繁忙期 ¥1,500，<a href="https://www.jrkyushu.co.jp/trains/yufuinnomori/pdf/baggage-storage-service-information.pdf" target="_blank" rel="noopener">JR九州</a>）。</div></details></div>
   <div class="toolbar">
+    <span class="status local" id="syncStatus" role="status">📴 本機模式（共享尚未設定）</span>
+    <button class="btn alt" id="refreshBtn" hidden>🔄 重新整理</button>
+    <button class="btn alt" id="shareBtn" hidden>🔗 複製分享連結</button>
+    <button class="btn alt" id="beforeShareBtn" hidden>↩️ 載入加入共享前的本機行程</button>
     <button class="btn" id="addDay">＋ 新增一天</button>
     <button class="btn alt" id="copyTxt">📋 複製行程文字</button>
     <button class="btn alt" id="exportBtn">⬇️ 匯出 JSON</button>
@@ -133,7 +174,8 @@ section.pane.on{display:block}
     <button class="btn warn" id="clearBtn">🗑 清空</button>
     <button class="btn alt" id="oldBtn" style="display:none">↩️ 載入舊版存檔</button>
   </div>
-  <p class="hint">按住 ☰ 拖曳即可排序或移到別天；也可以用右側選單直接換天。行程會自動存在這支手機（localStorage）。</p>
+  <div class="share-box" id="joinBox" hidden><p>尚未加入共享行程：請向家人索取分享連結或輸入行程代碼</p><form id="joinForm" class="row"><input id="tripInput" aria-label="行程代碼" placeholder="行程代碼" required pattern="[A-Za-z0-9_-]{16,64}" autocomplete="off"><button class="btn" type="submit">加入</button><button class="btn alt" type="button" id="createTrip">建立新的共享行程</button></form></div>
+  <p class="hint" id="planHint">按住 ☰ 拖曳即可排序或移到別天；也可以用右側選單直接換天。行程會自動存在這支手機（localStorage）。</p>
   <div id="days"></div>
 </section>
 
@@ -145,7 +187,11 @@ section.pane.on{display:block}
   </div>
   <div class="legend" id="legend"></div>
 </section>
+<section id="wishPane" class="pane"><p class="hint">點選喜好即可許願，再點一次可取消。每個景點每人可選一種喜好。</p><div id="wishSections"></div></section>
 </main>
+
+<div class="modal" id="nickModal" role="dialog" aria-modal="true" aria-labelledby="nickLabel"><form class="box" id="nickForm"><label id="nickLabel" for="nickInput">請輸入你的暱稱（顯示在許願池與修改紀錄）</label><input class="nick-input" id="nickInput" maxlength="12" required autocomplete="nickname"><div class="row" style="justify-content:flex-end"><button class="btn" type="submit">確定</button></div></form></div>
+<aside class="detail-panel" id="detailPanel" role="dialog" aria-labelledby="detailTitle"><div class="detail-head" id="detailHead"><strong>景點詳情</strong><button class="detail-close" id="detailClose" aria-label="關閉景點詳情">✕</button></div><div class="detail-body" id="detailBody"></div></aside>
 
 <div class="modal" id="modal"><div class="box">
   <div style="font-weight:700;margin-bottom:6px" id="mTitle"></div>
@@ -161,6 +207,8 @@ section.pane.on{display:block}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 <script>
+const SYNC_CFG = { dbURL: "" };  // e.g. "https://<project>-default-rtdb.asia-southeast1.firebasedatabase.app"
+
 // ===== 景點資料 =====
 // [id, 中文名, 日文名(Google搜尋用), 地區, 標籤[], 2歲★, 6歲★, 備註, lat, lng, 不確定?, 來源URL?]
 const A = [
@@ -243,9 +291,15 @@ const A = [
 ["miffy","米飛兔森林廚房 由布院","みっふぃー森のきっちん 湯布院店","由布院",["室內","美食","卡通角色","購物"],3,3,"【備選：由布院／別府一日來回，不住宿】湯之坪街道，米飛造型麵包；2F 可內用。商店約 9:30–17:30，年中無休（請再確認）。",33.2667,131.3650],
 ["donguri","橡子共和國 由布院（龍貓）","どんぐりの森 湯布院店","由布院",["室內","卡通角色","購物"],2,3,"湯之坪街道。約 平日 10:00–17:00，六日假日 9:30–17:00。",33.2662,131.3612]
 ];
-const ATTR = A.map(a=>({id:a[0],zh:a[1],ja:a[2],area:a[3],tags:a[4],a2:a[5],a6:a[6],note:a[7],lat:a[8],lng:a[9],q:!!a[10],src:a[11]||""}));
+// 可在這裡補充既有景點詳情與新景點；保持空白也能正常使用。
+const DETAIL = {};
+const EXTRA = [];
+const ATTR = A.map(a=>({id:a[0],zh:a[1],ja:a[2],area:a[3],tags:a[4],a2:a[5],a6:a[6],note:a[7],lat:a[8],lng:a[9],q:!!a[10],src:a[11]||"",cat:"親子景點"}));
+EXTRA.forEach(a=>{const cat=a.cat||"親子景點";ATTR.push({...a,cat,tags:Array.isArray(a.tags)?a.tags:[cat],a2:a.a2??1,a6:a.a6??1,q:!!a.uncertain?.length,src:a.url||"",note:a.note||""});DETAIL[a.id]={...a,...DETAIL[a.id]};});
 const BY = Object.fromEntries(ATTR.map(a=>[a.id,a]));
 const gmap = a => "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(a.ja);
+const CATEGORY_STYLE={"購物街/商圈":{emoji:"🛍️",color:"#dba2c2"},"安全帽店":{emoji:"🪖",color:"#a5c8a9"},"樂高店":{emoji:"🧱",color:"#e5bd7c"},"PS5遊戲片店":{emoji:"🎮",color:"#aca8dd"}};
+function hasCoords(a){return Number.isFinite(a?.lat)&&Number.isFinite(a?.lng);}
 const COLORS = ["#ff8fab","#6fb7f2","#9b7cf0","#3cc4a0","#f5a524","#ef6f6c","#4f7fd9","#c06fd6","#58b368","#e08a3c"];
 const KEY = "kyushuPlanner.v2", OLDKEY = "kyushuPlanner.v1";
 const DATES = ["2/8(一)","2/9(二)","2/10(三)","2/11(四)","2/12(五)","2/13(六)"];
@@ -280,27 +334,120 @@ else{try{if(OLD_DEFAULTS.includes(fp(S)))S=sample();}catch(e){}}
 function valid(s){return s&&Array.isArray(s.days)&&Array.isArray(s.pool)&&s.days.every(d=>Array.isArray(d.items));}
 function clean(s){const seen=new Set();const f=ids=>ids.filter(id=>BY[id]&&!seen.has(id)&&seen.add(id));s.days.forEach(d=>{d.items=f(d.items);if(!d.id)d.id=uid();if(!d.label)d.label="新的一天";});s.pool=f(s.pool);return s;}
 S=clean(S);
-function save(){localStorage.setItem(KEY,JSON.stringify(S));}
+// ===== 裝置、共享與離線快取（Firebase REST，無 SDK） =====
+const UIKEY="kyushuPlanner.ui", MEKEY="kyushuPlanner.me", WISHKEY="kyushuPlanner.wishes";
+function stored(key,fallback){try{return JSON.parse(localStorage.getItem(key))??fallback;}catch{return fallback;}}
+function randomCode(n){const chars="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-",bytes=new Uint8Array(n);crypto.getRandomValues(bytes);return [...bytes].map(b=>chars[b&63]).join("");}
+let UI=stored(UIKEY,{});if(!UI||typeof UI!=="object")UI={};
+let ME=stored(MEKEY,{});if(!ME||!/^[A-Za-z0-9_-]{12}$/.test(ME.id||""))ME={id:randomCode(12),nick:""};
+ME.nick=String(ME.nick||"").trim().slice(0,12);localStorage.setItem(MEKEY,JSON.stringify(ME));
+const POOLS={want:"💖 好想去",maybe:"👍 順便去",meh:"🙅 不太想去"};
+const CODE_RE=/^[A-Za-z0-9_-]{16,64}$/;
+let tripCode=localStorage.getItem("kyushuPlanner.trip")||"";
+const hashTrip=new URLSearchParams(location.hash.slice(1)).get("trip");
+if(hashTrip!==null){if(CODE_RE.test(hashTrip)){tripCode=hashTrip;localStorage.setItem("kyushuPlanner.trip",tripCode);}else setTimeout(()=>toast("行程代碼格式不正確"),0);history.replaceState(null,"",location.pathname+location.search);}
+if(!CODE_RE.test(tripCode))tripCode="";
+const localDB=["localhost","127.0.0.1"].includes(location.hostname)?new URLSearchParams(location.search).get("db"):null;
+const dbURL=String(localDB||SYNC_CFG.dbURL||"").replace(/\/+$/,"");
+const shared=()=>!!(dbURL&&tripCode);
+const scope=()=>shared()?dbURL+"/trips/"+tripCode:"local";
+function sanitizeWishes(raw){const out={};if(!raw||typeof raw!=="object")return out;Object.entries(raw).forEach(([spot,users])=>{if(!Object.hasOwn(BY,spot)||!users||typeof users!=="object")return;Object.entries(users).forEach(([dev,v])=>{if(!/^[A-Za-z0-9_-]{1,64}$/.test(dev)||["__proto__","constructor","prototype"].includes(dev)||!v||!Object.hasOwn(POOLS,v.pool)||typeof v.nick!=="string"||!v.nick.trim())return;(out[spot]??={})[dev]={pool:v.pool,nick:v.nick.trim().slice(0,12),at:Number(v.at)||0};});});return out;}
+let WISH=sanitizeWishes(stored(WISHKEY,{})),dragging=false,renderQueued=false,detailId=null;
+let sync={mirror:{},rev:0,etag:null,ready:false,offline:false,dirty:false,version:0,baseRev:0,pending:{},memberDirty:true,busy:false,source:null,poll:null,errors:0};
+let flushTimer,refreshing=false;
+const savedSync=stored("kyushuPlanner.sync",{});
+if(savedSync.scope===scope()){sync.rev=Number(savedSync.rev)||0;sync.dirty=!!savedSync.dirty;sync.baseRev=Number(savedSync.baseRev)||0;sync.pending=savedSync.pending||{};}
+function persistSync(){localStorage.setItem("kyushuPlanner.sync",JSON.stringify({scope:scope(),rev:sync.rev,dirty:sync.dirty,baseRev:sync.baseRev,pending:sync.pending}));}
+function cacheWishes(){localStorage.setItem(WISHKEY,JSON.stringify(WISH));}
+function cachePlan(){localStorage.setItem(KEY,JSON.stringify(S));}
+function normalPlan(p){if(!p||typeof p!=="object"||(!Object.hasOwn(p,"days")&&!Object.hasOwn(p,"rev")))return null;const list=x=>Array.isArray(x)?x:(x&&typeof x==="object"?Object.values(x):[]);return clean({days:list(p.days).filter(d=>d&&typeof d==="object").map(d=>({id:typeof d.id==="string"?d.id:uid(),label:String(d.label||"新的一天"),items:list(d.items)})),pool:list(p.pool)});}
+function renderAll(){if(dragging){renderQueued=true;return;}renderQueued=false;renderList();renderDays();renderMap();renderWishes();renderDetail();renderSync();}
+function renderSync(){const pill=document.getElementById("syncStatus");pill.className="status";if(!dbURL){pill.textContent="📴 本機模式（共享尚未設定）";pill.classList.add("local");}else if(!tripCode){pill.textContent="尚未加入共享行程";pill.classList.add("local");}else if(sync.offline){pill.textContent="⚠️ 離線，變更會在連線後上傳";pill.classList.add("off");}else{const p=sync.mirror.plan;const time=p?.at?new Date(p.at).toLocaleTimeString("zh-TW",{hour:"2-digit",minute:"2-digit",hour12:false}):"";pill.textContent=p?.by?`🟢 共享中・最後修改：${p.by} ${time}`:"🟢 共享中・等待同步";}
+  document.getElementById("joinBox").hidden=!dbURL||!!tripCode;document.getElementById("shareBtn").hidden=!shared();document.getElementById("refreshBtn").hidden=!shared();document.getElementById("beforeShareBtn").hidden=!localStorage.getItem(KEY+".beforeShare");
+  document.getElementById("planHint").textContent="按住 ☰ 拖曳即可排序或移到別天；也可以用右側選單直接換天。"+(shared()?"目前與家人共享，修改會自動同步並保留本機快取。":"行程會自動存在這支手機（localStorage）。");
+}
+function markPlan(){if(!shared())return;if(!sync.dirty)sync.baseRev=sync.rev;sync.dirty=true;sync.version++;persistSync();scheduleFlush();}
+function scheduleFlush(){clearTimeout(flushTimer);if(shared())flushTimer=setTimeout(flushPending,600);}
+async function request(path,opts={}){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),10000);try{const r=await fetch(scope()+path+".json",{...opts,signal:controller.signal,headers:{...(opts.body?{"Content-Type":"application/json"}:{}),...opts.headers}});if(!r.ok&&r.status!==412)throw new Error("HTTP "+r.status);const data=await r.json();return {data,etag:r.headers.get("ETag"),status:r.status};}finally{clearTimeout(timer);}}
+function offline(){sync.offline=true;renderSync();startPoll();}
+function queueWish(spot,dev,value){sync.pending[spot+"/"+dev]={value};persistSync();scheduleFlush();}
+function applyWishes(raw){WISH=sanitizeWishes(raw);Object.entries(sync.pending).forEach(([path,p])=>{const [spot,dev]=path.split("/");if(!BY[spot])return;if(p.value)(WISH[spot]??={})[dev]=p.value;else if(WISH[spot])delete WISH[spot][dev];});
+  if(ME.nick)Object.entries(WISH).forEach(([spot,users])=>{if(users[ME.id]&&users[ME.id].nick!==ME.nick){users[ME.id]={...users[ME.id],nick:ME.nick,at:Date.now()};queueWish(spot,ME.id,users[ME.id]);}});cacheWishes();}
+function acceptMirror(){if(dragging){renderQueued=true;return;}const p=normalPlan(sync.mirror.plan);sync.rev=Number(sync.mirror.plan?.rev)||0;if(p&&!sync.dirty){S=p;cachePlan();}applyWishes(sync.mirror.wishes);persistSync();renderAll();}
+function conflict(remote){if(dragging){sync.deferredConflict=remote;renderQueued=true;return;}clearTimeout(flushTimer);sync.dirty=false;sync.mirror.plan=remote;sync.rev=Number(remote?.rev)||0;const p=normalPlan(remote);if(p)S=p;else S=blank();cachePlan();persistSync();toast("其他人剛修改了行程，已載入最新版本");renderAll();}
+async function refreshShared(){if(!shared()||refreshing)return;refreshing=true;try{
+  const results=await Promise.allSettled([request("/plan",{headers:{"X-Firebase-ETag":"true"}}),request("/wishes")]);
+  if(results.some(r=>r.status==="rejected"))throw new Error("讀取失敗");
+  const [plan,wishes]=results.map(r=>r.value),remote=normalPlan(plan.data);sync.etag=plan.etag;
+  const joined=stored("kyushuPlanner.joined",{}),first=!joined[scope()];
+  if(!sync.ready&&first&&remote&&fp(S)!==fp(sample())&&fp(S)!==fp(remote)){localStorage.setItem(KEY+".beforeShare",JSON.stringify(S));toast("加入前的本機行程已備份，可用還原按鈕載入");}
+  sync.mirror.plan=plan.data;sync.mirror.wishes=wishes.data;sync.rev=Number(plan.data?.rev)||0;sync.offline=false;
+  if(!sync.ready){if(!remote&&!sync.dirty){sync.dirty=true;sync.version++;sync.baseRev=sync.rev;}
+    if(first){Object.entries(WISH).forEach(([spot,users])=>{if(users[ME.id]&&!wishes.data?.[spot]?.[ME.id]&&!Object.hasOwn(sync.pending,spot+"/"+ME.id))sync.pending[spot+"/"+ME.id]={value:users[ME.id]};});}
+    joined[scope()]=true;localStorage.setItem("kyushuPlanner.joined",JSON.stringify(joined));sync.ready=true;persistSync();openStream();}
+  acceptMirror();scheduleFlush();
+}catch{offline();}finally{refreshing=false;}}
+async function flushPending(){if(!shared()||!ME.nick||sync.busy||dragging)return;if(!sync.ready){await refreshShared();return;}sync.busy=true;
+  try{if(sync.dirty){const version=sync.version,desired=JSON.parse(JSON.stringify(S));if(!desired.days.length)desired.days=blank().days;const latest=await request("/plan",{headers:{"X-Firebase-ETag":"true"}});sync.etag=latest.etag;
+      if(!latest.etag)throw new Error("缺少 ETag");
+      const latestRev=Number(latest.data?.rev)||0;
+      if(latestRev!==sync.baseRev&&fp(normalPlan(latest.data)||blank())!==fp(desired)){conflict(latest.data);}
+      else{const plan={...desired,rev:latestRev+1,by:ME.nick,byId:ME.id,at:Date.now()};const result=await request("/plan",{method:"PUT",headers:{"if-match":latest.etag},body:JSON.stringify(plan)});sync.etag=result.etag;
+        if(result.status===412){const newest=await request("/plan",{headers:{"X-Firebase-ETag":"true"}});sync.etag=newest.etag;conflict(newest.data);}else{if((Number(sync.mirror.plan?.rev)||0)<=plan.rev)sync.mirror.plan=plan;sync.rev=Number(sync.mirror.plan?.rev)||plan.rev;if(sync.version===version)sync.dirty=false;else sync.baseRev=plan.rev;persistSync();acceptMirror();}}
+    }
+    for(const [path,pending] of Object.entries(sync.pending)){const [spot,dev]=path.split("/");if(!BY[spot]||!/^[A-Za-z0-9_-]{1,64}$/.test(dev)){delete sync.pending[path];continue;}await request("/wishes/"+encodeURIComponent(spot)+"/"+dev,{method:pending.value?"PUT":"DELETE",...(pending.value?{body:JSON.stringify(pending.value)}:{})});if(sync.pending[path]===pending){delete sync.pending[path];setMirror("/wishes/"+spot+"/"+dev,pending.value);}persistSync();}
+    if(sync.memberDirty){const nick=ME.nick;await request("/members/"+ME.id,{method:"PUT",body:JSON.stringify({nick,at:Date.now()})});sync.memberDirty=ME.nick!==nick;}
+    sync.offline=false;renderSync();if(sync.dirty||Object.keys(sync.pending).length||sync.memberDirty)scheduleFlush();
+  }catch{offline();}finally{sync.busy=false;}
+}
+// SSE 的 path 相對於 trip 根節點；patch 可包含多層路徑。
+function setMirror(path,value){const parts=path.split("/").filter(Boolean);if(parts.some(p=>["__proto__","constructor","prototype"].includes(p)))return;if(!parts.length){sync.mirror=value&&typeof value==="object"?value:{};return;}let node=sync.mirror;for(const part of parts.slice(0,-1)){if(!node[part]||typeof node[part]!=="object")node[part]={};node=node[part];}const last=parts.at(-1);if(value===null)delete node[last];else node[last]=value;}
+function openStream(){if(sync.source||!shared())return;if(!window.EventSource){startPoll();return;}const source=new EventSource(scope()+".json");sync.source=source;
+  const receive=e=>{try{const msg=JSON.parse(e.data);if(e.type==="patch"&&msg.data&&typeof msg.data==="object")Object.entries(msg.data).forEach(([k,v])=>setMirror(msg.path+"/"+k,v));else setMirror(msg.path,msg.data);sync.offline=false;acceptMirror();}catch{}};
+  source.addEventListener("put",receive);source.addEventListener("patch",receive);source.onopen=()=>{sync.offline=false;if(sync.poll){clearInterval(sync.poll);sync.poll=null;}renderSync();scheduleFlush();};
+  source.onerror=()=>{sync.errors++;if(sync.errors>=3){source.close();sync.source=null;offline();}else renderSync();};
+  source.addEventListener("cancel",()=>{source.close();sync.source=null;offline();});
+  source.addEventListener("auth_revoked",()=>{source.close();sync.source=null;offline();});
+}
+function startPoll(){if(!sync.poll&&shared())sync.poll=setInterval(async()=>{await refreshShared();await flushPending();},20000);}
+function sharedConfirm(localMessage){return confirm(shared()?"這會改變所有人看到的行程，確定？":localMessage);}
+function joinTrip(code){if(!CODE_RE.test(code)){toast("行程代碼需為 16–64 個英數字、底線或連字號");return;}localStorage.setItem("kyushuPlanner.trip",code);location.reload();}
+function openNick(){document.getElementById("nickInput").value=ME.nick;document.getElementById("nickModal").classList.add("on");setTimeout(()=>document.getElementById("nickInput").focus(),50);}
+function renameMe(nick){ME.nick=nick;localStorage.setItem(MEKEY,JSON.stringify(ME));document.getElementById("meBtn").textContent="👤 "+ME.nick;Object.entries(WISH).forEach(([spot,users])=>{if(users[ME.id]){users[ME.id]={...users[ME.id],nick,at:Date.now()};if(shared())queueWish(spot,ME.id,users[ME.id]);}});cacheWishes();sync.memberDirty=true;renderAll();scheduleFlush();}
+function initSharing(){const notes=document.getElementById("notes");document.getElementById("notesSummary").textContent=`⚠️ 注意事項（${(notes.querySelector(".notes-body").textContent.match(/•/g)||[]).length} 項）`;notes.open=UI.notesOpen===true;notes.addEventListener("toggle",()=>{UI.notesOpen=notes.open;localStorage.setItem(UIKEY,JSON.stringify(UI));});
+  document.getElementById("meBtn").textContent="👤 "+(ME.nick||"暱稱");document.getElementById("meBtn").onclick=openNick;
+  document.getElementById("nickForm").onsubmit=e=>{e.preventDefault();const input=document.getElementById("nickInput"),nick=input.value.trim().slice(0,12);if(!nick){input.setCustomValidity("請輸入暱稱");input.reportValidity();return;}input.setCustomValidity("");renameMe(nick);document.getElementById("nickModal").classList.remove("on");document.getElementById("meBtn").focus();};document.getElementById("nickInput").oninput=e=>e.target.setCustomValidity("");
+  document.getElementById("joinForm").onsubmit=e=>{e.preventDefault();joinTrip(document.getElementById("tripInput").value.trim());};document.getElementById("createTrip").onclick=()=>joinTrip(randomCode(22));
+  document.getElementById("shareBtn").onclick=()=>copy(location.origin+location.pathname+"#trip="+tripCode);
+  document.getElementById("refreshBtn").onclick=async()=>{await refreshShared();await flushPending();};
+  document.getElementById("beforeShareBtn").onclick=()=>{const saved=stored(KEY+".beforeShare",null);if(valid(saved)&&sharedConfirm("載入加入共享前的本機行程？會覆蓋目前的安排")){S=clean(saved);update();fit();}};
+  window.addEventListener("online",async()=>{await refreshShared();await flushPending();});window.addEventListener("offline",()=>{if(shared())offline();});
+  if(window.ResizeObserver)new ResizeObserver(()=>document.documentElement.style.setProperty("--header-height",document.querySelector("header").offsetHeight+"px")).observe(document.querySelector("header"));
+  renderSync();cachePlan();cacheWishes();if(!ME.nick)openNick();if(shared())refreshShared();
+}
+
+function save(){cachePlan();markPlan();}
 function selected(){const s=new Set(S.pool);S.days.forEach(d=>d.items.forEach(i=>s.add(i)));return s;}
 function where(id){if(S.pool.includes(id))return -1;return S.days.findIndex(d=>d.items.includes(id));}
 function removeId(id){S.pool=S.pool.filter(x=>x!==id);S.days.forEach(d=>d.items=d.items.filter(x=>x!==id));}
 function moveTo(id,dayIdx,pos){removeId(id);const arr=dayIdx<0?S.pool:S.days[dayIdx].items;if(pos==null||pos>arr.length)pos=arr.length;arr.splice(pos,0,id);}
-function update(){save();renderList();renderDays();renderMap();}
+function update(){save();renderAll();}
 function toast(t){const e=document.getElementById("toast");e.textContent=t;e.classList.add("on");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove("on"),1600);}
 
 // ===== 清單 =====
 const AREAS=[...new Set(ATTR.map(a=>a.area))];
 const TAGS=[...new Set(ATTR.flatMap(a=>a.tags))];
-const F={q:"",area:"",age:"",tags:new Set(),only:false};
+const F={q:"",area:"",age:"",cat:"",tags:new Set(),only:false};
 const areaSel=document.getElementById("area");
-areaSel.innerHTML='<option value="">地區：全部</option>'+AREAS.map(a=>`<option>${a}</option>`).join("");
-document.getElementById("tagChips").innerHTML=TAGS.map(t=>`<button class="chip" data-tag="${t}">${t}</button>`).join("");
+areaSel.innerHTML='<option value="">地區：全部</option>'+AREAS.map(a=>`<option>${esc(a)}</option>`).join("");
+document.getElementById("tagChips").innerHTML=TAGS.map(t=>`<button class="chip" data-tag="${esc(t)}">${esc(t)}</button>`).join("");
 document.getElementById("tagChips").onclick=e=>{const t=e.target.dataset.tag;if(!t)return;F.tags.has(t)?F.tags.delete(t):F.tags.add(t);e.target.classList.toggle("on");renderList();};
 document.getElementById("q").oninput=e=>{F.q=e.target.value.trim().toLowerCase();renderList();};
 areaSel.onchange=e=>{F.area=e.target.value;renderList();};
 document.getElementById("age").onchange=e=>{F.age=e.target.value;renderList();};
+document.getElementById("cat").onchange=e=>{F.cat=e.target.value;renderList();};
 document.getElementById("onlySel").onclick=e=>{F.only=!F.only;e.target.classList.toggle("on",F.only);renderList();};
-document.getElementById("clearF").onclick=()=>{F.q="";F.area="";F.age="";F.tags.clear();F.only=false;document.getElementById("q").value="";areaSel.value="";document.getElementById("age").value="";document.querySelectorAll(".chip.on").forEach(c=>c.classList.remove("on"));renderList();};
+document.getElementById("clearF").onclick=()=>{F.q="";F.area="";F.age="";F.cat="";document.getElementById("cat").value="";F.tags.clear();F.only=false;document.getElementById("q").value="";areaSel.value="";document.getElementById("age").value="";document.querySelectorAll(".filters .chip.on").forEach(c=>c.classList.remove("on"));renderList();};
 const stars=n=>"★".repeat(n)+"☆".repeat(3-n);
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 function renderList(){
@@ -308,6 +455,7 @@ function renderList(){
   const list=ATTR.filter(a=>{
     if(F.only&&!sel.has(a.id))return false;
     if(F.area&&a.area!==F.area)return false;
+    if(F.cat&&a.cat!==F.cat)return false;
     if(F.q&&!(a.zh+a.ja+a.note).toLowerCase().includes(F.q))return false;
     if(F.tags.size&&![...F.tags].every(t=>a.tags.includes(t)))return false;
     if(F.age==="a2"&&a.a2<2)return false;
@@ -317,13 +465,13 @@ function renderList(){
   document.getElementById("count").textContent=`顯示 ${list.length} / ${ATTR.length} 個景點 ・ 已選 ${sel.size} 個`;
   document.getElementById("cards").innerHTML=list.map(a=>{
     const w=where(a.id);const dl=w>=0?S.days[w].label:(w===-1&&sel.has(a.id)?"未排入":"");
-    return `<label class="card${sel.has(a.id)?" sel":""}">
-    <input type="checkbox" data-id="${a.id}" ${sel.has(a.id)?"checked":""}>
-    <div class="body"><div class="nm">${esc(a.zh)}</div><div class="ja">${esc(a.ja)}</div>
-    <div class="tags"><span class="tag area">${a.area}</span>${a.tags.map(t=>`<span class="tag">${t}</span>`).join("")}${a.q?'<span class="tag q">⚠️待確認</span>':""}${dl?`<span class="tag" style="background:#e3f6ee;color:#25785a">📅 ${esc(dl)}</span>`:""}</div>
+    return `<div class="card${sel.has(a.id)?" sel":""}">
+    <input type="checkbox" aria-label="選取 ${esc(a.zh)}" data-id="${esc(a.id)}" ${sel.has(a.id)?"checked":""}>
+    <div class="body"><button type="button" class="nm title-button" data-detail="${esc(a.id)}">${esc(a.zh)} <span class="info">ⓘ</span></button><div class="ja">${esc(a.ja)}</div>
+    <div class="tags"><span class="tag area">${esc(a.area)}</span><span class="tag cat">${esc(a.cat)}</span>${a.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join("")}${a.q?'<span class="tag q">⚠️待確認</span>':""}${dl?`<span class="tag" style="background:#e3f6ee;color:#25785a">📅 ${esc(dl)}</span>`:""}</div>
     <div class="ages">2 歲 <b>${stars(a.a2)}</b>　6 歲 <b>${stars(a.a6)}</b></div>
     ${a.note?`<div class="note">${esc(a.note)}</div>`:""}
-    <div class="links"><a href="${gmap(a)}" target="_blank" rel="noopener">🗺 Google 地圖</a><button type="button" data-show="${a.id}">📍 在地圖上看</button>${a.src?`<a href="${esc(a.src)}" target="_blank" rel="noopener">🔗 來源</a>`:""}</div></div></label>`;}).join("");
+    <div class="links"><a href="${gmap(a)}" target="_blank" rel="noopener">🗺 Google 地圖</a><button type="button" data-show="${esc(a.id)}">📍 在地圖上看</button>${a.src?linkHTML(a.src,"🔗 來源"):""}</div>${wishButtons(a.id)}</div></div>`;}).join("");
 }
 document.getElementById("cards").addEventListener("click",e=>{
   const s=e.target.dataset.show;if(s){e.preventDefault();showOnMap(s);}
@@ -340,35 +488,37 @@ function dayBlock(title,color,idx,items,isPool){
   return `<div class="day" data-idx="${idx}"><h3 style="background:${color}"><span class="lbl">${esc(title)}</span>
   <span style="font-size:12px;opacity:.9">${items.length} 個</span>
   ${isPool?"":`<button data-ren="${idx}">✎</button><button data-del="${idx}">✕</button>`}</h3>
-  <ul data-idx="${idx}">${items.map((id,i)=>{const a=BY[id];return `<li class="it" data-id="${id}">
+  <ul data-idx="${idx}">${items.map((id,i)=>{const a=BY[id];return `<li class="it" data-id="${esc(id)}">
     <span class="h">☰</span><span class="n" style="background:${isPool?"#a9b6c9":color}">${isPool?"•":i+1}</span>
-    <span class="t">${esc(a.zh)}<small>${esc(a.area)}・${esc(a.note||a.ja)}</small></span>
-    <select data-mv="${id}"><option value="-1"${isPool?" selected":""}>未排入</option>${S.days.map((d,j)=>`<option value="${j}"${j===idx?" selected":""}>${esc(d.label)}</option>`).join("")}</select>
-    <button class="x" data-rm="${id}" title="移除">×</button></li>`;}).join("")}</ul></div>`;
+    <span class="t">${esc(a.zh)} <span class="info">ⓘ</span><small>${esc(a.area)}・${esc(a.note||a.ja)}</small></span>
+    <select aria-label="移動 ${esc(a.zh)}" data-mv="${esc(id)}"><option value="-1"${isPool?" selected":""}>未排入</option>${S.days.map((d,j)=>`<option value="${j}"${j===idx?" selected":""}>${esc(d.label)}</option>`).join("")}</select>
+    <button class="x" data-rm="${esc(id)}" title="移除">×</button></li>`;}).join("")}</ul></div>`;
 }
 function renderDays(){
   sortables.forEach(s=>s.destroy());sortables=[];
   const el=document.getElementById("days");
   el.innerHTML=dayBlock("🧺 未排入行程（已勾選）","#a9b6c9",-1,S.pool,true)+S.days.map((d,i)=>dayBlock(d.label,COLORS[i%COLORS.length],i,d.items,false)).join("");
-  if(window.Sortable) el.querySelectorAll("ul").forEach(ul=>sortables.push(Sortable.create(ul,{group:"plan",handle:".h",animation:150,delay:0,touchStartThreshold:4,fallbackOnBody:true,forceFallback:true,onEnd:syncFromDom})));
+  if(window.Sortable) el.querySelectorAll("ul").forEach(ul=>sortables.push(Sortable.create(ul,{group:"plan",handle:".h",animation:150,delay:0,touchStartThreshold:4,fallbackOnBody:true,forceFallback:true,onStart:()=>{dragging=true;},onEnd:syncFromDom})));
 }
 function syncFromDom(){
+  const queued=renderQueued;
   document.querySelectorAll("#days ul").forEach(ul=>{const idx=+ul.dataset.idx;const ids=[...ul.querySelectorAll("li")].map(li=>li.dataset.id);if(idx<0)S.pool=ids;else S.days[idx].items=ids;});
-  update();
+  dragging=false;update();if(Object.hasOwn(sync,"deferredConflict")){const remote=sync.deferredConflict;delete sync.deferredConflict;conflict(remote);}else if(queued)acceptMirror();
 }
 document.getElementById("days").addEventListener("change",e=>{const id=e.target.dataset.mv;if(id){moveTo(id,+e.target.value);update();}});
 document.getElementById("days").addEventListener("click",e=>{
   const t=e.target;
+  const item=t.closest(".it");if(item&&!t.closest(".h,select,button")){openDetail(item.dataset.id);return;}
   if(t.dataset.rm){removeId(t.dataset.rm);update();}
   else if(t.dataset.ren!=null){const i=+t.dataset.ren;const v=prompt("這一天的名稱",S.days[i].label);if(v){S.days[i].label=v;update();}}
-  else if(t.dataset.del!=null){const i=+t.dataset.del;if(confirm(`刪除「${S.days[i].label}」？當天景點會移回「未排入」`)){S.pool.push(...S.days[i].items);S.days.splice(i,1);update();}}
+  else if(t.dataset.del!=null){const i=+t.dataset.del;if(shared()&&S.days.length===1){toast("共享行程至少需保留一天");return;}if(confirm(`刪除「${S.days[i].label}」？當天景點會移回「未排入」`)){S.pool.push(...S.days[i].items);S.days.splice(i,1);update();}}
 });
 document.getElementById("addDay").onclick=()=>{S.days.push({id:uid(),label:`第 ${S.days.length+1} 天`,items:[]});update();toast("已新增一天");};
-document.getElementById("sampleBtn").onclick=()=>{if(confirm("載入預設行程？會覆蓋目前的安排")){S=sample();update();fit();}};
+document.getElementById("sampleBtn").onclick=()=>{if(sharedConfirm("載入預設行程？會覆蓋目前的安排")){S=sample();update();fit();}};
 (function(){let old=null;try{old=JSON.parse(localStorage.getItem(OLDKEY));}catch(e){}
   if(old&&Array.isArray(old.days)){const b=document.getElementById("oldBtn");b.style.display="";
-    b.onclick=()=>{if(confirm("載入這支手機上舊版（航班變更前）自動儲存的行程？會覆蓋目前的安排")){S=clean(norm(old));update();fit();toast("已載入舊版存檔");}};}})();
-document.getElementById("clearBtn").onclick=()=>{if(confirm("清空所有已選景點與天數？")){S=blank();update();}};
+    b.onclick=()=>{if(sharedConfirm("載入這支手機上舊版（航班變更前）自動儲存的行程？會覆蓋目前的安排")){S=clean(norm(old));update();fit();toast("已載入舊版存檔");}};}})();
+document.getElementById("clearBtn").onclick=()=>{if(sharedConfirm("清空所有已選景點與天數？")){S=blank();update();}};
 function planText(){
   let out="九州親子行程 2027 春節\n🏨 住宿（暫定）：クインテッサホテル福岡博多 Relax＆Sleep（博多駅東 2-9-29，☎ +81-92-292-6728，入住 15:00／退房 11:00）\n";
   S.days.forEach(d=>{out+=`\n【${d.label}】\n`;if(!d.items.length)out+="  （尚未安排）\n";d.items.forEach((id,i)=>{const a=BY[id];out+=`  ${i+1}. ${a.zh}（${a.ja}）\n     ${gmap(a)}\n`;});});
@@ -382,9 +532,44 @@ function openModal(title,text,onOk){document.getElementById("mTitle").textConten
 document.getElementById("mCancel").onclick=()=>modal.classList.remove("on");
 document.getElementById("mCopy").onclick=()=>{const t=document.getElementById("mText");t.select();try{navigator.clipboard.writeText(t.value);}catch(e){document.execCommand("copy");}toast("已複製");};
 document.getElementById("mOk").onclick=()=>{if(modalOk&&modalOk(document.getElementById("mText").value)!==false)modal.classList.remove("on");};
-document.getElementById("exportBtn").onclick=()=>openModal("行程 JSON（可複製保存或傳給家人）",JSON.stringify({v:2,days:S.days.map(d=>({label:d.label,items:d.items})),pool:S.pool},null,1),null);
+document.getElementById("exportBtn").onclick=()=>openModal("行程 JSON（可複製保存或傳給家人）",JSON.stringify({v:2,days:S.days.map(d=>({label:d.label,items:d.items})),pool:S.pool,wishes:WISH},null,1),null);
 document.getElementById("importBtn").onclick=()=>openModal("貼上 JSON 後按「確定」","",txt=>importJSON(txt));
-function importJSON(txt){try{const o=JSON.parse(txt);if(!o||!Array.isArray(o.days))throw 0;S=clean(norm(o));update();fit();toast("匯入成功");return true;}catch(e){alert("JSON 格式不正確");return false;}}
+function importJSON(txt){try{const o=JSON.parse(txt);if(!o||!Array.isArray(o.days))throw 0;const next=clean(norm(o));if(shared()&&!sharedConfirm(""))return false;S=next;if(Object.hasOwn(o,"wishes")){const nextWishes=sanitizeWishes(o.wishes);if(shared()){const all=new Set([...Object.keys(WISH),...Object.keys(nextWishes)]);all.forEach(spot=>{const devs=new Set([...Object.keys(WISH[spot]||{}),...Object.keys(nextWishes[spot]||{})]);devs.forEach(dev=>queueWish(spot,dev,nextWishes[spot]?.[dev]||null));});}WISH=nextWishes;cacheWishes();}update();fit();toast("匯入成功");return true;}catch(e){alert("JSON 格式不正確");return false;}}
+
+// ===== 許願池與景點詳情 =====
+function wishButtons(id){const mine=WISH[id]?.[ME.id]?.pool;return `<div class="wish-buttons" aria-label="景點許願">${Object.entries(POOLS).map(([pool,label])=>`<button type="button" class="wish-btn${mine===pool?" on":""}" data-wish="${pool}" data-spot="${esc(id)}" aria-pressed="${mine===pool}">${label}</button>`).join("")}</div><div class="wish-names">${Object.keys(POOLS).map(pool=>{const names=Object.values(WISH[id]||{}).filter(w=>w.pool===pool).map(w=>esc(w.nick));return names.length?`${POOLS[pool].split(" ")[0]} ${names.join("、")}`:"";}).filter(Boolean).join("　")||"還沒有人許願"}</div>`;}
+function toggleWish(id,pool){if(!BY[id]||!Object.hasOwn(POOLS,pool))return;if(!ME.nick){openNick();return;}const old=WISH[id]?.[ME.id],value=old?.pool===pool?null:{pool,nick:ME.nick,at:Date.now()};if(value)(WISH[id]??={})[ME.id]=value;else if(WISH[id])delete WISH[id][ME.id];cacheWishes();if(shared())queueWish(id,ME.id,value);renderAll();}
+function renderWishes(){const sel=selected();document.getElementById("wishSections").innerHTML=Object.entries(POOLS).map(([pool,title])=>{const spots=ATTR.map(a=>({a,votes:Object.values(WISH[a.id]||{}).filter(w=>w.pool===pool)})).filter(x=>x.votes.length).sort((a,b)=>b.votes.length-a.votes.length||a.a.zh.localeCompare(b.a.zh,"zh-Hant"));return `<section class="wish-section"><h2>${title}</h2>${spots.map(({a,votes})=>`<div class="wish-row" data-detail="${esc(a.id)}" tabindex="0" role="button" aria-label="${esc(a.zh)} 詳情"><span class="wish-count">${votes.length} 人</span><strong>${esc(a.zh)}</strong><div class="meta">${esc(a.area)}／${esc(a.cat)}</div><div>${votes.map(w=>`<span class="nick-chip">${esc(w.nick)}</span>`).join("")}</div>${!sel.has(a.id)?`<button class="btn" type="button" data-add="${esc(a.id)}">＋ 加入行程（未排入）</button>`:""}</div>`).join("")||'<p class="hint">目前還沒有許願</p>'}</section>`;}).join("");}
+function safeURL(value){try{const u=new URL(value);return ["https:","http:"].includes(u.protocol)?u.href:"";}catch{return "";}}
+function linkHTML(url,label){const safe=safeURL(url);return safe?`<a href="${esc(safe)}" target="_blank" rel="noopener noreferrer">${esc(label||safe)}</a>`:"";}
+function currentPlace(id){if(!selected().has(id))return "未選";const idx=where(id);return idx<0?"未排入":S.days[idx].label;}
+function renderDetail(){if(!detailId||!BY[detailId])return;const a=BY[detailId],d=DETAIL[detailId]||{},val=k=>d[k]??a[k],rows=[];
+  const row=(label,value,html=false)=>{if(value!==undefined&&value!==null&&value!=="")rows.push(`<dt>${label}</dt><dd>${html?value:esc(value)}</dd>`);};
+  row("🏷️ 類別／地區／標籤",[d.cat||a.cat,a.area,...a.tags].filter(Boolean).filter((v,i,arr)=>arr.indexOf(v)===i).join("・"));
+  row("📍 地址",val("addr"));row("🕘 營業時間",val("hours"));row("🚫 休息日",val("closed"));row("💴 門票／價格",val("price"));row("🚉 最近車站／交通",val("station"));row("⏱ 建議停留",val("time"));
+  row("👶 親子資訊",(val("kids")?esc(val("kids"))+"<br>":"")+`2 歲 <b style="color:#d69c19">${stars(a.a2)}</b>　6 歲 <b style="color:#d69c19">${stars(a.a6)}</b>`,true);
+  row("⚠️ 注意事項",val("caution"));row("📝 備註",a.note);row("🔗 官網",linkHTML(val("url"),"開啟官網"),true);row("🗺 Google 地圖",linkHTML(gmap(a),"開啟地圖／導航"),true);
+  const sources=Array.isArray(d.sources)?[...d.sources]:[];if(a.src&&!sources.some(s=>(typeof s==="string"?s:s?.url)===a.src))sources.push(a.src);const sourceLinks=sources.map(s=>typeof s==="string"?linkHTML(s,s):linkHTML(s?.url,s?.label||s?.title||s?.url)).filter(Boolean);
+  if(sourceLinks.length)row("📚 資料來源",`<ul class="sources">${sourceLinks.map(s=>`<li>${s}</li>`).join("")}</ul>`,true);
+  const uncertain=Array.isArray(d.uncertain)?d.uncertain:[];if(uncertain.length)row("⚠️ 待確認",`<ul>${uncertain.map(s=>`<li>${esc(s)}</li>`).join("")}</ul>`,true);else if(a.q)row("⚠️ 待確認","現有資料含待確認資訊，請見備註並於出發前確認。");
+  const place=currentPlace(a.id),idx=selected().has(a.id)?where(a.id):-2;
+  document.getElementById("detailBody").innerHTML=`<h2 id="detailTitle">${esc(a.zh)}</h2>${a.ja?`<p class="ja">${esc(a.ja)}</p>`:""}<dl>${rows.join("")}<dt>💭 許願</dt><dd>${wishButtons(a.id)}</dd><dt>📅 目前在：${esc(place)}</dt><dd><select aria-label="加入或移動景點" data-detail-move="${esc(a.id)}"><option value="-2"${idx===-2?" selected":""}>未選</option><option value="-1"${idx===-1?" selected":""}>未排入</option>${S.days.map((day,i)=>`<option value="${i}"${idx===i?" selected":""}>${esc(day.label)}</option>`).join("")}</select></dd></dl>`;
+  if(document.getElementById("detailPanel").classList.contains("on"))clampPanel();
+}
+function clampPanel(){const panel=document.getElementById("detailPanel");if(innerWidth<700)return;const rect=panel.getBoundingClientRect(),pos=UI.panel||{x:innerWidth-400,y:Math.max(12,Math.min(160,innerHeight-rect.height-10))};const x=Math.max(10,Math.min(Number(pos.x)||10,innerWidth-rect.width-10)),y=Math.max(10,Math.min(Number(pos.y)||10,innerHeight-rect.height-10));panel.style.left=x+"px";panel.style.top=y+"px";}
+let detailReturn=null;
+function openDetail(id){if(!BY[id])return;detailReturn=document.activeElement;detailId=id;renderDetail();document.getElementById("detailPanel").classList.add("on");document.getElementById("detailBody").scrollTop=0;clampPanel();document.getElementById("detailClose").focus({preventScroll:true});}
+function closeDetail(){detailId=null;document.getElementById("detailPanel").classList.remove("on");if(detailReturn?.isConnected)detailReturn.focus({preventScroll:true});}
+document.getElementById("detailClose").onclick=closeDetail;
+document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeDetail();if(ME.nick)document.getElementById("nickModal").classList.remove("on");}const row=e.target.closest(".wish-row");if(row&&e.target===row&&["Enter"," "].includes(e.key)){e.preventDefault();openDetail(row.dataset.detail);}});
+document.addEventListener("click",e=>{const wish=e.target.closest("[data-wish]");if(wish){e.preventDefault();toggleWish(wish.dataset.spot,wish.dataset.wish);return;}const add=e.target.closest("[data-add]");if(add){if(!selected().has(add.dataset.add)){S.pool.push(add.dataset.add);update();toast("已加入未排入行程");}return;}const detail=e.target.closest("[data-detail]");if(detail){e.preventDefault();openDetail(detail.dataset.detail);}});
+document.getElementById("detailBody").onchange=e=>{const id=e.target.dataset.detailMove;if(id){const idx=Number(e.target.value);if(idx===-2)removeId(id);else moveTo(id,idx);update();}};
+let panelDrag=null;const panelHead=document.getElementById("detailHead");
+panelHead.addEventListener("pointerdown",e=>{if(innerWidth<700||e.target.closest("button")||e.button!==0)return;const rect=document.getElementById("detailPanel").getBoundingClientRect();panelDrag={dx:e.clientX-rect.left,dy:e.clientY-rect.top};panelHead.setPointerCapture(e.pointerId);e.preventDefault();});
+panelHead.addEventListener("pointermove",e=>{if(!panelDrag)return;UI.panel={x:e.clientX-panelDrag.dx,y:e.clientY-panelDrag.dy};clampPanel();});
+function endPanelDrag(){if(!panelDrag)return;const rect=document.getElementById("detailPanel").getBoundingClientRect();UI.panel={x:rect.left,y:rect.top};localStorage.setItem(UIKEY,JSON.stringify(UI));panelDrag=null;}
+panelHead.addEventListener("pointerup",endPanelDrag);panelHead.addEventListener("pointercancel",endPanelDrag);window.addEventListener("resize",()=>{if(detailId)clampPanel();});
+
 
 // ===== 地圖 =====
 const HOTEL={name:"クインテッサホテル福岡博多 Relax＆Sleep",zh:"住宿（暫定）",addr:"〒812-0013 福岡市博多區博多駅東 2-9-29",tel:"+81-92-292-6728",lat:33.587048,lng:130.424911,url:"https://quintessahotels.com/fukuoka-hakata/"};
@@ -394,34 +579,35 @@ function initMap(){
   map=L.map("map",{zoomControl:true}).setView([33.45,130.9],8);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
   allLayer=L.layerGroup().addTo(map);layer=L.layerGroup().addTo(map);
+  map.on("popupopen",e=>{const detail=e.popup.getElement().querySelector("[data-detail]");if(detail)detail.onclick=event=>{event.preventDefault();event.stopPropagation();openDetail(detail.dataset.detail);};});
   document.getElementById("showAll").onchange=renderMap;
   document.getElementById("fitBtn").onclick=fit;
   renderMap();fit();
 }
-function popup(a,extra){return `<b>${esc(a.zh)}</b><br><span style="color:#7a86a0">${esc(a.ja)}</span>${extra?`<br>📅 ${esc(extra)}`:""}${a.note?`<br><span style="font-size:12px">${esc(a.note)}</span>`:""}<br><a href="${gmap(a)}" target="_blank" rel="noopener">🗺 用 Google 地圖開啟／導航</a>${a.src?` ・ <a href="${esc(a.src)}" target="_blank" rel="noopener">🔗 來源</a>`:""}`;}
+function popup(a,extra){return `<a href="#" data-detail="${esc(a.id)}">詳細 ⓘ</a><br><b>${esc(a.zh)}</b><br><span style="color:#7a86a0">${esc(a.ja)}</span>${extra?`<br>📅 ${esc(extra)}`:""}${a.note?`<br><span style="font-size:12px">${esc(a.note)}</span>`:""}<br><a href="${gmap(a)}" target="_blank" rel="noopener">🗺 用 Google 地圖開啟／導航</a>${a.src?" ・ "+linkHTML(a.src,"🔗 來源"):""}`;}
 function pin(color,txt){return L.divIcon({className:"",html:`<div class="pin" style="background:${color}"><span>${txt}</span></div>`,iconSize:[26,26],iconAnchor:[13,26],popupAnchor:[0,-24]});}
 function renderMap(){
   if(!map)return;
   layer.clearLayers();allLayer.clearLayers();markers={};
   L.marker([HOTEL.lat,HOTEL.lng],{icon:L.divIcon({className:"hotel-pin",html:"🏨",iconSize:[30,30],iconAnchor:[15,15],popupAnchor:[0,-15]}),zIndexOffset:1000}).bindPopup(`<b>🏨 ${esc(HOTEL.zh)}</b><br>${esc(HOTEL.name)}<br>${esc(HOTEL.addr)}<br>☎ ${esc(HOTEL.tel)}<br>入住 15:00・退房 11:00<br>2/8–2/13 五晚<br><a href="${esc(HOTEL.url)}" target="_blank" rel="noopener">官網</a>`).addTo(layer);
   const sel=selected();
-  if(document.getElementById("showAll").checked) ATTR.filter(a=>!sel.has(a.id)).forEach(a=>{markers[a.id]=L.circleMarker([a.lat,a.lng],{radius:6,color:"#8d97a8",fillColor:"#c3cad6",fillOpacity:.9,weight:1}).bindPopup(popup(a)).addTo(allLayer);});
-  S.pool.forEach(id=>{const a=BY[id];markers[id]=L.marker([a.lat,a.lng],{icon:pin("#a9b6c9","•")}).bindPopup(popup(a,"未排入")).addTo(layer);});
+  if(document.getElementById("showAll").checked) ATTR.filter(a=>!sel.has(a.id)&&hasCoords(a)).forEach(a=>{const style=CATEGORY_STYLE[a.cat];markers[a.id]=(style?L.marker([a.lat,a.lng],{icon:L.divIcon({className:"category-pin",html:`<span style="display:block;border-radius:8px;background:${style.color}">${style.emoji}</span>`,iconSize:[30,30],iconAnchor:[15,15]})}):L.circleMarker([a.lat,a.lng],{radius:6,color:"#8d97a8",fillColor:"#c3cad6",fillOpacity:.9,weight:1})).bindPopup(popup(a)).addTo(allLayer);});
+  S.pool.forEach(id=>{const a=BY[id];if(!hasCoords(a))return;markers[id]=L.marker([a.lat,a.lng],{icon:pin("#a9b6c9","•")}).bindPopup(popup(a,"未排入")).addTo(layer);});
   S.days.forEach((d,i)=>{const c=COLORS[i%COLORS.length];const pts=[];
-    d.items.forEach((id,k)=>{const a=BY[id];pts.push([a.lat,a.lng]);markers[id]=L.marker([a.lat,a.lng],{icon:pin(c,k+1),zIndexOffset:100}).bindPopup(popup(a,`${d.label} 第 ${k+1} 站`)).addTo(layer);});
+    d.items.forEach((id,k)=>{const a=BY[id];if(!hasCoords(a))return;pts.push([a.lat,a.lng]);markers[id]=L.marker([a.lat,a.lng],{icon:pin(c,k+1),zIndexOffset:100}).bindPopup(popup(a,`${d.label} 第 ${k+1} 站`)).addTo(layer);});
     if(pts.length>1)L.polyline(pts,{color:c,weight:4,opacity:.8,dashArray:"6 6"}).addTo(layer);});
-  document.getElementById("legend").innerHTML=S.days.map((d,i)=>`<span><i style="background:${COLORS[i%COLORS.length]}"></i>${esc(d.label)}</span>`).join("")+(S.pool.length?'<span><i style="background:#a9b6c9"></i>未排入</span>':"");
+  document.getElementById("legend").innerHTML=S.days.map((d,i)=>`<span><i style="background:${COLORS[i%COLORS.length]}"></i>${esc(d.label)}</span>`).join("")+(S.pool.length?'<span><i style="background:#a9b6c9"></i>未排入</span>':"")+(document.getElementById("showAll").checked?Object.entries(CATEGORY_STYLE).filter(([cat])=>ATTR.some(a=>a.cat===cat&&!sel.has(a.id)&&hasCoords(a))).map(([cat,style])=>`<span><i style="background:${style.color}"></i>${style.emoji} ${esc(cat)}</span>`).join(""):"");
 }
-function fit(){if(!map)return;const pts=[[HOTEL.lat,HOTEL.lng],...[...selected()].map(id=>[BY[id].lat,BY[id].lng])];if(pts.length===1)map.setView(pts[0],14);else if(pts.length)map.fitBounds(pts,{padding:[30,30]});}
-function showOnMap(id){tab("mapPane");const a=BY[id];if(!markers[id]){document.getElementById("showAll").checked=true;renderMap();}map.setView([a.lat,a.lng],14);setTimeout(()=>markers[id]&&markers[id].openPopup(),200);}
+function fit(){if(!map)return;const pts=[[HOTEL.lat,HOTEL.lng],...[...selected()].map(id=>BY[id]).filter(hasCoords).map(a=>[a.lat,a.lng])];if(pts.length===1)map.setView(pts[0],14);else if(pts.length)map.fitBounds(pts,{padding:[30,30]});}
+function showOnMap(id){tab("mapPane");const a=BY[id];if(!map||!hasCoords(a)){toast("此景點尚無地圖座標");return;}if(!markers[id]){document.getElementById("showAll").checked=true;renderMap();}map.setView([a.lat,a.lng],14);setTimeout(()=>markers[id]&&markers[id].openPopup(),200);}
 
 // ===== 分頁 =====
 function tab(id){document.querySelectorAll("nav.tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tab===id));document.querySelectorAll("section.pane").forEach(p=>p.classList.toggle("on",p.id===id));if(id==="mapPane"&&map)setTimeout(()=>{map.invalidateSize();},50);window.scrollTo(0,0);}
 document.querySelectorAll("nav.tabs button").forEach(b=>b.onclick=()=>{tab(b.dataset.tab);if(b.dataset.tab==="mapPane")setTimeout(fit,80);});
 
-renderList();renderDays();initMap();
+renderList();renderDays();renderWishes();initMap();initSharing();
 // 測試／除錯用
-window.planner={get state(){return S;},moveTo:(id,d,p)=>{moveTo(id,d,p);update();},select:id=>{if(!selected().has(id)){S.pool.push(id);update();}},unselect:id=>{removeId(id);update();},planText,ATTR,tab,fit};
+window.planner={get state(){return S;},moveTo:(id,d,p)=>{moveTo(id,d,p);update();},select:id=>{if(!selected().has(id)){S.pool.push(id);update();}},unselect:id=>{removeId(id);update();},planText,ATTR,tab,fit,openDetail,toggleWish,get wishes(){return WISH;}};
 </script>
 </body>
 </html>
