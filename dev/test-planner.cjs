@@ -13,17 +13,26 @@ class Database{
  if(this.failPath&&url.includes(this.failPath)){this.failPath=null;throw Error('simulated connection drop');}if(method==='PUT'||method==='DELETE'){this.set(path,method==='DELETE'?null:JSON.parse(opts.body));if(this.dropStateResponse&&path.at(-1)==='state'){this.dropStateResponse=false;throw Error('response lost after commit');}return this.response(200,this.read(path),this.tag(this.read(path)));}const query=new URL(url).searchParams;let data=current;if(query.get('orderBy')==='"$key"'&&data){data=Object.fromEntries(Object.keys(data).sort().slice(-Number(query.get('limitToLast')||200)).map(k=>[k,data[k]]));}return this.response(200,data,opts.headers?.['X-Firebase-ETag']?tag:null);}
  response(status,data,etag){return {ok:status<400,status,json:async()=>clone(data),headers:{get:k=>k.toLowerCase()==='etag'?etag:null}};}
 }
+// Exercise the production adapter through an in-memory JSON-file REST endpoint.
+class JsonfileDatabase extends Database{
+ async fetch(owner,url,opts={}){if(!owner.online)throw Error('offline');await sleep(2);const op=new URL(url).searchParams.get('op'),path=['kyushu2027','state'];
+  if(op==='state')return this.response(200,this.read(path));
+  if(op==='rev'){const {rev,at,by}=this.read(path)||{rev:0};return this.response(200,{rev,at,by});}
+  if(op==='save'){const {baseRev,state}=JSON.parse(opts.body);if(this.beforePut){const cb=this.beforePut;this.beforePut=null;cb(path);}const current=this.read(path);if(baseRev!==(current?.rev||0))return this.response(409,{conflict:true,state:current});const entry={...state,rev:baseRev+1,at:Date.now()};this.set(path,entry);this.set(['kyushu2027','history',String(entry.rev).padStart(6,'0')],entry);return this.response(200,{ok:true,state:entry});}
+  throw Error('Unexpected JSON-file operation: '+op);
+ }
+}
 class El{
  constructor(id=''){this.id=id;this.value='';this.dataset={};this.style={};this.hidden=false;this.listeners={};this.textContent='';this.innerHTML='';this.open=false;this.classes=new Set;this.classList={add:x=>this.classes.add(x),remove:x=>this.classes.delete(x),contains:x=>this.classes.has(x),toggle:(x,on)=>{if(on===undefined)on=!this.classes.has(x);on?this.classes.add(x):this.classes.delete(x);}};this.isConnected=true;}
  addEventListener(k,cb){(this.listeners[k]??=[]).push(cb);}querySelector(){return null;}querySelectorAll(){return [];}focus(){}setCustomValidity(s){this.validation=s;}reportValidity(){}hasAttribute(key){return Object.hasOwn(this,key);}getBoundingClientRect(){return {left:parseFloat(this.style.left)||0,top:parseFloat(this.style.top)||0,width:380,height:500};}closest(){return null;}setPointerCapture(){}
 }
 const instances=[];
-function page({db=null,hostname='127.0.0.1',storage=new Map(),nick='小明',source=script}={}){
+function page({db=null,backend='firebase',hostname='127.0.0.1',storage=new Map(),nick='小明',source=script}={}){
  const owner={online:true};const timers=new Set,els={};for(const [,id]of html.matchAll(/\bid="([^"]+)"/g))els[id]=new El(id);
  const notes=new El('notes-body');notes.textContent=html.match(/<div class="notes-body">([\s\S]*?)<\/div><\/details>/)[1].replace(/<[^>]+>/g,'');els.notes.querySelector=()=>notes;
  const tabs=['listPane','planPane','mapPane','wishPane'].map(id=>{const e=new El;e.dataset.tab=id;return e;});const panes=tabs.map(t=>els[t.dataset.tab]);
  if(nick&&!storage.has('kyushuPlanner.me'))storage.set('kyushuPlanner.me',JSON.stringify({id:'ABCDefgh1234',nick}));
- const uri=new URL('http://'+hostname+':8000/'+(db?'?backend=firebase&db=http://127.0.0.1:9000':''));
+ const uri=new URL('http://'+hostname+':8000/'+(db?'?backend='+backend+'&db=http://127.0.0.1:9000':''));
  const context={console,URL,URLSearchParams,AbortController,Uint8Array,crypto:crypto.webcrypto,location:uri,innerWidth:390,innerHeight:844,navigator:{clipboard:{writeText:async t=>{owner.clipboard=t;}}},localStorage:{getItem:k=>storage.get(k)??null,setItem:(k,v)=>storage.set(k,String(v)),removeItem:k=>storage.delete(k)},history:{replaceState:(_,__,url)=>{const next=new URL(url,uri);context.location=next;}},document:{getElementById:id=>els[id]??(els[id]=new El(id)),querySelectorAll:q=>q==='nav.tabs button'?tabs:q==='section.pane'?panes:[],querySelector:()=>new El('header'),addEventListener(){},removeEventListener(){},visibilityState:'visible',activeElement:null,documentElement:{style:{setProperty(){}}}},setTimeout:(cb,ms)=>{const id=setTimeout(()=>{timers.delete(id);cb();},ms);timers.add(id);return id;},clearTimeout:id=>{clearTimeout(id);timers.delete(id);},setInterval:()=>1,clearInterval(){},scrollTo(){},addEventListener:(name,cb)=>{(owner.listeners??={})[name]=cb;},confirm:()=>true,prompt:()=>null,alert:msg=>{throw Error('Alert: '+msg);}};
  if(db){context.fetch=(url,opts)=>db.fetch(owner,url,opts);context.EventSource=class{
  constructor(url){this.path=new URL(url).pathname.replace(/\.json$/,'').split('/').filter(Boolean);this.owner=owner;this.listeners={};db.streams.push(this);context.setTimeout(()=>{if(!this.closed){this.onopen?.();this.emit('put',{path:'/',data:db.read(this.path)});}},3);}
@@ -34,18 +43,56 @@ function page({db=null,hostname='127.0.0.1',storage=new Map(),nick='小明',sour
 const waitFor=async(predicate)=>{for(let i=0;i<100;i++){if(await predicate())return;await sleep(10);}throw Error('timed out');};
 const initial=async p=>{await waitFor(()=>p.run('sync.ready'));await p.run('flushPending()');};
 (async()=>{
- const p=page({nick:''});await initial(p);assert(p.els.nickModal.classes.has('on'));assert.equal(p.run('ME.id.length'),12);assert.equal(p.els.notes.open,false);assert.match(p.els.notesSummary.textContent,/14 項/);assert.equal(p.run('S.days.length'),6);assert.match(p.els.syncStatus.textContent,/本機模式/);
+ const p=page({nick:''});await initial(p);assert(p.els.nickModal.classes.has('on'));assert.equal(p.run('ME.id.length'),12);assert.equal(p.els.notes.open,false);assert.equal(p.els.notesSummary.textContent,`⚠️ 注意事項（${(html.match(/<div class="notes-body">([\s\S]*?)<\/div><\/details>/)[1].match(/•/g)||[]).length} 項）`);assert.match(p.els.notesSummary.textContent,/19 項/);assert.equal(p.run('S.days.length'),6);assert.match(p.els.syncStatus.textContent,/本機模式/);
  p.run('renameMe("媽媽<小明>");toggleWish("canal","want")');await p.run('flushPending()');assert.equal(p.run('sync.rev'),1);assert.match(p.run('sync.current.summary'),/許願：媽媽<小明> 好想去/);assert.match(p.els.cards.innerHTML,/媽媽&lt;小明&gt;/);assert(!p.els.cards.innerHTML.includes('媽媽<小明>'));
  p.run('toggleWish("canal","maybe");toggleWish("canal","meh")');await p.run('flushPending()');assert.equal(p.run('sync.rev'),2);const version1=p.run('JSON.stringify(stored(HISTORYKEY,[])[0])');assert.equal(p.run('stored(HISTORYKEY,[])[0].wishes.canal[ME.id].pool'),'want');
  p.run('toggleWish("canal","meh")');await p.run('flushPending()');assert.equal(p.run('sync.rev'),3);assert.match(p.run('sync.current.summary'),/取消許願/);
  p.run('planner.select("tower");planner.moveTo("tower",1)');await sleep(650);assert.equal(p.run('sync.rev'),4);assert.match(p.run('sync.current.summary'),/新增 福岡塔 到 2\/9/);assert.equal(p.run('JSON.stringify(stored(HISTORYKEY,[])[0])'),version1);
- p.run('openDetail("canal")');assert.match(p.els.detailBody.innerHTML,/detailTitle/);p.run('closeDetail()');p.run('document.getElementById("exportBtn").onclick()');assert(Object.hasOwn(JSON.parse(p.els.mText.value),'wishes'));assert.match(p.run('planText()'),/住宿/);
+ p.run('openDetail("canal")');assert.match(p.els.detailBody.innerHTML,/detailTitle/);p.run('closeDetail()');p.run('document.getElementById("exportBtn").onclick()');assert(Object.hasOwn(JSON.parse(p.els.mText.value),'wishes'));assert.match(p.run('planText()'),/住宿（已訂）/);
  await p.run('openHistory()');assert.match(p.els.historyBody.innerHTML,/#4/);assert.match(p.els.historyBody.innerHTML,/台北/);await p.run('previewVersion(1)');assert.match(p.els.historyBody.innerHTML,/與目前行程比較/);assert.match(p.els.historyBody.innerHTML,/移除 福岡塔/);
  await p.els.historyBody.onclick({target:{closest:()=>({dataset:{},hasAttribute:key=>key==='data-history-restore'})}});await p.run('flushPending()');assert.equal(p.run('sync.rev'),5);assert.equal(p.run('sync.current.summary'),'還原至第 1 版');assert.equal(p.run('WISH.canal[ME.id].pool'),'want');assert(!p.run('selected().has("tower")'));assert.equal(p.run('JSON.stringify(stored(HISTORYKEY,[])[0])'),version1);
  p.run('importJSON(JSON.stringify({v:2,days:[],pool:[]}))');await p.run('flushPending()');assert.equal(p.run('sync.current.summary'),'匯入 JSON');assert.equal(p.run('S.days.length'),6);p.run('document.getElementById("sampleBtn").onclick()');await p.run('flushPending()');assert.equal(p.run('sync.current.summary'),'載入預設行程');p.run('document.getElementById("clearBtn").onclick()');await p.run('flushPending()');assert.equal(p.run('sync.current.summary'),'清空行程');
  for(let i=0;i<102;i++){p.run('S.days[0].label="測試 "+'+i+';update()');await p.run('flushPending()');}assert.equal(p.run('stored(HISTORYKEY,[]).length'),100);assert.equal(p.run('sync.rev'),110);
  const old=JSON.parse(p.run('OLD_DEFAULTS[0]')),oldPlan={days:old[0].map(([label,items])=>({label,items})),pool:old[1]},oldStore=new Map([['kyushuPlanner.v2',JSON.stringify(oldPlan)]]),upgrade=page({storage:oldStore});assert(upgrade.run('fp(S)===fp(sample())'));oldPlan.days[0].label+=' 自訂';oldStore.set('kyushuPlanner.v2',JSON.stringify(oldPlan));const edited=page({storage:oldStore});assert.match(edited.run('S.days[0].label'),/自訂/);
  const v1=page({storage:new Map([['kyushuPlanner.v1',JSON.stringify({days:[{label:'2/7(日)',items:['tower']},{label:'2/9(二)',items:['dazaifu']}],pool:[]})]])});await initial(v1);v1.run('document.getElementById("oldBtn").onclick()');await v1.run('flushPending()');assert.equal(v1.run('sync.current.summary'),'載入舊版存檔');assert(v1.run('S.pool.includes("tower")'));
+ // Confirmed lodging labels and public-page privacy.
+ assert.match(html,/<div class="sub">🏨 住宿（已訂）：/);
+ assert.equal(p.run('HOTEL.zh'),'住宿（已訂）');
+ assert(!/住宿（暫定）/.test(html));
+ for(const privateValue of ['189,520','189520','1791493524','6222338535','60626719'])assert(!html.includes(privateValue));
+ console.log('PASS confirmed lodging header, export and map labels; no booking amount or private identifiers');
+ // Confirmed flight labels upgrade only exact old defaults, with no load-time save/version.
+ assert(!/tokyo|東京|TYO/i.test(html));assert(!/\.sw(?:[\s.{]|$)|<nav class="sw"/.test(html));
+ assert(!/暫定/.test(html.match(/<div class="sub">([^<]+)/)[1]));
+ assert(!p.run('DEFAULT_LABELS.some(label=>label.includes("暫定"))'));
+ const oldLabels=['2/8(一) 去程 CI116 16:25→19:35（暫定）','2/13(六) 回程 CI117 20:35 起飛（暫定）'];
+ const newLabels=['2/8(一) 去程 CI116 桃園T2 16:25→福岡 19:35','2/13(六) 回程 CI117 福岡 20:35→桃園T2 22:20'];
+ const flightPlan=JSON.parse(p.run('JSON.stringify(sample())'));flightPlan.days[0].label=oldLabels[0];flightPlan.days[5].label=oldLabels[1];flightPlan.days[1].label='2/9(二) 家人自訂';
+ const flightState={rev:7,at:1000,by:'家人',byId:'remote123456',summary:'既有行程',plan:flightPlan,wishes:{}};
+ const flightStore=new Map([['kyushuPlanner.v2',JSON.stringify(flightPlan)],['kyushuPlanner.history',JSON.stringify([flightState])]]);
+ const localFlights=page({storage:flightStore});await initial(localFlights);
+ function confirmedLabels(view){for(const [i,label]of [[0,newLabels[0]],[5,newLabels[1]]]){assert.equal(view.run(`S.days[${i}].label`),label);assert(view.els.days.innerHTML.includes(label));}assert.equal(view.run('S.days[1].label'),'2/9(二) 家人自訂');}
+ confirmedLabels(localFlights);
+ const renamedPlan=clone(flightPlan);renamedPlan.days[0].label+=' 自訂';renamedPlan.days[5].label=' '+oldLabels[1];
+ const renamedFlights=page({storage:new Map([['kyushuPlanner.v2',JSON.stringify(renamedPlan)]])});await initial(renamedFlights);
+ assert.equal(renamedFlights.run('S.days[0].label'),renamedPlan.days[0].label);assert.equal(renamedFlights.run('S.days[5].label'),renamedPlan.days[5].label);
+ const sharedFlights=[];
+ for(const [DB,backend]of [[Database,'firebase'],[JsonfileDatabase,'jsonfile']]){
+  const flightsDb=new DB(),key='000007';flightsDb.tree={kyushu2027:{state:clone(flightState),history:{[key]:clone(flightState)},historyIndex:{[key]:{rev:7,at:1000,by:'家人',byId:'remote123456',summary:'既有行程'}}}};
+  const view=page({db:flightsDb,backend,storage:new Map([['kyushuPlanner.v2',JSON.stringify(flightPlan)]])});await initial(view);confirmedLabels(view);assert(!view.storage.has('kyushuPlanner.v2.beforeShare'));sharedFlights.push({view,flightsDb});
+ }
+ await sleep(650);
+ for(const view of [localFlights,renamedFlights,...sharedFlights.map(x=>x.view)]){assert.equal(view.run('sync.queue.length'),0);assert.equal(view.run('sync.stage'),null);}
+ assert.equal(localFlights.run('sync.rev'),7);assert.equal(flightStore.get('kyushuPlanner.history'),JSON.stringify([flightState]));assert.equal(renamedFlights.run('sync.rev'),0);assert(!renamedFlights.storage.has('kyushuPlanner.history'));
+ for(const {view,flightsDb}of sharedFlights){assert.equal(view.run('sync.rev'),7);assert.equal(flightsDb.writes,0);assert.deepEqual(flightsDb.tree.kyushu2027.state,flightState);
+  view.run('planner.select("tower")');await view.run('flushPending()');assert.equal(view.run('sync.rev'),8);assert.equal(flightsDb.tree.kyushu2027.state.plan.days[0].label,newLabels[0]);assert.equal(flightsDb.tree.kyushu2027.state.plan.days[5].label,newLabels[1]);assert.deepEqual(flightsDb.tree.kyushu2027.history['000007'],flightState);
+  // A concurrent old client can still return old defaults during a real plan conflict.
+  view.run('planner.moveTo("teamlab",0)');flightsDb.beforePut=path=>{const current=flightsDb.read(path);current.rev++;current.plan=clone(flightPlan);flightsDb.set(path,current);};await view.run('flushPending()');confirmedLabels(view);assert.equal(view.run('sync.rev'),9);assert.equal(view.run('stored("kyushuPlanner.conflicts",[]).length'),1);
+  view.run('acceptState({...sync.current,rev:10,plan:{...sync.current.plan,days:sync.current.plan.days.map((d,i)=>({...d,label:i===0?"家人改名":d.label}))}})');assert.equal(view.run('S.days[0].label'),'家人改名');
+ }
+ const importedFlights=page();await initial(importedFlights);assert(importedFlights.run('importJSON('+JSON.stringify(JSON.stringify({v:2,...flightPlan}))+')'));await importedFlights.run('flushPending()');confirmedLabels(importedFlights);assert.equal(importedFlights.run('sync.rev'),1);assert.equal(importedFlights.run('sync.current.summary'),'匯入 JSON');
+ assert(p.run('diffState('+JSON.stringify(flightState)+',normalState('+JSON.stringify(flightState)+')).filter(change=>change.startsWith("修改日標題")).length===2'));
+ console.log('PASS exact flight-label upgrades: local/Firebase/JSON-file load without saves or rev changes, custom labels, next save, immutable history, conflict, import, notes count, Kyushu-only content');
  console.log('PASS local versions, 600 ms debounce, snapshot immutability, diff, preview/restore, JSON/default/clear/v1, 100-version cap, old defaults, escaping');
  const db=new Database(),a=page({db});await initial(a);assert.equal(db.tree.kyushu2027.state.rev,1);assert.match(db.tree.kyushu2027.state.summary,/建立共享行程/);assert(db.tree.kyushu2027.history['000001']);assert(db.tree.kyushu2027.historyIndex['000001']);const original=clone(db.tree.kyushu2027.history['000001']);
  const b=page({db,storage:new Map([['kyushuPlanner.me',JSON.stringify({id:'ZZZZabcd5678',nick:'阿姨'})]])});await initial(b);a.run('planner.moveTo("zoo",1)');await a.run('flushPending()');await waitFor(()=>b.run('S.days[1].items.includes("zoo")'));
