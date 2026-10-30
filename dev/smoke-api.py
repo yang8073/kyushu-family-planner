@@ -81,7 +81,7 @@ def main():
                 valid_custom['customs'] = {
                     'u_testspot1': {
                         'zh': '測試自訂景點',
-                        'cat': '親子景點',
+                        'cat': '餐廳',
                         'area': '福岡市區',
                         'addr': '福岡市博多區',
                         'lat': 33.59,
