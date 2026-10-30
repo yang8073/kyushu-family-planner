@@ -27,7 +27,12 @@ class El{
  addEventListener(k,cb){(this.listeners[k]??=[]).push(cb);}querySelector(){return null;}querySelectorAll(){return [];}focus(){}setCustomValidity(s){this.validation=s;}reportValidity(){}hasAttribute(key){return Object.hasOwn(this,key);}getBoundingClientRect(){return {left:parseFloat(this.style.left)||0,top:parseFloat(this.style.top)||0,width:380,height:500};}closest(){return null;}setPointerCapture(){}
 }
 const instances=[];
-function page({db=null,backend='firebase',hostname='127.0.0.1',storage=new Map(),nick='小明',source=script}={}){
+// Leaflet lifecycle double: catches reused containers and records bounds, pins and popup handlers.
+function leaflet(){const maps=[],groups=[],pins=[],circles=[],active=new Set;
+ const item=(kind,data)=>({kind,data,addTo(target){this.target=target;(target.children??=[]).push(this);return this;},bindPopup(html){this.popup=html;return this;},remove(){this.removed=true;},clearLayers(){this.children=[];return this;},openPopup(){return this;}});
+ const L={maps,groups,pins,circles,map:(host,options)=>{assert(!active.has(host),'Leaflet container already initialized');active.add(host);const m=Object.assign(item('map',{host,options}),{handlers:{},on(k,cb){(this.handlers[k]??=[]).push(cb);return this;},setView(point,zoom){this.view={point,zoom};return this;},fitBounds(points,options){this.bounds={points,options};return this;},invalidateSize(){this.invalidations=(this.invalidations||0)+1;return this;},remove(){this.removed=true;active.delete(host);}});maps.push(m);return m;},tileLayer:(...args)=>item('tiles',args),layerGroup:()=>{const g=item('group');groups.push(g);return g;},marker:(point,options)=>{const p=item('pin',{point,options});pins.push(p);return p;},circleMarker:(...args)=>item('circleMarker',args),circle:(point,options)=>{const c=item('circle',{point,options});circles.push(c);return c;},polyline:(...args)=>item('line',args),divIcon:options=>options};return L;
+}
+function page({db=null,backend='firebase',hostname='127.0.0.1',storage=new Map(),nick='小明',source=script,L=null}={}){
  const owner={online:true};const timers=new Set,els={};for(const [,id]of html.matchAll(/\bid="([^"]+)"/g))els[id]=new El(id);
  const notes=new El('notes-body');notes.textContent=html.match(/<div class="notes-body">([\s\S]*?)<\/div><\/details>/)[1].replace(/<[^>]+>/g,'');els.notes.querySelector=()=>notes;
  const tabs=['listPane','planPane','mapPane','wishPane'].map(id=>{const e=new El;e.dataset.tab=id;return e;});const panes=tabs.map(t=>els[t.dataset.tab]);
@@ -38,6 +43,8 @@ function page({db=null,backend='firebase',hostname='127.0.0.1',storage=new Map()
  constructor(url){this.path=new URL(url).pathname.replace(/\.json$/,'').split('/').filter(Boolean);this.owner=owner;this.listeners={};db.streams.push(this);context.setTimeout(()=>{if(!this.closed){this.onopen?.();this.emit('put',{path:'/',data:db.read(this.path)});}},3);}
  addEventListener(k,cb){(this.listeners[k]??=[]).push(cb);}emit(type,data){for(const cb of this.listeners[type]||[])cb({type,data:JSON.stringify(data)});}close(){this.closed=true;}
  };}else context.fetch=()=>{throw Error('local should not fetch');};
+ owner.docListeners={};context.document.addEventListener=(name,cb)=>{(owner.docListeners[name]??=[]).push(cb);};for(const el of Object.values(els))el.focus=()=>{context.document.activeElement=el;};
+ if(L)context.L=L;
  context.removeEventListener=()=>{};context.window=context;vm.createContext(context);vm.runInContext(source,context);const run=code=>vm.runInContext(code,context);const p={context,run,els,storage,owner,close(){for(const t of timers)clearTimeout(t);run('sync.unsubscribe?.()');}};instances.push(p);return p;
 }
 const waitFor=async(predicate)=>{for(let i=0;i<100;i++){if(await predicate())return;await sleep(10);}throw Error('timed out');};
@@ -65,6 +72,51 @@ const initial=async p=>{await waitFor(()=>p.run('sync.ready'));await p.run('flus
   const counts=JSON.parse(p.run('JSON.stringify(ATTR.reduce((m,a)=>(m[a.cat]=(m[a.cat]||0)+1,m),{}))'));assert.deepEqual(Object.keys(counts).sort(),['PS5遊戲片店','安全帽店','樂高店','親子景點','購物街/商圈','餐廳'].sort());
   p.run('openDetail("food_daitoen")');assert.match(p.els.detailBody.innerHTML,/大東園/);p.run('closeDetail()');
   console.log('PASS 餐廳 category: 29 entries (燒肉7/拉麵12/其他10), unique ids, coords, map style, allowed as custom category',JSON.stringify(counts));}
+ // Nearby logic uses all registered spots (including unselected customs), never stored UI state.
+ {const n=page();await initial(n);const fixtures={};
+  const custom=(zh,coords={})=>({zh,cat:'餐廳',area:'測試區',by:'家人',byId:'nearby123456',at:1000,...coords});
+  fixtures.u_near_source=custom('起點<測試>',{lat:0,lng:0});
+  for(const [id,meters]of [['walk',499],['short',501],['shortend',1499],['area',1501],['edge',4999],['outside',5001],['tie',499]])fixtures['u_near_'+id]=custom(id+'<景點>',{lat:meters/6371000*180/Math.PI,lng:0});
+  fixtures.u_near_missing=custom('沒有座標');fixtures.u_near_builtin=custom('內建旁的自訂點',{lat:n.run('BY.canal.lat'),lng:n.run('BY.canal.lng')});
+  n.run('planner.setCustoms('+JSON.stringify(fixtures)+')');
+  assert(n.run('Math.abs(planner.haversine({lat:0,lng:0},{lat:1,lng:0})-111195)<1111.95'));
+  assert(n.run('Math.abs(planner.haversine({lat:51.5074,lng:-0.1278},{lat:40.7128,lng:-74.006})-5570222)<55702.22'));
+  assert.equal(n.run('planner.haversine(BY.canal,BY.canal)'),0);assert(n.run('Number.isNaN(planner.haversine({},BY.canal))'));
+  for(const [meters,band]of [[0,'步行可達'],[500,'步行可達'],[500.01,'短程（步行/1站）'],[1500,'短程（步行/1站）'],[1500.01,'同區域（電車/計程車）'],[5000,'同區域（電車/計程車）']])assert.equal(n.run('planner.nearbyBand('+meters+')'),band);
+  const nearby=JSON.parse(n.run('JSON.stringify(planner.nearbySpots("u_near_source"))'));
+  assert.equal(nearby.length,6);assert(nearby.every(s=>s.id!=='u_near_source'&&s.id!=='u_near_missing'&&s.id!=='u_near_outside'));
+  assert(nearby.every((s,i)=>!i||s.meters>=nearby[i-1].meters));assert(nearby.every(s=>s.walkMin===Math.ceil(s.meters/67)));
+  assert.deepEqual(nearby.map(s=>s.band),['步行可達','步行可達','短程（步行/1站）','短程（步行/1站）','同區域（電車/計程車）','同區域（電車/計程車）']);
+  assert.deepEqual(nearby.slice(0,2).map(s=>s.id),['u_near_tie','u_near_walk']);
+  assert.equal(n.run('planner.nearbySpots("u_near_source",500).length'),2);assert.equal(n.run('planner.nearbySpots("u_near_missing").length'),0);assert.equal(n.run('planner.nearbySpots("unknown").length'),0);
+  assert(n.run('planner.nearbySpots("canal").some(s=>s.id==="u_near_builtin"&&s.meters===0)'));
+  assert.equal((n.els.cards.innerHTML.match(/data-nearby=/g)||[]).length,n.run('ATTR.length'));assert.match(n.els.cards.innerHTML,/data-nearby="canal"[^>]*>📍附近/);assert.match(n.els.cards.innerHTML,/data-nearby="u_near_missing" disabled[^>]*>📍附近（無座標）/);
+  n.run('planner.openDetail("u_near_missing")');assert.match(n.els.detailBody.innerHTML,/📍附近（無座標）/);n.run('planner.openDetail("canal")');assert.match(n.els.detailBody.innerHTML,/data-nearby="canal"/);n.run('closeDetail()');
+  const click=dataset=>{const button={dataset};const event={target:{closest:q=>q==='[data-nearby],[data-near-add],[data-near-detail]'?button:null},preventDefault(){},stopPropagation(){}};for(const cb of n.owner.docListeners.click)cb(event);};
+  assert.equal(n.context.L,undefined);click({nearby:'u_near_source'});assert(n.els.nearbyPanel.classes.has('on'));assert.equal(n.els.nearbyTitle.textContent,'📍 起點<測試> 附近');assert.match(n.els.nearbyMap.innerHTML,/地圖載入失敗/);assert(n.els.nearbyBigMap.disabled);assert.match(n.els.nearbyRows.innerHTML,/walk&lt;景點&gt;/);assert.match(n.els.nearbyRows.innerHTML,/步行 ≈ 8 分鐘/);assert.match(n.els.nearbyRows.innerHTML,/未選/);assert.match(n.els.nearbyRows.innerHTML,/＋未排入/);assert.equal(n.context.document.activeElement,n.els.nearbyClose);
+  click({nearSource:'u_near_source',nearAdd:'u_near_walk'});assert(n.run('S.pool.includes("u_near_walk")'));assert.match(n.els.nearbyRows.innerHTML,/未排入/);assert(!/data-near-add="u_near_walk"/.test(n.els.nearbyRows.innerHTML));
+  const focusStops=[n.els.nearbyClose,n.els.nearbyBigMap];n.els.nearbyPanel.querySelectorAll=()=>focusStops;
+  for(const [active,shiftKey,expected]of [[focusStops[0],true,focusStops[1]],[focusStops[1],false,focusStops[0]],[n.els.cards,false,focusStops[0]]]){n.context.document.activeElement=active;const e={key:'Tab',shiftKey,target:active,preventDefault(){this.prevented=true;}};for(const cb of n.owner.docListeners.keydown)cb(e);assert(e.prevented);assert.equal(n.context.document.activeElement,expected);}
+  n.run('planner.moveTo("u_near_source",1);planner.moveTo("u_near_walk",2)');await n.run('flushPending()');const beforeNearbyMove=n.run('sync.rev');assert.match(n.els.nearbyRows.innerHTML,/＋同一天/);
+  click({nearSource:'u_near_source',nearAdd:'u_near_walk'});assert(n.run('S.days[1].items.includes("u_near_walk")'));assert(!n.run('S.days[2].items.includes("u_near_walk")'));assert(!n.run('S.pool.includes("u_near_walk")'));assert(n.els.nearbyRows.innerHTML.includes(n.run('esc(S.days[1].label)')));
+  await n.run('flushPending()');assert.equal(n.run('sync.rev'),beforeNearbyMove+1);assert(n.run('sync.current.plan.days[1].items.includes("u_near_walk")'));assert.match(n.run('sync.current.summary'),/到|移動/);assert(!Object.keys(JSON.parse(n.run('JSON.stringify(snapshot())'))).some(k=>/nearby/i.test(k)));
+  click({nearDetail:'u_near_walk'});assert(!n.els.nearbyPanel.classes.has('on'));assert.match(n.els.detailBody.innerHTML,/walk&lt;景點&gt;/);
+  n.run('planner.openNearby("u_near_missing")');assert(!n.els.nearbyPanel.classes.has('on'));
+  n.run('planner.openNearby("u_near_builtin")');const event={key:'Escape',target:n.els.nearbyClose,preventDefault(){}};for(const cb of n.owner.docListeners.keydown)cb(event);assert(!n.els.nearbyPanel.classes.has('on'));
+  n.run('planner.setCustoms({u_near_source:planner.customs.u_near_source});planner.openNearby("u_near_source")');assert.match(n.els.nearbyRows.innerHTML,/5 km 內沒有/);n.run('planner.closeNearby()');
+  // Opening, reopening and closing remove mini-maps; stale timers cannot touch removed maps.
+  const L=leaflet(),mapped=page({L});await initial(mapped);mapped.run('planner.openNearby("canal")');const mini=L.maps[1];assert.equal(L.maps.length,2);assert(L.circles.some(c=>c.data.options.radius===500));assert(L.circles.some(c=>c.data.options.radius===1500));assert(L.pins.some(p=>p.data.options.icon.className==='nearby-source'));
+  await sleep(80);assert.equal(mini.invalidations,1);assert(mini.bounds.points.length>1);assert.equal(mini.bounds.options.maxZoom,16);
+  const detailPin=L.pins.find(p=>p.target===L.groups.at(-1)&&p.popup.includes('data-near-detail'));assert(detailPin);
+  const popupAction=(view,button)=>{button.closest=()=>button;for(const cb of view.handlers.popupopen)cb({popup:{getElement:()=>({querySelector:()=>null,querySelectorAll:()=>[button]})}});assert.equal(typeof button.onclick,'function');button.onclick({target:button,preventDefault(){},stopPropagation(){}});};
+  const nearbyTarget=mapped.run('planner.nearbySpots("canal")[0].id');mapped.run('planner.moveTo("canal",1);planner.moveTo('+JSON.stringify(nearbyTarget)+',2)');
+  assert(L.pins.some(p=>p.popup.includes('data-near-add="'+nearbyTarget+'"')&&p.popup.includes('＋同一天')));popupAction(mini,{dataset:{nearAdd:nearbyTarget,nearSource:'canal'}});assert(mapped.run('S.days[1].items.includes('+JSON.stringify(nearbyTarget)+')'));
+  popupAction(mini,{dataset:{nearDetail:'canal'}});assert(mini.removed);assert(mapped.els.detailPanel.classes.has('on'));
+  mapped.run('planner.openNearby("canal");planner.openNearby("tower")');assert(L.maps[2].removed);const latest=L.maps.at(-1);mapped.run('planner.showNearbyOnMap()');assert(latest.removed);assert.equal(mapped.els.clearNearby.hidden,false);assert(mapped.els.mapPane.classes.has('on'));assert(L.maps[0].bounds.points.length>1);const highlights=L.groups.at(-1);mapped.els.clearNearby.onclick();assert(highlights.removed);assert(mapped.els.clearNearby.hidden);
+  mapped.run('planner.openNearby("canal");planner.showNearbyOnMap()');const normalClear=L.groups.at(-1);mapped.run('renderMap()');assert(normalClear.removed);assert(mapped.els.clearNearby.hidden);
+  mapped.run('planner.moveTo('+JSON.stringify(nearbyTarget)+',2);planner.openNearby("canal");planner.showNearbyOnMap()');popupAction(L.maps[0],{dataset:{nearAdd:nearbyTarget,nearSource:'canal'}});assert(mapped.run('S.days[1].items.includes('+JSON.stringify(nearbyTarget)+')'));assert(mapped.els.clearNearby.hidden);
+  mapped.run('planner.openNearby("canal");planner.closeNearby()');await sleep(80);assert.equal(L.maps.at(-1).invalidations,undefined);
+  console.log('PASS nearby: haversine, boundaries, sorted/custom/coord-less spots, list/detail buttons, rows without Leaflet, pool/same-day history, popup actions, mini-map lifecycle and main-map highlights');}
  // Confirmed lodging labels and public-page privacy.
  assert.match(html,/<div class="sub">🏨 住宿（已訂）：/);
  assert.equal(p.run('HOTEL.zh'),'住宿（已訂）');
