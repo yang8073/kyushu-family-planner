@@ -43,8 +43,9 @@ section.pane.on{display:block}
 .ages{font-size:12.5px;color:var(--ink)}
 .ages b{color:#e7a400;letter-spacing:1px;font-weight:normal}
 .note{font-size:12.5px;color:#56617a;margin-top:4px;line-height:1.45}
-.links{margin-top:6px;display:flex;gap:10px;font-size:13px}
+.links{margin-top:6px;display:flex;gap:10px;flex-wrap:wrap;font-size:13px}
 .links a,.links button{color:#2f6ea8;text-decoration:none;background:none;border:0;padding:0;font-size:13px}
+.links button:disabled{color:var(--sub);cursor:default}
 .day{background:var(--card);border-radius:var(--radius);margin-bottom:10px;box-shadow:0 1px 4px #0000000d;overflow:hidden}
 .day h3{margin:0;padding:8px 10px;font-size:15px;display:flex;align-items:center;gap:6px;color:#fff}
 .day h3 .lbl{flex:1}
@@ -86,6 +87,12 @@ section.pane.on{display:block}
 .modal{position:fixed;inset:0;background:#0005;z-index:3000;display:none;align-items:center;justify-content:center;padding:14px}
 .modal.on{display:flex}
 .modal .box{background:#fff;border-radius:16px;padding:14px;width:100%;max-width:560px}
+#nearbyPanel .box{padding:0;max-width:620px;max-height:90vh;max-height:90dvh;display:flex;flex-direction:column;overflow:hidden}
+#nearbyPanel .detail-head{cursor:default;touch-action:auto}#nearbyBody{overflow:auto;overscroll-behavior:contain;padding:12px}
+#nearbyMap{height:240px;border-radius:12px;background:var(--bg);margin-bottom:10px;isolation:isolate}
+#nearbyRows h3{font-size:14px;margin:16px 0 4px}.nearby-row{border-top:1px solid var(--line);padding:10px 0;overflow-wrap:anywhere}.nearby-row .meta{font-size:12px;color:var(--sub);margin:5px 0;line-height:1.6}.nearby-row .btn{min-height:36px}
+.nearby-source{width:34px;height:34px;background:#d94e57;border:3px solid #fff;border-radius:50%;color:#fff;font-size:21px;text-align:center;line-height:28px;box-shadow:0 2px 6px #0005}
+@media(max-width:699px){#nearbyPanel{padding:0;align-items:flex-end}#nearbyPanel .box{border-radius:20px 20px 0 0;padding-bottom:env(safe-area-inset-bottom)}}
 .modal textarea{width:100%;height:46vh;font-family:ui-monospace,Menlo,monospace;font-size:12px;border:1px solid var(--line);border-radius:10px;padding:8px}
 #customModal .box{max-width:440px;max-height:85vh;overflow-y:auto}
 #customForm label{display:block;font-weight:700;font-size:13px;margin:8px 0 3px}
@@ -219,6 +226,7 @@ button{cursor:pointer}
   <div class="mapbar">
     <label><input type="checkbox" id="showAll"> 顯示全部景點（灰）</label>
     <button class="btn" id="fitBtn" style="padding:4px 8px">🔍 縮放到已選</button>
+    <button class="btn warn" id="clearNearby" hidden>清除附近標示</button>
   </div>
   <div class="legend" id="legend"></div>
 </section>
@@ -228,6 +236,7 @@ button{cursor:pointer}
 <div class="modal" id="customModal" role="dialog" aria-modal="true" aria-labelledby="customModalTitle"><form class="box" id="customForm"><h3 id="customModalTitle" style="margin:0 0 10px 0;font-size:17px">＋ 自訂景點</h3><input type="hidden" id="customId"><label for="customZh">景點名稱 <b style="color:#ef6f6c">*</b></label><input type="text" id="customZh" maxlength="60" required placeholder="例如：博多運河城（必填，60 字內）"><label for="customCat">類型 <b style="color:#ef6f6c">*</b></label><select id="customCat" required><option value="親子景點">親子景點</option><option value="購物街/商圈">購物街/商圈</option><option value="安全帽店">安全帽店</option><option value="樂高店">樂高店</option><option value="PS5遊戲片店">PS5遊戲片店</option><option value="餐廳">餐廳</option></select><label for="customArea">地區</label><input type="text" id="customArea" maxlength="40" placeholder="例如：福岡市區、太宰府（40 字內）"><label for="customAddr">地址</label><input type="text" id="customAddr" maxlength="200" placeholder="例如：福岡県福岡市博多区...（200 字內）"><label for="customCoords">座標或 Google 地圖連結</label><input type="text" id="customCoords" placeholder="可貼 Google 地圖網址或 33.5898, 130.4108"><small class="hint" style="margin-top:2px;display:block">自動解析網址中的 @座標、q=座標 或直接填「緯度, 經度」</small><label for="customUrl">相關網址</label><input type="url" id="customUrl" placeholder="https://...（http 或 https）"><label for="customNote">備註</label><textarea id="customNote" maxlength="1000" rows="3" placeholder="例如：營業時間、推薦原因、注意事項等（1000 字內）"></textarea><div class="row" style="margin-top:12px;justify-content:flex-end"><button type="button" class="btn alt" id="customCancel">取消</button><button type="submit" class="btn" id="customSubmit">儲存</button></div></form></div>
 <div class="modal" id="nickModal" role="dialog" aria-modal="true" aria-labelledby="nickLabel"><form class="box" id="nickForm"><label id="nickLabel" for="nickInput">請輸入你的暱稱（顯示在許願池與修改紀錄）</label><input class="nick-input" id="nickInput" maxlength="12" required autocomplete="nickname"><div class="row" style="justify-content:flex-end"><button class="btn" type="submit">確定</button></div></form></div>
 <aside class="detail-panel" id="detailPanel" role="dialog" aria-labelledby="detailTitle"><div class="detail-head" id="detailHead"><strong>景點詳情</strong><button class="detail-close" id="detailClose" aria-label="關閉景點詳情">✕</button></div><div class="detail-body" id="detailBody"></div></aside>
+<div class="modal" id="nearbyPanel" role="dialog" aria-modal="true" aria-labelledby="nearbyTitle"><div class="box"><div class="detail-head"><strong id="nearbyTitle">📍 附近景點</strong><button type="button" class="detail-close" id="nearbyClose" aria-label="關閉附近景點">✕</button></div><div id="nearbyBody"><div id="nearbyMap" role="region" aria-label="附近景點地圖"></div><div class="row"><button type="button" class="btn" id="nearbyBigMap">🗺 在大地圖上顯示</button></div><p class="hint" style="margin-top:8px">紅色 ★ 為起點，藍色數字對應下方景點；虛線圈為 500 m／1.5 km。距離為直線估算，步行時間以親子步速約 4 km/h 估算，實際路線與交通時間請另確認。</p><div id="nearbyRows"></div></div></div></div>
 
 <aside class="detail-panel" id="historyPanel" role="dialog" aria-labelledby="historyTitle"><div class="detail-head"><strong id="historyTitle">🕘 版本紀錄</strong><button class="detail-close" id="historyClose" aria-label="關閉版本紀錄">✕</button></div><div class="detail-body" id="historyBody"></div></aside>
 
@@ -473,6 +482,11 @@ let ATTR = [...BUILTIN_ATTR];
 let BY = Object.fromEntries(ATTR.map(a=>[a.id,a]));
 const CUSTOM_CATEGORIES = ["親子景點", "購物街/商圈", "安全帽店", "樂高店", "PS5遊戲片店", "餐廳"];
 function hasCoords(a){return Number.isFinite(a?.lat)&&Number.isFinite(a?.lng);}
+const NEARBY_BANDS=[{max:500,label:"步行可達"},{max:1500,label:"短程（步行/1站）"},{max:5000,label:"同區域（電車/計程車）"}];
+function haversine(a,b){if(!hasCoords(a)||!hasCoords(b))return NaN;const rad=Math.PI/180,dLat=(b.lat-a.lat)*rad,dLng=(b.lng-a.lng)*rad,h=Math.sin(dLat/2)**2+Math.cos(a.lat*rad)*Math.cos(b.lat*rad)*Math.sin(dLng/2)**2;return 6371000*2*Math.asin(Math.sqrt(Math.max(0,Math.min(1,h))));}
+function nearbyBand(meters){return (NEARBY_BANDS.find(b=>meters<=b.max)||NEARBY_BANDS[2]).label;}
+function nearbySpots(id,maxMeters=5000){const a=BY[id];if(!hasCoords(a)||!Number.isFinite(maxMeters)||maxMeters<0)return [];return ATTR.filter(b=>b.id!==id&&hasCoords(b)).map(b=>{const meters=haversine(a,b);return {id:b.id,meters,walkMin:Math.ceil(meters/67),band:nearbyBand(meters)};}).filter(b=>b.meters<=maxMeters).sort((a,b)=>a.meters-b.meters||(a.id<b.id?-1:a.id>b.id?1:0));}
+function nearbyButton(a){return `<button type="button" class="btn" data-nearby="${esc(a.id)}"${hasCoords(a)?'':' disabled title="此景點尚無座標"'}>📍附近${hasCoords(a)?'':'（無座標）'}</button>`;}
 const gmap = a => {
   if(hasCoords(a)) return "https://www.google.com/maps/search/?api=1&query="+a.lat+","+a.lng;
   return "https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(a.addr||a.ja||a.zh);
@@ -707,7 +721,7 @@ let flushTimer,refreshing=false;
 function persistSync(){localStorage.setItem("kyushuPlanner.sync",JSON.stringify({scope:scope(),rev:sync.rev,current:sync.current,queue:sync.queue,stage:sync.stage}));}
 function cacheWishes(){localStorage.setItem(WISHKEY,JSON.stringify(WISH));}
 function cachePlan(){localStorage.setItem(KEY,JSON.stringify(S));}
-function renderAll(){if(dragging){renderQueued=true;return;}renderQueued=false;renderList();renderDays();renderMap();renderWishes();renderDetail();renderSync();if(historyPreview)renderHistoryPreview();}
+function renderAll(){if(dragging){renderQueued=true;return;}renderQueued=false;renderList();renderDays();renderMap();renderWishes();renderDetail();renderNearby();renderSync();if(historyPreview)renderHistoryPreview();}
 function renderSync(){const pill=document.getElementById("syncStatus");pill.className="status";let text;if(!shared()){text="📴 本機模式・版本紀錄存於此裝置";pill.classList.add("local");}else if(sync.offline){text="⚠️ 離線，變更會在連線後上傳";pill.classList.add("off");}else{const p=sync.current,time=p?.at?new Intl.DateTimeFormat("zh-TW",{timeZone:"Asia/Taipei",hour:"2-digit",minute:"2-digit",hour12:false}).format(p.at):"";text=p?.by?`🟢 共享中・第 ${p.rev} 版・${p.by} ${time}`:"🟢 共享中・等待同步";}
   const span=pill.querySelector?.(".status-text");if(span)span.textContent=text;else pill.textContent=text+" 🕘";
   document.getElementById("refreshBtn").hidden=!shared();document.getElementById("beforeShareBtn").hidden=!localStorage.getItem(KEY+".beforeShare");document.getElementById("planHint").textContent="按住 ☰ 拖曳即可排序或移到別天；也可以用右側選單直接換天。"+(shared()?"目前與家人共享，修改會自動同步並保留版本紀錄。":"行程會自動存在這支手機（localStorage），保留最近 100 個版本。");}
@@ -819,7 +833,7 @@ function renderList(){
     <div class="tags">${a.custom?`<span class="tag custom-badge">✏️ 自訂・by ${esc(a.by||"家人")}</span>`:""}<span class="tag area">${esc(a.area)}</span><span class="tag cat">${esc(a.cat)}</span>${a.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join("")}${a.q?'<span class="tag q">⚠️待確認</span>':""}${dl?`<span class="tag" style="background:#e3f6ee;color:#25785a">📅 ${esc(dl)}</span>`:""}</div>
     <div class="ages">2 歲 <b>${stars(a.a2)}</b>　6 歲 <b>${stars(a.a6)}</b></div>
     ${a.note?`<div class="note">${esc(a.note)}</div>`:""}
-    <div class="links"><a href="${gmap(a)}" target="_blank" rel="noopener">🗺 Google 地圖</a><button type="button" data-show="${esc(a.id)}">📍 在地圖上看</button>${a.src?linkHTML(a.src,"🔗 來源"):""}</div>${wishButtons(a.id)}</div></div>`;}).join("");
+    <div class="links"><a href="${gmap(a)}" target="_blank" rel="noopener">🗺 Google 地圖</a><button type="button" data-show="${esc(a.id)}">📍 在地圖上看</button>${nearbyButton(a)}${a.src?linkHTML(a.src,"🔗 來源"):""}</div>${wishButtons(a.id)}</div></div>`;}).join("");
 }
 document.getElementById("cards").addEventListener("click",e=>{
   const s=e.target.dataset.show;if(s){e.preventDefault();showOnMap(s);}
@@ -891,6 +905,7 @@ function renderWishes(){const sel=selected();document.getElementById("wishSectio
 function currentPlace(id){if(!selected().has(id))return "未選";const idx=where(id);return idx<0?"未排入":S.days[idx].label;}
 function renderDetail(){if(!detailId||!BY[detailId])return;const a=BY[detailId],d=DETAIL[detailId]||{},val=k=>d[k]??a[k],rows=[];
   const row=(label,value,html=false)=>{if(value!==undefined&&value!==null&&value!=="")rows.push(`<dt>${label}</dt><dd>${html?value:esc(value)}</dd>`);};
+  row("📍 一起安排",nearbyButton(a),true);
   if(a.custom){
     row("🏷️ 類別／地區",[a.cat,a.area].filter(Boolean).join("・"));
     row("👤 新增者",`${esc(a.by||"家人")}・${esc(taipeiTime(a.at))}`,true);
@@ -1008,8 +1023,9 @@ document.getElementById("customForm").onsubmit=e=>{
     if(editId) openDetail(savedId);
   }
 };
-document.addEventListener("keydown",e=>{if(e.key==="Escape"){closeDetail();if(ME.nick)document.getElementById("nickModal").classList.remove("on");document.getElementById("customModal")?.classList.remove("on");}const row=e.target.closest(".wish-row");if(row&&e.target===row&&["Enter"," "].includes(e.key)){e.preventDefault();openDetail(row.dataset.detail);}});
+document.addEventListener("keydown",e=>{if(nearbyId){if(e.key==="Escape"){e.preventDefault();closeNearby();return;}if(e.key==="Tab"){const items=[...document.getElementById("nearbyPanel").querySelectorAll('button:not(:disabled),a[href],input,select,[tabindex="0"]')];const first=items[0],last=items[items.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus();}else if(!items.includes(document.activeElement)||(!e.shiftKey&&document.activeElement===last)){e.preventDefault();first?.focus();}}return;}if(e.key==="Escape"){closeDetail();if(ME.nick)document.getElementById("nickModal").classList.remove("on");document.getElementById("customModal")?.classList.remove("on");}const row=e.target.closest(".wish-row");if(row&&e.target===row&&["Enter"," "].includes(e.key)){e.preventDefault();openDetail(row.dataset.detail);}});
 document.addEventListener("click",e=>{
+  if(handleNearbyClick(e))return;
   const editCustom=e.target.closest("[data-custom-edit]");
   if(editCustom){e.preventDefault();openCustomForm(editCustom.dataset.customEdit);return;}
   const delCustom=e.target.closest("[data-custom-del]");
@@ -1026,12 +1042,42 @@ panelHead.addEventListener("pointerup",endPanelDrag);panelHead.addEventListener(
 // ===== 地圖 =====
 const HOTEL={name:"クインテッサホテル福岡博多 Relax＆Sleep",zh:"住宿（已訂）",addr:"〒812-0013 福岡市博多區博多駅東 2-9-29",tel:"+81-92-292-6728",lat:33.587048,lng:130.424911,url:"https://quintessahotels.com/fukuoka-hakata/"};
 let map,layer,allLayer,markers={};
+// 附近景點僅為暫時顯示狀態，不寫入行程或同步資料。
+let nearbyId=null,nearbyReturn=null,nearbyMap=null,nearbyMiniLayer=null,nearbyLayer=null;
+function nearbyDistance(meters){return meters<1000?`${Math.round(meters)} m`:`${(meters/1000).toFixed(1)} km`;}
+function nearbyAction(source,id){if(where(source)>=0)return `<button type="button" class="btn" data-near-add="${esc(id)}" data-near-source="${esc(source)}">＋同一天</button>`;return selected().has(id)?"":`<button type="button" class="btn" data-near-add="${esc(id)}" data-near-source="${esc(source)}">＋未排入</button>`;}
+function nearbyAdd(source,id){if(!hasCoords(BY[source])||!hasCoords(BY[id])||source===id)return;const day=where(source);if(day<0&&selected().has(id))return;moveTo(id,day);update();toast(day>=0?`已安排至 ${S.days[day].label}`:"已加入未排入行程");}
+function handleNearbyClick(e){const target=e.target.closest("[data-nearby],[data-near-add],[data-near-detail]");if(!target)return false;e.preventDefault();e.stopPropagation();if(target.dataset.nearby)openNearby(target.dataset.nearby);else if(target.dataset.nearAdd){nearbyAdd(target.dataset.nearSource,target.dataset.nearAdd);if(nearbyId){const rows=document.getElementById("nearbyRows"),id=esc(target.dataset.nearAdd);(rows.querySelector(`[data-near-add="${id}"]`)||rows.querySelector(`[data-near-detail="${id}"]`)||document.getElementById("nearbyClose")).focus({preventScroll:true});}else document.getElementById("fitBtn").focus({preventScroll:true});}else{closeNearby();openDetail(target.dataset.nearDetail);}return true;}
+function nearbyPopup(a,source,index){return `<b>${index?index+'. ':"★ "}${esc(a.zh)}</b><br>${esc(a.area||"")}・${esc(currentPlace(a.id))}<div class="row" style="margin-top:8px"><button type="button" class="btn" data-near-detail="${esc(a.id)}">詳情</button>${a.id===source?"":nearbyAction(source,a.id)}</div>`;}
+function drawNearby(group,source,spots){const a=BY[source];group.clearLayers();[500,1500].forEach(radius=>L.circle([a.lat,a.lng],{radius,color:"#5a88af",weight:1,dashArray:"5 5",fill:false,interactive:false}).addTo(group));
+  L.marker([a.lat,a.lng],{icon:L.divIcon({className:"nearby-source",html:"★",iconSize:[34,34],iconAnchor:[17,17],popupAnchor:[0,-18]}),zIndexOffset:2000}).bindPopup(nearbyPopup(a,source)).addTo(group);
+  spots.forEach((spot,i)=>{const b=BY[spot.id];L.marker([b.lat,b.lng],{icon:pin("#387cac",i+1),zIndexOffset:500}).bindPopup(nearbyPopup(b,source,i+1)).addTo(group);});
+}
+function fitNearby(target,source,spots){const a=BY[source],pts=[[a.lat,a.lng],...spots.map(s=>[BY[s.id].lat,BY[s.id].lng])];if(pts.length===1)target.setView(pts[0],15);else target.fitBounds(pts,{padding:[28,28],maxZoom:16});}
+function bindNearbyPopups(target){target.on("popupopen",e=>{e.popup.getElement().querySelectorAll("[data-near-add],[data-near-detail]").forEach(b=>b.onclick=handleNearbyClick);});}
+function renderNearby(){if(!nearbyId)return;if(!hasCoords(BY[nearbyId])){closeNearby();return;}const a=BY[nearbyId],spots=nearbySpots(nearbyId);document.getElementById("nearbyTitle").textContent=`📍 ${a.zh} 附近`;
+  document.getElementById("nearbyRows").innerHTML=NEARBY_BANDS.map(b=>{const rows=spots.map((spot,i)=>({...spot,index:i+1})).filter(s=>s.band===b.label);return rows.length?`<section><h3>${b.label}・${rows.length} 處</h3>${rows.map(spot=>{const a=BY[spot.id];return `<div class="nearby-row"><strong>${spot.index}. ${CATEGORY_STYLE[a.cat]?.emoji||"🎡"} ${esc(a.zh)}</strong><div class="meta">${esc(a.area||"未填地區")}・${nearbyDistance(spot.meters)}・步行 ≈ ${spot.walkMin} 分鐘<br>📅 ${esc(currentPlace(a.id))}</div><div class="row"><button type="button" class="btn alt" data-near-detail="${esc(a.id)}">詳情</button>${nearbyAction(nearbyId,a.id)}</div></div>`;}).join("")}</section>`:"";}).join("")||'<p class="hint">5 km 內沒有其他已登錄且有座標的景點，可以新增自訂地點再一起安排。</p>';
+  document.getElementById("nearbyBigMap").disabled=!map||!window.L;
+  if(nearbyMap&&window.L)drawNearby(nearbyMiniLayer,nearbyId,spots);
+}
+function openNearby(id){if(!hasCoords(BY[id])){toast("此景點尚無座標");return;}if(nearbyId)closeNearby();nearbyReturn=document.activeElement;nearbyId=id;const panel=document.getElementById("nearbyPanel");panel.classList.add("on");document.getElementById("nearbyBody").scrollTop=0;const host=document.getElementById("nearbyMap");host.innerHTML="";
+  if(window.L){nearbyMap=L.map(host,{zoomControl:true,scrollWheelZoom:false});L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'}).addTo(nearbyMap);nearbyMiniLayer=L.layerGroup().addTo(nearbyMap);bindNearbyPopups(nearbyMap);}else host.innerHTML='<p style="padding:16px">地圖載入失敗，仍可使用下方附近景點清單。</p>';
+  renderNearby();const current=nearbyMap;setTimeout(()=>{if(current&&current===nearbyMap){current.invalidateSize();fitNearby(current,id,nearbySpots(id));}},60);document.getElementById("nearbyClose").focus({preventScroll:true});
+}
+function closeNearby(){nearbyMap?.remove();nearbyMap=null;nearbyMiniLayer=null;nearbyId=null;document.getElementById("nearbyPanel").classList.remove("on");if(nearbyReturn?.isConnected)nearbyReturn.focus({preventScroll:true});else if(detailId)document.getElementById("detailClose").focus({preventScroll:true});else document.querySelector("nav.tabs button.on")?.focus({preventScroll:true});nearbyReturn=null;}
+function clearNearbyMap(){if(nearbyLayer){nearbyLayer.remove();nearbyLayer=null;}document.getElementById("clearNearby").hidden=true;}
+function showNearbyOnMap(){if(!map||!window.L||!hasCoords(BY[nearbyId]))return;const source=nearbyId,spots=nearbySpots(source);closeNearby();closeDetail();tab("mapPane");clearNearbyMap();nearbyLayer=L.layerGroup().addTo(map);drawNearby(nearbyLayer,source,spots);map.invalidateSize();fitNearby(map,source,spots);document.getElementById("clearNearby").hidden=false;document.getElementById("clearNearby").focus({preventScroll:true});}
+document.getElementById("nearbyClose").onclick=closeNearby;
+document.getElementById("nearbyPanel").onclick=e=>{if(e.target===e.currentTarget)closeNearby();};
+document.getElementById("nearbyBigMap").onclick=showNearbyOnMap;
+document.getElementById("clearNearby").onclick=()=>{clearNearbyMap();document.getElementById("fitBtn").focus({preventScroll:true});};
 function initMap(){
   if(!window.L){document.getElementById("map").innerHTML='<p style="padding:20px">地圖載入失敗（需要網路連線載入 Leaflet）。</p>';return;}
   map=L.map("map",{zoomControl:true}).setView([33.45,130.9],8);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'}).addTo(map);
   allLayer=L.layerGroup().addTo(map);layer=L.layerGroup().addTo(map);
   map.on("popupopen",e=>{const detail=e.popup.getElement().querySelector("[data-detail]");if(detail)detail.onclick=event=>{event.preventDefault();event.stopPropagation();openDetail(detail.dataset.detail);};});
+  bindNearbyPopups(map);
   document.getElementById("showAll").onchange=renderMap;
   document.getElementById("fitBtn").onclick=fit;
   renderMap();fit();
@@ -1040,6 +1086,7 @@ function popup(a,extra){return `<a href="#" data-detail="${esc(a.id)}">詳細 �
 function pin(color,txt){return L.divIcon({className:"",html:`<div class="pin" style="background:${color}"><span>${txt}</span></div>`,iconSize:[26,26],iconAnchor:[13,26],popupAnchor:[0,-24]});}
 function renderMap(){
   if(!map)return;
+  clearNearbyMap();
   layer.clearLayers();allLayer.clearLayers();markers={};
   L.marker([HOTEL.lat,HOTEL.lng],{icon:L.divIcon({className:"hotel-pin",html:"🏨",iconSize:[30,30],iconAnchor:[15,15],popupAnchor:[0,-15]}),zIndexOffset:1000}).bindPopup(`<b>🏨 ${esc(HOTEL.zh)}</b><br>${esc(HOTEL.name)}<br>${esc(HOTEL.addr)}<br>☎ ${esc(HOTEL.tel)}<br>入住 15:00・退房 11:00<br>2/8–2/13 五晚<br><a href="${esc(HOTEL.url)}" target="_blank" rel="noopener">官網</a>`).addTo(layer);
   const sel=selected();
@@ -1141,7 +1188,7 @@ function initDropdowns(){
 
 renderList();renderDays();renderWishes();initMap();initSharing();initDropdowns();
 // 測試／除錯用
-window.planner={get state(){return S;},moveTo:(id,d,p)=>{moveTo(id,d,p);update();},select:id=>{if(!selected().has(id)){S.pool.push(id);update();}},unselect:id=>{removeId(id);update();},planText,get ATTR(){return ATTR;},get BY(){return BY;},get customs(){return CUSTOMS;},setCustoms,saveCustomSpot,deleteCustomSpot,openCustomForm,tab,fit,openDetail,toggleWish,get wishes(){return WISH;}};
+window.planner={get state(){return S;},moveTo:(id,d,p)=>{moveTo(id,d,p);update();},select:id=>{if(!selected().has(id)){S.pool.push(id);update();}},unselect:id=>{removeId(id);update();},planText,get ATTR(){return ATTR;},get BY(){return BY;},get customs(){return CUSTOMS;},setCustoms,saveCustomSpot,deleteCustomSpot,openCustomForm,tab,fit,openDetail,haversine,nearbyBand,nearbySpots,openNearby,closeNearby,nearbyAdd,showNearbyOnMap,toggleWish,get wishes(){return WISH;}};
 </script>
 </body>
 </html>
