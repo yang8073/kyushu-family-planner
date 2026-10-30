@@ -75,7 +75,7 @@ function validateState(mixed $state): bool {
     }
     if (isset($state->customs)) {
         if (!objectValid($state->customs)) return false;
-        $allowedCats = ['親子景點', '購物街/商圈', '安全帽店', '樂高店', 'PS5遊戲片店'];
+        $allowedCats = ['親子景點', '購物街/商圈', '安全帽店', '樂高店', 'PS5遊戲片店', '餐廳'];
         $allowedCustomFields = ['zh', 'cat', 'area', 'addr', 'lat', 'lng', 'note', 'url', 'by', 'byId', 'at', 'editBy', 'editAt'];
         foreach (get_object_vars($state->customs) as $id => $spot) {
             if (!idValid($id) || !objectValid($spot) || !fieldsValid($spot, $allowedCustomFields)) return false;
