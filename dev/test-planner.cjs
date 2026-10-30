@@ -55,16 +55,16 @@ const initial=async p=>{await waitFor(()=>p.run('sync.ready'));await p.run('flus
  for(let i=0;i<102;i++){p.run('S.days[0].label="測試 "+'+i+';update()');await p.run('flushPending()');}assert.equal(p.run('stored(HISTORYKEY,[]).length'),100);assert.equal(p.run('sync.rev'),110);
  const old=JSON.parse(p.run('OLD_DEFAULTS[0]')),oldPlan={days:old[0].map(([label,items])=>({label,items})),pool:old[1]},oldStore=new Map([['kyushuPlanner.v2',JSON.stringify(oldPlan)]]),upgrade=page({storage:oldStore});assert(upgrade.run('fp(S)===fp(sample())'));oldPlan.days[0].label+=' 自訂';oldStore.set('kyushuPlanner.v2',JSON.stringify(oldPlan));const edited=page({storage:oldStore});assert.match(edited.run('S.days[0].label'),/自訂/);
  const v1=page({storage:new Map([['kyushuPlanner.v1',JSON.stringify({days:[{label:'2/7(日)',items:['tower']},{label:'2/9(二)',items:['dazaifu']}],pool:[]})]])});await initial(v1);v1.run('document.getElementById("oldBtn").onclick()');await v1.run('flushPending()');assert.equal(v1.run('sync.current.summary'),'載入舊版存檔');assert(v1.run('S.pool.includes("tower")'));
- // Built-in restaurant category (餐廳): data, ids, map style; custom categories unchanged for api.php allowedCats.
+ // Built-in restaurant category (餐廳): data, ids, map style; also allowed for custom spots (api.php allowedCats updated).
  {const food=JSON.parse(p.run('JSON.stringify(ATTR.filter(a=>a.cat==="餐廳"))'));assert.equal(food.length,29);
   const ids=JSON.parse(p.run('JSON.stringify(ATTR.map(a=>a.id))'));assert.equal(new Set(ids).size,ids.length);
   for(const a of food){assert.match(a.id,/^food_[a-z0-9_]{1,35}$/);assert(Number.isFinite(a.lat)&&Number.isFinite(a.lng));assert(['燒肉','拉麵','其他'].includes(a.tags[0]));assert(a.zh&&a.ja&&a.addr&&a.hours&&a.url&&a.sources.length);}
   const byType=t=>food.filter(a=>a.tags[0]===t).length;assert.equal(byType('燒肉'),7);assert.equal(byType('拉麵'),12);assert.equal(byType('其他'),10);
-  assert.equal(p.run('CATEGORY_STYLE["餐廳"].emoji'),'🍜');assert(!p.run('CUSTOM_CATEGORIES.includes("餐廳")'));
-  assert.match(html.match(/<select id="cat"[^]*?<\/select>/)[0],/<option>餐廳<\/option>/);assert(!/<option value="餐廳">/.test(html.match(/<select id="customCat"[^]*?<\/select>/)[0]));
+  assert.equal(p.run('CATEGORY_STYLE["餐廳"].emoji'),'🍜');assert(p.run('CUSTOM_CATEGORIES.includes("餐廳")'));
+  assert.match(html.match(/<select id="cat"[^]*?<\/select>/)[0],/<option>餐廳<\/option>/);assert(/<option value="餐廳">/.test(html.match(/<select id="customCat"[^]*?<\/select>/)[0]));
   const counts=JSON.parse(p.run('JSON.stringify(ATTR.reduce((m,a)=>(m[a.cat]=(m[a.cat]||0)+1,m),{}))'));assert.deepEqual(Object.keys(counts).sort(),['PS5遊戲片店','安全帽店','樂高店','親子景點','購物街/商圈','餐廳'].sort());
   p.run('openDetail("food_daitoen")');assert.match(p.els.detailBody.innerHTML,/大東園/);p.run('closeDetail()');
-  console.log('PASS 餐廳 category: 29 entries (燒肉7/拉麵12/其他10), unique ids, coords, map style, not a custom category',JSON.stringify(counts));}
+  console.log('PASS 餐廳 category: 29 entries (燒肉7/拉麵12/其他10), unique ids, coords, map style, allowed as custom category',JSON.stringify(counts));}
  // Confirmed lodging labels and public-page privacy.
  assert.match(html,/<div class="sub">🏨 住宿（已訂）：/);
  assert.equal(p.run('HOTEL.zh'),'住宿（已訂）');
@@ -133,7 +133,7 @@ const initial=async p=>{await waitFor(()=>p.run('sync.ready'));await p.run('flus
 
  // 2. Adding a custom spot creates a version and syncs to a second device
  const revBeforeAdd=db.tree.kyushu2027.state.rev;
- const cid=reload.run('saveCustomSpot({zh:"博多一雙拉麵",cat:"購物街/商圈",area:"博多",addr:"福岡市博多區博多駅東3-1-6",lat:33.588,lng:130.422,note:"濃郁豚骨",url:"https://example.com/ramen"})');
+ const cid=reload.run('saveCustomSpot({zh:"博多一雙拉麵",cat:"餐廳",area:"博多",addr:"福岡市博多區博多駅東3-1-6",lat:33.588,lng:130.422,note:"濃郁豚骨",url:"https://example.com/ramen"})');
  assert(cid&&cid.startsWith("u_"));
  await reload.run('flushPending()');
  assert.equal(db.tree.kyushu2027.state.rev,revBeforeAdd+1);
@@ -143,7 +143,7 @@ const initial=async p=>{await waitFor(()=>p.run('sync.ready'));await p.run('flus
 
  await waitFor(()=>b.run('!!planner.customs["'+cid+'"]'));
  assert.equal(b.run('BY["'+cid+'"].zh'),"博多一雙拉麵");
- assert.equal(b.run('BY["'+cid+'"].cat'),"購物街/商圈");
+ assert.equal(b.run('BY["'+cid+'"].cat'),"餐廳");
  assert.equal(b.run('BY["'+cid+'"].custom'),true);
 
  // 3. Custom spot can be added to a day and wished
