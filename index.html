@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>九州親子行程規劃 2027 春節</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#dff0ff">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
 <style>
 :root{--bg:#f4f9ff;--card:#fff;--ink:#3a4660;--sub:#7a86a0;--accent:#6fb7f2;--accent2:#b9a3f0;--pink:#f7b6cf;--line:#e2ebf7;--radius:14px}
@@ -13,6 +15,19 @@ header{background:linear-gradient(120deg,#dff0ff,#efe6ff);padding:10px 14px 8px;
 header h1{margin:0;font-size:17px;letter-spacing:.5px;flex:1;min-width:0}
 header .sub{font-size:12px;color:var(--sub);margin-top:2px;line-height:1.5;overflow-wrap:anywhere}
 header .sub a{color:inherit}
+header .sub .doc-button{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:6px 9px;margin:2px 0;border:1px solid var(--line);border-radius:9px;background:#ffffffbb;color:#2f6ea8;text-decoration:none;font:inherit;font-weight:600}
+.doc-actions{display:inline-flex;gap:6px;flex-wrap:wrap}
+.offline-indicator{font-size:12px;line-height:1.5;padding:5px 8px;margin-top:4px;background:#fff3d8;color:#785c13;border-radius:8px}
+#documentsPanel .box{max-height:90vh;max-height:90dvh;display:flex;flex-direction:column;padding:0;overflow:hidden}
+#documentsPanel .detail-head{cursor:default;touch-action:auto}
+#documentsTitle{font-size:17px;margin:0;flex:1}
+#documentsClose{min-width:44px;min-height:44px}
+#documentsBody{overflow:auto;overscroll-behavior:contain;padding:12px}
+#documentsBody summary{min-height:44px;cursor:pointer;font-weight:700;padding:8px 0}
+#documentsBody ul{list-style:none;margin:0 0 12px;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px}
+#documentsBody a{display:flex;align-items:center;min-height:44px;padding:9px 10px;background:#e8f3ff;border-radius:9px;color:#2f6ea8;text-decoration:none;line-height:1.5}
+#documentsBody details{border-top:1px solid var(--line)}
+#documentsHint{margin:12px 0 0;color:#56617a;font-size:13px;line-height:1.7}
 nav.tabs{display:flex;gap:6px;margin-top:8px}
 nav.tabs button{flex:1;border:0;border-radius:999px;padding:8px 0;background:#ffffffaa;color:var(--ink);font-size:15px;font-weight:600}
 nav.tabs button.on{background:var(--accent);color:#fff;box-shadow:0 2px 6px #6fb7f255}
@@ -152,8 +167,10 @@ button{cursor:pointer}
     <h1>☁️ 九州親子行程規劃 · 2027 春節</h1>
     <button class="chip identity" id="meBtn">👤 暱稱</button>
   </div>
-  <div class="sub">2/8(一)–2/13(六) 福岡進・福岡出 ｜ ✈️ 華航（已訂）去 CI116 桃園T2 16:25→福岡 19:35・回 CI117 福岡 20:35→桃園T2 22:20</div>
-  <div class="sub">🏨 住宿（已訂）：<a href="https://quintessahotels.com/fukuoka-hakata/" target="_blank" rel="noopener">クインテッサホテル福岡博多 Relax＆Sleep</a> ｜ 福岡市博多區博多駅東 2-9-29（JR 博多站筑紫口步行約 6–7 分）｜ ☎ +81-92-292-6728 ｜ 入住 15:00・退房 11:00 ｜ 2/8–2/13 五晚</div>
+  <div class="sub">2/8(一)–2/13(六) 福岡進・福岡出 ｜ ✈️ 華航（已訂）去 CI116 桃園T2 16:25→福岡國際線 19:35・回 CI117 福岡國際線 20:35→桃園T2 22:20 <button type="button" class="doc-button" id="flightDocsBtn" aria-haspopup="dialog" aria-controls="documentsPanel">🎫 電子機票</button></div>
+  <div class="sub">🏨 住宿（已訂）：博多東急REI飯店（博多東急REIホテル / Hakata Tokyu REI Hotel）｜ 博多駅前1-2-23・博多口步行3分 ｜ ☎ +81-92-451-0109 ｜ 入住15:00・退房10:00 ｜ 2/8–2/13 五晚・2間 <span class="doc-actions"><a class="doc-button" href="https://www.tokyuhotels.co.jp/hakata-r/" target="_blank" rel="noopener">🌐 飯店官網</a><a class="doc-button" id="hotelDocsBtn" href="#documentsPanel" target="_blank" rel="noopener" aria-haspopup="dialog" aria-controls="documentsPanel">📄 住宿文件</a></span></div>
+  <div id="offlineIndicator" class="offline-indicator" role="status" hidden>📴 離線模式：顯示上次載入的版本，同步待恢復連線</div>
+  <div id="pwaUpdate" class="offline-indicator" role="status" hidden>已更新，重新整理即可使用新版</div>
   <nav class="tabs">
     <button data-tab="listPane" class="on">清單</button>
     <button data-tab="planPane">行程</button>
@@ -187,7 +204,30 @@ button{cursor:pointer}
 </section>
 
 <section id="planPane" class="pane">
-  <div class="trip"><details id="notes"><summary id="notesSummary">⚠️ 注意事項</summary><div class="notes-body">• ✈️ 中華航空（已訂）・經濟艙直飛：2/8 CI116 桃園T2 16:25→福岡 19:35（2h10m）；2/13 CI117 福岡 20:35→桃園T2 22:20（2h45m）。<br>• 🧳 行李額度（每人含兒童）：免費託運 2 件、每件 23kg，單件長＋寬＋高 ≤158cm；超過 32kg 不收，需分裝。手提 1 件 ≤7kg、56×36×23cm。<br>• 🕐 報到須帶護照；兩地櫃台起飛前 60 分鐘關櫃（去程 15:25／回程 19:35）。網路報到：起飛前 48 小時～60 分鐘，同訂位 9 人內適用；可於起飛前 48 小時～360 天預約自動報到（<a href="https://www.china-airlines.com/tw/zh/prepare-for-the-fly/information/check-in/online-check-in" target="_blank" rel="noopener">華航報到</a>）。<br>• 🛫 航廈：桃園第二航廈 T2；福岡國際線航廈，不是國內線。<br>• 🔁 票價：去程標準 Standard（T）、回程靈活 Flex（Y），改退依較嚴格的標準規則：改票收手續費＋票價差額；退票收手續費，YR 等航空公司規費不退；起飛前未取消且未搭機另收未登機費。官網購票可至「管理行程」處理（<a href="https://www.china-airlines.com/tw/zh/itinerary-booking/ticket-information/ticket-change-and-refund" target="_blank" rel="noopener">改退票</a>）。<br>• 👶 全團 7 人（4 大 3 小）；3 名小孩含 2 歲均為 CHILD 兒童票、有自己的座位，託運額度同大人，無嬰兒不佔位票。<br>• 🏨 2/8 晚到：入境＋領行李約 1 小時（估計）。飯店官網：晚上 10 點後才到要先打電話 092-292-6728；夜間大門上鎖，按右側對講機。19:35 後西鐵巴士（國際線→博多站，大人 ¥400）班次未確認。⚠️第三方訂房頁寫櫃台 6:00–23:00、23:00 前未聯絡可能取消（待確認）。<br>• 🛏 房型／人數：已訂 2 間 Superior Queen（雙層床）、4 大 3 小、含早餐＋Wi‑Fi（官網：17㎡、160cm 床＋110cm 雙層床，每間定員 3 人）。官網：小學生以下每位付費者可免費帶 1 名添い寝；沒有嬰兒床、不出借推車。建議出發前直接向飯店確認 2 間、4 大 3 小已收到；2 歲不適合睡上舖（估計）；房間小，行李箱攤開會很擠。（<a href="https://quintessahotels.com/fukuoka-hakata/stay/superior/" target="_blank" rel="noopener">客房</a>、<a href="https://quintessahotels.com/fukuoka-hakata/faq/" target="_blank" rel="noopener">FAQ</a>）<br>• 💴 付款／取消：未預付，房費入住時在飯店付清（現金或信用卡，官網寫不收 debit card）；2027/2/7 前免費取消；入住前 1 天內 20%、當天 80%、no-show 100%；變更／取消請透過 Agoda（JTB 承辦）。<br>• ⚠️ 飯店公告：本次為 Agoda／JTB 第三方訂單，飯店無法變更／取消，請找 Agoda 處理（<a href="https://quintessahotels.com/fukuoka-hakata/news/224/" target="_blank" rel="noopener">公告</a>）。<br>• 🪪 入住證件：入住時必須出示與主要住客同名、有照片＋居住地址的證件；台灣護照無地址欄 → 另帶有地址的證件（如身分證／駕照，估計）。<br>• 🧾 住宿稅入住時由飯店另收：福岡市＋縣每人每晚 ¥200（住宿費 2 萬日圓以下），添い寝免費的小孩不課稅。5 晚估約 ¥4,000–7,000（看幾位小孩被算付費，估計）（<a href="https://www.city.fukuoka.lg.jp/zaisei/zeisei/life/syuku001.html" target="_blank" rel="noopener">福岡市</a>、<a href="https://www.city.fukuoka.lg.jp/zaisei/zeisei/life/syukuqa.html" target="_blank" rel="noopener">FAQ</a>）。<br>• 🍳 早餐：方案含早餐，但與父母同房的兒童可能另收早餐費，入住時確認。1F 6:30–10:00（L.O. 9:30）；官網館內設施頁寫大人 ¥1,650／小學生 ¥820／未就學免費，餐廳頁寫大人・小孩 ¥2,000／未就學免費，說法不一。<br>• 🧺 館內：1F 投幣洗衣機＋烘衣機、1F 微波爐、房內電熱水壺；無停車場（附近投幣停車場，包車接送停靠點待確認）。<br>• 🚕 7 人＋約 7 個行李箱：一般計程車坐 4 人、後車廂約 2 個大箱（估計）→ 需 1 台 9 人座 Jumbo（MK：建議 8 人、可放 13 個行李箱，機場↔博多 ¥20,330 起，電話 092-518-0089，<a href="https://www.mk-group.co.jp/fukuoka/" target="_blank" rel="noopener">MK</a>）或 3 台計程車。<br>• 📅 休館／休園：九州國立博物館週一休；海之中道海濱公園冬季每週二休（2/9 休）；海洋世界海豚／海獅秀 2027/1/12–4/9 暫停；太宰府遊園地 2 月休園日未公布。<br>• 🎌 2/11 日本國定假日：景點、交通、餐廳人較多。<br>• 🧾 退稅（2026/11/1 起出境再退）：托運行李前在國際線 3F 出發大廳機台刷「購買人本人」護照；免稅品要隨身、不可拆用，同一張收據少一件整張不退；建議起飛前約 3 小時到機場。（<a href="https://www.customs.go.jp/kaigairyoko/taxrefund/jpn.htm" target="_blank" rel="noopener">日本海關</a>、<a href="https://www.mlit.go.jp/kankocho/tax-free/page01_000001_00021.html" target="_blank" rel="noopener">觀光廳</a>）<br>• 🧳 2/13 退房後行李選項：<br>　– 包車：放車上。<br>　– 本飯店：退房後櫃台可寄放行李（官網 FAQ，沒寫時限，傍晚才取回請入住時確認）；延遲退房每小時 ¥1,000、最晚 14:00。⚠️本館不在 CARGO PASS 合作飯店名單（2026/10 查），不能從飯店直送機場。<br>　– Crosta博多（JR 博多站 2F 新幹線ひかり広場改札旁，9:00–20:00）：12:00 前交、每件 ¥1,500 送機場，14:00 起國際線 1F CARGO PASS 櫃台（8:00–19:30）領；⚠️非合作飯店房客能否使用請先電話確認 070-1815-4806（<a href="https://cargopass.jp/question" target="_blank" rel="noopener">CARGO PASS</a>）。<br>　– 機場：國際線 1F 佐川（101–200cm 每件 ¥1,000／日，7:30–21:40，<a href="https://www.sagawa-exp.co.jp/hands-freetravel/servicecenter/fukuoka_airport.html" target="_blank" rel="noopener">佐川</a>）；置物櫃 大 ¥800、大寬門 ¥1,200（<a href="https://www.fukuoka-airport.jp/service/coin-locker-intl-2.html" target="_blank" rel="noopener">福岡機場</a>）。<br>　– 博多站周邊：ecbo cloak App 預約，行李箱約 ¥800／件／日，各店可放數量有限、重量約 20kg 內（<a href="https://cloak.ecbo.io/ja" target="_blank" rel="noopener">ecbo</a>）；博多站 1F 手荷物寄放 10:30–18:30，¥1,000（繁忙期 ¥1,500，<a href="https://www.jrkyushu.co.jp/trains/yufuinnomori/pdf/baggage-storage-service-information.pdf" target="_blank" rel="noopener">JR九州</a>）。</div></details></div>
+  <div class="trip"><details id="notes"><summary id="notesSummary">⚠️ 注意事項</summary><div class="notes-body">• ✈️ 中華航空（已訂）・經濟艙直飛：2/8 CI116 桃園T2 16:25→福岡國際線航廈 19:35（2h10m）；2/13 CI117 福岡國際線航廈 20:35→桃園T2 22:20（2h45m）。7 人訂位狀態均為 OK、已劃位；電子機票收據見 📂 旅行文件。<br>
+• 🧳 行李額度（每人含兒童）：每人託運 2 件（收據 2PC），每件 23kg，單件長＋寬＋高 ≤158cm；超過 32kg 不收，需分裝。手提 1 件 ≤7kg、56×36×23cm。<br>
+• 🕐 報到須帶護照；兩地櫃台起飛前 60 分鐘關櫃（去程 15:25／回程 19:35）。網路報到：起飛前 48 小時～60 分鐘，同訂位 9 人內適用；可於起飛前 48 小時～360 天預約自動報到（<a href="https://www.china-airlines.com/tw/zh/prepare-for-the-fly/information/check-in/online-check-in" target="_blank" rel="noopener">華航報到</a>）。<br>
+• 🛫 航廈：桃園第二航廈 T2；福岡國際線航廈，不是國內線。<br>
+• 🔁 票價：去程標準 Standard（T）、回程靈活 Flex（Y），改退依較嚴格的標準規則：改票收手續費＋票價差額；退票收手續費，YR 等航空公司規費不退；起飛前未取消且未搭機另收未登機費。官網購票可至「管理行程」處理（<a href="https://www.china-airlines.com/tw/zh/itinerary-booking/ticket-information/ticket-change-and-refund" target="_blank" rel="noopener">改退票</a>）。<br>
+• 👶 全團 7 人（4 ADT、3 CHD）；3 名小孩含 2 歲均為 CHD 兒童票、有自己的座位，託運額度同大人。<br>
+• 🏨 博多東急REI飯店（博多東急REIホテル）：〒812-0011 福岡県福岡市博多区博多駅前1-2-23；☎ +81-92-451-0109。JR博多站「博多口」（西側）步行約3分；地下鐵博多站西6出口步行約1分。2/8 國際線入境＋領行李約1小時（估計），可搭西鐵巴士至博多巴士總站，再步行約5分到飯店，或搭計程車；夜間巴士班次待確認。約21:00後抵達仍在憑證入住15:00–24:00時段內；若晚於24:00請先致電飯店（處理方式待確認）。<a href="https://www.tokyuhotels.co.jp/hakata-r/" target="_blank" rel="noopener">日文官網</a>・<a href="https://www.tokyuhotels.co.jp/zh-CHT/hakata-r/index.html" target="_blank" rel="noopener">繁中官網</a>。<br>
+• 🛏 2/8(一)–2/13(六)共5晚、2間房。房1：禁菸高級雙床房 Superior Twin、2張單人床；房2：禁菸標準雙人房、僅淋浴間無浴缸、1張 Queen 床160×195cm、18㎡。每張憑證列每房最多3人（含最多2位大人），添い寝是否另計須飯店確認。房1若2大2小較擠；官網一般雙床房床寬約120cm，高級雙床房尺寸未列，待確認。<br>
+• 💴 住宿已預付（Trip.com）；變更／取消透過 Trip.com。依憑證、飯店當地時間：2027/2/6 23:59 前免費取消，之後不可退款；no-show 收費。<br>
+• ⚠️ 出發前寫信／打電話給飯店，確認兩房小孩（6歲×2、2歲×1）已登記添い寝，並預約2歲用床護欄。官網：小學生以下不佔床免費，上限為「每位大人1名」且「每張床1名」；小孩單獨使用一張床要付大人價，方案可能另有規定。床護欄免費租借、限18–60個月，嬰兒浴盆也要預約；兒童備品向櫃台索取。餐廳有兒童椅與餐具，1F廁所有尿布垃圾桶及更換台。（<a href="https://www.tokyuhotels.co.jp/hakata-r/guide/child_support/index.html" target="_blank" rel="noopener">兒童支援與添い寝規則</a>）<br>
+• 🪪 入住時帶護照與入住憑證（📂 旅行文件）；兩房兒童登記與添い寝人數請向櫃台確認。<br>
+• 🧾 住宿稅抵達時由飯店另收：福岡市＋縣每人每晚 ¥200（房價≤¥20,000時），添い寝小孩免稅。（<a href="https://www.city.fukuoka.lg.jp/zaisei/zeisei/life/syuku001.html" target="_blank" rel="noopener">福岡市</a>、<a href="https://www.city.fukuoka.lg.jp/zaisei/zeisei/life/syukuqa.html" target="_blank" rel="noopener">FAQ</a>）<br>
+• 🍳 2/9–2/13每天每房含2人早餐；1F住客休息室06:30–09:30（實際用餐時限待確認；官網目前寫至10:00、L.O.09:30）。添い寝的小學生以上另付早餐費；未就學兒童早餐免費為目前解讀（估計／待確認，6歲依就學身分確認）。休息室14:30–21:00提供免費飲料／點心，先到先得、供完為止。（<a href="https://www.tokyuhotels.co.jp/hakata-r/feature/breakfast/index.html" target="_blank" rel="noopener">早餐</a>）<br>
+• 🧺 館內：6F／9F免費洗衣機（洗劑¥100）、微波爐，另有飲水機；免費Wi‑Fi。房內無保險箱，貴重物品交櫃台。附設停車場12台、先到先得，¥1,500／晚（15:00–10:00）、限高≤1.55m，Jumbo計程車／包車無法停入，接送停靠點待確認。（<a href="https://www.tokyuhotels.co.jp/hakata-r/facility/index.html" target="_blank" rel="noopener">館內設施</a>）<br>
+• 🚕 7 人＋約 7 個行李箱：一般計程車坐 4 人、後車廂約 2 個大箱（估計）→ 需 1 台 9 人座 Jumbo（MK：建議 8 人、可放 13 個行李箱，機場↔博多 ¥20,330 起，電話 092-518-0089，<a href="https://www.mk-group.co.jp/fukuoka/" target="_blank" rel="noopener">MK</a>）或 3 台計程車。<br>
+• 📅 休館／休園：九州國立博物館週一休；海之中道海濱公園冬季每週二休（2/9 休）；海洋世界海豚／海獅秀 2027/1/12–4/9 暫停；太宰府遊園地 2 月休園日未公布。<br>
+• 🎌 2/11 日本國定假日：景點、交通、餐廳人較多。<br>
+• 🧾 退稅（2026/11/1 起出境再退）：托運行李前在國際線 3F 出發大廳機台刷「購買人本人」護照；免稅品要隨身、不可拆用，同一張收據少一件整張不退；建議起飛前約 3 小時到機場。（<a href="https://www.customs.go.jp/kaigairyoko/taxrefund/jpn.htm" target="_blank" rel="noopener">日本海關</a>、<a href="https://www.mlit.go.jp/kankocho/tax-free/page01_000001_00021.html" target="_blank" rel="noopener">觀光廳</a>）<br>
+• 🧳 <strong>2/13 10:00 前退房，行李寄放櫃台</strong>；其他行李選項：<br>
+　– 包車：放車上。<br>
+　– 本飯店：櫃台可寄放行李、接受宅配；退房後寄放時限未公布，傍晚取回請先確認。本館是否為 CARGO PASS 合作飯店未確認。<br>
+　– Crosta博多（JR 博多站 2F 新幹線ひかり広場改札旁，9:00–20:00）：12:00 前交、每件 ¥1,500 送機場，14:00 起國際線 1F CARGO PASS 櫃台（8:00–19:30）領；⚠️非合作飯店房客能否使用請先電話確認 070-1815-4806（<a href="https://cargopass.jp/question" target="_blank" rel="noopener">CARGO PASS</a>）。<br>
+　– 機場：國際線 1F 佐川（101–200cm 每件 ¥1,000／日，7:30–21:40，<a href="https://www.sagawa-exp.co.jp/hands-freetravel/servicecenter/fukuoka_airport.html" target="_blank" rel="noopener">佐川</a>）；置物櫃 大 ¥800、大寬門 ¥1,200（<a href="https://www.fukuoka-airport.jp/service/coin-locker-intl-2.html" target="_blank" rel="noopener">福岡機場</a>）。<br>
+　– 博多站周邊：ecbo cloak App 預約，行李箱約 ¥800／件／日，各店可放數量有限、重量約 20kg 內（<a href="https://cloak.ecbo.io/ja" target="_blank" rel="noopener">ecbo</a>）；博多站 1F 手荷物寄放 10:30–18:30，¥1,000（繁忙期 ¥1,500，<a href="https://www.jrkyushu.co.jp/trains/yufuinnomori/pdf/baggage-storage-service-information.pdf" target="_blank" rel="noopener">JR九州</a>）。</div></details></div>
   <div class="toolbar">
     <button type="button" class="status local" id="syncStatus" role="status" aria-live="polite" title="查看版本紀錄" aria-label="查看版本紀錄"><span class="status-text">📴 本機模式（共享尚未設定）</span><span class="status-hint" aria-hidden="true"> 🕘</span></button>
     <button type="button" class="btn" id="addDay">＋ 新增一天</button>
@@ -233,6 +273,12 @@ button{cursor:pointer}
 <section id="wishPane" class="pane"><p class="hint">點選喜好即可許願，再點一次可取消。每個景點每人可選一種喜好。</p><div id="wishSections"></div></section>
 </main>
 
+<div class="modal" id="documentsPanel" role="dialog" aria-modal="true" aria-labelledby="documentsTitle" aria-describedby="documentsHint">
+  <div class="box">
+    <div class="detail-head"><h2 id="documentsTitle">📂 旅行文件</h2><button type="button" class="detail-close" id="documentsClose" aria-label="關閉旅行文件">×</button></div>
+    <div id="documentsBody"><div id="documentsGroups"></div><p id="documentsHint">離線查看：在手機 Google Drive App 開啟檔案 → ⋮ → 開啟『可離線使用』。本頁可離線開啟，但雲端文件需先在 Drive App 設為離線。</p></div>
+  </div>
+</div>
 <div class="modal" id="customModal" role="dialog" aria-modal="true" aria-labelledby="customModalTitle"><form class="box" id="customForm"><h3 id="customModalTitle" style="margin:0 0 10px 0;font-size:17px">＋ 自訂景點</h3><input type="hidden" id="customId"><label for="customZh">景點名稱 <b style="color:#ef6f6c">*</b></label><input type="text" id="customZh" maxlength="60" required placeholder="例如：博多運河城（必填，60 字內）"><label for="customCat">類型 <b style="color:#ef6f6c">*</b></label><select id="customCat" required><option value="親子景點">親子景點</option><option value="購物街/商圈">購物街/商圈</option><option value="安全帽店">安全帽店</option><option value="樂高店">樂高店</option><option value="PS5遊戲片店">PS5遊戲片店</option><option value="餐廳">餐廳</option></select><label for="customArea">地區</label><input type="text" id="customArea" maxlength="40" placeholder="例如：福岡市區、太宰府（40 字內）"><label for="customAddr">地址</label><input type="text" id="customAddr" maxlength="200" placeholder="例如：福岡県福岡市博多区...（200 字內）"><label for="customCoords">座標或 Google 地圖連結</label><input type="text" id="customCoords" placeholder="可貼 Google 地圖網址或 33.5898, 130.4108"><small class="hint" style="margin-top:2px;display:block">自動解析網址中的 @座標、q=座標 或直接填「緯度, 經度」</small><label for="customUrl">相關網址</label><input type="url" id="customUrl" placeholder="https://...（http 或 https）"><label for="customNote">備註</label><textarea id="customNote" maxlength="1000" rows="3" placeholder="例如：營業時間、推薦原因、注意事項等（1000 字內）"></textarea><div class="row" style="margin-top:12px;justify-content:flex-end"><button type="button" class="btn alt" id="customCancel">取消</button><button type="submit" class="btn" id="customSubmit">儲存</button></div></form></div>
 <div class="modal" id="nickModal" role="dialog" aria-modal="true" aria-labelledby="nickLabel"><form class="box" id="nickForm"><label id="nickLabel" for="nickInput">請輸入你的暱稱（顯示在許願池與修改紀錄）</label><input class="nick-input" id="nickInput" maxlength="12" required autocomplete="nickname"><div class="row" style="justify-content:flex-end"><button class="btn" type="submit">確定</button></div></form></div>
 <aside class="detail-panel" id="detailPanel" role="dialog" aria-labelledby="detailTitle"><div class="detail-head" id="detailHead"><strong>景點詳情</strong><button class="detail-close" id="detailClose" aria-label="關閉景點詳情">✕</button></div><div class="detail-body" id="detailBody"></div></aside>
@@ -255,6 +301,27 @@ button{cursor:pointer}
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 <script>
 const SYNC_CFG = { type: "jsonfile", url: "https://trip.yi-jia-zi.com/api.php", path: "kyushu2027" };  // type: "none" | "firebase" | "jsonfile"
+// 公開頁面只保留通用文件標籤與 Drive 連結；文件內容由 Drive 管理。
+const TRAVEL_DOCUMENTS = [
+  {id:"lodging",title:"📄 住宿文件",folder:"https://drive.google.com/drive/folders/10rEX9MmXUUl9xtYpDjrNhPMFnA8NeKFx",files:[
+    ["房1 入住憑證","https://drive.google.com/file/d/1-Plb33orHo2pob3BgeSUyE25XimPtr6o/view"],
+    ["房1 英文入住憑證","https://drive.google.com/file/d/1AiIyDMTlc9IOc7W62QX5Yx-YS5KrfY4A/view"],
+    ["房1 電子收據","https://drive.google.com/file/d/1FcqMH8mdjPTnQhJxIoonFqFB2GEYo6sL/view"],
+    ["房2 入住憑證","https://drive.google.com/file/d/1Th7_wfDMNg0mTywJF2kVjnCMomKz_sSZ/view"],
+    ["房2 英文入住憑證","https://drive.google.com/file/d/1v6SHTkaxR-kpD9jUev6Y7yrnjXZObbw3/view"],
+    ["房2 電子收據","https://drive.google.com/file/d/15UMr26349Qjnd9o4ffR-BEgBrpD8X64r/view"],
+    ["訂單總覽截圖","https://drive.google.com/file/d/1w1lnviZrEDDQq0xN7FNpy0ggPcujlYhh/view"]
+  ]},
+  {id:"flights",title:"🎫 電子機票",folder:"https://drive.google.com/drive/folders/1CPbFQ8ybG46g6yLOB7k7igCLUDUcaKum",files:[
+    ["大人1","https://drive.google.com/file/d/1f3YGquAzGKAG65dLwlsg1rbBbSosvgQ3/view"],
+    ["大人2","https://drive.google.com/file/d/1A1xqTt1euQO3cv40Fmc_l6Aj5EKMCkAZ/view"],
+    ["兒童1","https://drive.google.com/file/d/1kyLWMU1JpcdukQ4v7seOBjjKANhU5duD/view"],
+    ["兒童2","https://drive.google.com/file/d/19KB9FoBgwI3DsTJFKyZKdXQTj6_FV6Gq/view"],
+    ["大人3","https://drive.google.com/file/d/1sI9UR69PjYP-acLQaPG4m4xGP9bcE9qI/view"],
+    ["大人4","https://drive.google.com/file/d/16ZOWH7vXB3iXRNBi7TL-3kD8wGcpSdN3/view"],
+    ["兒童3","https://drive.google.com/file/d/186kwTA80h-yHu7oXXRFhH0O0qa0-IiaQ/view"]
+  ]}
+];
 
 // ===== 景點資料 =====
 // [id, 中文名, 日文名(Google搜尋用), 地區, 標籤[], 2歲★, 6歲★, 備註, lat, lng, 不確定?, 來源URL?]
@@ -281,7 +348,7 @@ const A = [
 ["yatai","中洲屋台街","中洲 屋台","福岡市區",["美食","戶外"],2,2,"約 18:00 後營業；週日不少攤休息。建議 18:30 前去避人潮。",33.590557,130.408463],
 ["kushida","櫛田神社＋川端商店街","櫛田神社","福岡市區",["戶外","景觀","美食"],2,2,"免費；神社內展示博多祇園山笠裝飾山車。",33.5930,130.4105],
 ["nokonoshima","能古島 Island Park","のこのしまアイランドパーク","福岡市區",["戶外","動物","景觀"],2,3,"姪濱渡輪約 10 分＋巴士；2 月有油菜花。⚠️票價請確認。",33.6345,130.3015,1],
-["fukair","福岡機場","福岡空港","福岡市區",["室內","交通"],1,1,"【華航已訂】去 CI116 桃園T2 16:25→福岡國際線航廈 19:35；回 CI117 福岡國際線航廈 20:35→桃園T2 22:20。入境＋領行李約 1 小時（估計）。國際線航廈→博多站：西鐵巴士直達筑紫口約 15–25 分（大人 ¥400，夜間班次未確認）；計程車 Jumbo 9 人座／一般 4 人座。國際線接機包車通常安排在抵達後 30 分。退稅機台在國際線 3F 出發大廳（托運前）；國際線 1F／3F 有置物櫃，1F 有佐川與 CARGO PASS 行李櫃台。",33.5859,130.451],
+["fukair","福岡機場","福岡空港","福岡市區",["室內","交通"],1,1,"【華航已訂】去 CI116 桃園T2 16:25→福岡國際線航廈 19:35；回 CI117 福岡國際線航廈 20:35→桃園T2 22:20。入境＋領行李約 1 小時（估計）。國際線航廈→博多站：西鐵巴士至博多巴士總站（再步行約5分至飯店，車程／夜間班次待確認）；計程車 Jumbo 9 人座／一般 4 人座。國際線接機包車通常安排在抵達後 30 分。退稅機台在國際線 3F 出發大廳（托運前）；國際線 1F／3F 有置物櫃，1F 有佐川與 CARGO PASS 行李櫃台。",33.5859,130.451],
 // —— 福岡 追加（親子向け；附來源連結） ——
 ["parcochara", "天神角色樂園（福岡PARCO 8F）", "天神キャラパーク 福岡PARCO", "福岡市區", ["室內", "卡通角色", "購物", "雨天備案", "免費"], 2, 3, "KIDDY LAND、Snoopy Town、拉拉熊、吉伊卡哇樂園等角色店集中一層（KIDDY LAND 有三麗鷗商品）。10:00–20:30，無固定休。地鐵天神站西7出口直通。⚠️福岡PARCO預定2027年2月底結束營業，2/7–2/10 仍營業，但閉店前可能人潮多；熱門日吉伊卡哇店需LINE整理券。", 33.5908, 130.3986, 1, "https://fukuoka.parco.jp/shop/detail/?cd=006228"],
 ["tenjinpark", "天神中央公園＋赤煉瓦文化館", "天神中央公園 赤煉瓦文化館", "福岡市區", ["戶外", "免費"], 2, 1, "公園免費、全年開放，有大草坪、噴水廣場、那珂川河畔與舊福岡縣公會堂貴賓館；無專門遊具，適合逛天神時放電與推車散步。赤煉瓦文化館（1909年紅磚建築，外觀拍照）免費 9:00–22:00，每月最後一個週一休（2027年2月為2/22），2/7–2/10 都開。", 33.5918, 130.4025, 0, "https://yokanavi.com/spots/26950"],
@@ -436,7 +503,7 @@ const EXTRA = [
 {"id":"game_bookoff_mina","cat":"PS5遊戲片店","zh":"BOOKOFF SUPER BAZAARミーナ天神店","ja":"BOOKOFF SUPER BAZAAR ミーナ天神店","area":"福岡市區","addr":"〒810-0001 福岡県福岡市中央区天神4-3-8 ミーナ天神7F","lat":33.592609,"lng":130.398712,"hours":"10:00–21:00。","station":"地下鉄天神駅步行3分鐘至商場。","time":"30–60分鐘（估計）","kids":"依遊戲盒上的年齡分級選購。","caution":"購買前確認繁體中文支援；二手片另查刮痕與附贈序號是否可用。","note":"大型二手遊戲賣場，官方亦有PS5新品預約頁。","url":"https://www.bookoff.co.jp/shop/shop20529.html","sources":["https://www.bookoff.co.jp/shop/shop20529.html","https://www.bookoff.co.jp/event/lp/detail_shop20529/","https://item-yoyaku.bookoff.co.jp/i/20529_PS5_ACECOM","https://www.mina-tenjin.com/access/"],"uncertain":["note：PS5預約頁可確認品類，旅日期間新品及二手現貨未定。","closed：未查得固定休館規則及2027/2/8–13臨時休業公告。","price：未查得該店售價範圍或適用商品的免稅資訊。"]},
 {"id":"game_geo","cat":"PS5遊戲片店","zh":"GEO福岡博多口店","ja":"ゲオ福岡博多口店","area":"福岡市區","addr":"〒812-0011 福岡県福岡市博多区博多駅前3-25-24","lat":33.589584,"lng":130.417526,"hours":"09:00–翌日00:00。","closed":"全年無休。","time":"30–60分鐘（估計）","kids":"依遊戲盒上的年齡分級選購。","caution":"購買前確認繁體中文支援；二手片另查刮痕與附贈序號是否可用。","note":"官方列有新品與二手遊戲販售的博多門市。","url":"https://geo-online.co.jp/store/03387/","sources":["https://geo-online.co.jp/store/03387/"],"uncertain":["note：官方確認遊戲販售，未公開該店PS5品項或現貨。","station：官方未公布博多駅步行時間，第三方資料不一致。","price：未查得該店售價範圍或適用商品的免稅資訊。"]},
 {"id":"food_daitoen","tags":["燒肉","百名店"],"zh":"大東園 本店（川端）","ja":"大東園 本店","area":"福岡市區","addr":"福岡県福岡市博多区上川端町1-1-1","lat":33.59269,"lng":130.411545,"hours":"官網：平日11:30–14:30（LO14:00）、16:00–23:00（LO22:30）；週六日假日11:30–23:00。","closed":"官網：無公休；食べログ記新年休。","station":"地下鐵中洲川端站步行約3分（櫛田神社旁）。","price":"晚餐約¥6,000–7,999／人（食べログ）。","time":"1.5–2小時","kids":"食べログ：可帶小孩（嬰兒可）、150席、有座敷、全席禁菸、無障礙。","caution":"可訂位；包廂另收10%。行程日：2/8一、2/9二、2/10三、2/11四（日本建國紀念日國定假日）、2/12五、2/13六。2027春節為2/6，2/8–2/13適逢春節連假，台灣／中港韓旅客多，人氣店排隊可能更久。","note":"博多川端的燒肉老店，食べログ 3.59（816則，2026-10-30查）；焼肉百名店2019–2026連續入選（焼肉WEST 2026）。","url":"https://tabelog.com/fukuoka/A4001/A400101/40001664/","sources":["https://tabelog.com/fukuoka/A4001/A400101/40001664/","https://ssl.daitoen.com/tenpo/index.html","https://award.tabelog.com/hyakumeiten/yakiniku_west/2026"],"uncertain":["hours：官網與食べログ平日午休時段描述不同，以官網為準。"],"cat":"餐廳"},
-{"id":"food_tagyu","tags":["燒肉","百名店"],"zh":"燒肉 多牛 站南店","ja":"焼肉 多牛 駅南店","area":"福岡市區","addr":"福岡県福岡市博多区博多駅南1-5-3 西園ビル1F・2F","lat":33.585747,"lng":130.423843,"hours":"週二–週日17:30–23:00（LO22:30）。","closed":"週一（2/8休）。","station":"JR博多站步行約5分。","price":"約¥5,000–5,999／人；僅收現金。","time":"1.5小時","kids":"全席禁菸；七輪炭火、煙大，衣物易沾味。兒童設施未核實。","caution":"1F燒肉不接受訂位，當天15:00起開放候位登記（依店家IG）；2F壽喜燒/涮涮鍋可電話訂位。距Quintessa很近。行程日：2/8一、2/9二、2/10三、2/11四（日本建國紀念日國定假日）、2/12五、2/13六。2027春節為2/6，2/8–2/13適逢春節連假，台灣／中港韓旅客多，人氣店排隊可能更久。","note":"食べログ 3.65（424則，2026-10-30查）；焼肉百名店2021、2025、2026。","url":"https://tabelog.com/fukuoka/A4001/A400101/40002803/","sources":["https://tabelog.com/fukuoka/A4001/A400101/40002803/","https://award.tabelog.com/hyakumeiten/yakiniku_west/2026"],"uncertain":["reservation：候位方式依店家IG，可能變更。","kids：兒童椅／推車／包廂等未逐店核實，以食べログ欄位為準者已註明。"],"cat":"餐廳"},
+{"id":"food_tagyu","tags":["燒肉","百名店"],"zh":"燒肉 多牛 站南店","ja":"焼肉 多牛 駅南店","area":"福岡市區","addr":"福岡県福岡市博多区博多駅南1-5-3 西園ビル1F・2F","lat":33.585747,"lng":130.423843,"hours":"週二–週日17:30–23:00（LO22:30）。","closed":"週一（2/8休）。","station":"JR博多站步行約5分。","price":"約¥5,000–5,999／人；僅收現金。","time":"1.5小時","kids":"全席禁菸；七輪炭火、煙大，衣物易沾味。兒童設施未核實。","caution":"1F燒肉不接受訂位，當天15:00起開放候位登記（依店家IG）；2F壽喜燒/涮涮鍋可電話訂位。行程日：2/8一、2/9二、2/10三、2/11四（日本建國紀念日國定假日）、2/12五、2/13六。2027春節為2/6，2/8–2/13適逢春節連假，台灣／中港韓旅客多，人氣店排隊可能更久。","note":"食べログ 3.65（424則，2026-10-30查）；焼肉百名店2021、2025、2026。","url":"https://tabelog.com/fukuoka/A4001/A400101/40002803/","sources":["https://tabelog.com/fukuoka/A4001/A400101/40002803/","https://award.tabelog.com/hyakumeiten/yakiniku_west/2026"],"uncertain":["reservation：候位方式依店家IG，可能變更。","kids：兒童椅／推車／包廂等未逐店核實，以食べログ欄位為準者已註明。"],"cat":"餐廳"},
 {"id":"food_rikihanten","tags":["燒肉","百名店"],"zh":"力飯店（西中洲）","ja":"力飯店","area":"福岡市區","addr":"福岡県福岡市中央区西中洲12-21","lat":33.591267,"lng":130.40387,"hours":"17:00–23:00（LO22:30）。","closed":"週一（2/8休）。","station":"地下鐵天神南站步行約8分。","price":"約¥9,900–16,500／人（套餐）。","time":"2小時","kids":"兒童適合度未核實；偏高價位、適合大人聚餐。","caution":"官網線上訂位；7人以上須電話。行程日：2/8一、2/9二、2/10三、2/11四（日本建國紀念日國定假日）、2/12五、2/13六。2027春節為2/6，2/8–2/13適逢春節連假，台灣／中港韓旅客多，人氣店排隊可能更久。","note":"食べログ 焼肉WEST百名店2026。","url":"https://www.rikihanten.com/","sources":["https://tabelog.com/fukuoka/A4001/A400103/40005186/","https://www.rikihanten.com/","https://award.tabelog.com/hyakumeiten/yakiniku_west/2026"],"uncertain":["rating：未記錄食べログ分數。","kids：兒童椅／推車／包廂等未逐店核實，以食べログ欄位為準者已註明。"],"cat":"餐廳"},
 {"id":"food_daichan","tags":["燒肉","百名店"],"zh":"燒肉內臟 人生大醬（馬出）","ja":"焼肉ホルモン人生大ちゃん","area":"福岡市區","addr":"福岡県福岡市東区馬出2-4-3","lat":33.610764,"lng":130.419418,"hours":"食べログ：每日17:00–23:00（LO22:00）；官網：17:30–22:00。","closed":"官網：週三（2/10可能休）；食べログ未列公休。","station":"地下鐵馬出九大病院前站5號出口步行約3分。","price":"未查得預算。","time":"1.5小時","kids":"食べログ：全席禁菸、16席（座位少）。","caution":"可訂位；座位少建議提早。行程日：2/8一、2/9二、2/10三、2/11四（日本建國紀念日國定假日）、2/12五、2/13六。2027春節為2/6，2/8–2/13適逢春節連假，台灣／中港韓旅客多，人氣店排隊可能更久。","note":"食べログ 焼肉WEST百名店2026，內臟（ホルモン）燒肉人氣店。","url":"https://tabelog.com/fukuoka/A4001/A400201/40060764/","sources":["https://tabelog.com/fukuoka/A4001/A400201/40060764/","https://hormonelife-daichan.jimdosite.com/","https://award.tabelog.com/hyakumeiten/yakiniku_west/2026"],"uncertain":["hours/closed：官網與食べログ不一致。","price：未查得。","kids：兒童椅／推車／包廂等未逐店核實，以食べログ欄位為準者已註明。"],"cat":"餐廳"},
 {"id":"food_taigen","tags":["燒肉","百名店"],"zh":"泰元 本館（舞鶴・赤坂）","ja":"泰元 本館","area":"福岡市區","addr":"福岡県福岡市中央区舞鶴3-1-8","lat":33.590218,"lng":130.389282,"hours":"17:00–22:00（料理LO21:00，依搜尋摘要）。","closed":"未查得。","station":"地下鐵赤坂站1號出口步行約3分。","price":"約¥6,000–7,999／人；套餐¥6,050–7,700（官網）。","time":"1.5–2小時","kids":"官網：3層樓，有桌席、座敷、包廂（2–3F廣間最多38人），提到適合家庭用餐。","caution":"可訂位。行程日：2/8一、2/9二、2/10三、2/11四（日本建國紀念日國定假日）、2/12五、2/13六。2027春節為2/6，2/8–2/13適逢春節連假，台灣／中港韓旅客多，人氣店排隊可能更久。","note":"自家牧場鹿兒島黑毛和牛「泰元牛」；食べログ 焼肉WEST百名店2026。","url":"https://www.taigen.jp/honkan.html","sources":["https://www.taigen.jp/honkan.html","https://tabelog.com/fukuoka/A4001/A400104/40000044/","https://award.tabelog.com/hyakumeiten/yakiniku_west/2026"],"uncertain":["closed：未查得公休。","hours：來自搜尋摘要，未直接讀到食べログ表格。"],"cat":"餐廳"},
@@ -882,7 +949,7 @@ document.getElementById("sampleBtn").onclick=()=>{if(sharedConfirm("載入預設
     b.onclick=()=>{if(sharedConfirm("載入這支手機上舊版（航班變更前）自動儲存的行程？會覆蓋目前的安排")){S=clean(norm(old));update("載入舊版存檔");fit();toast("已載入舊版存檔");}};}})();
 document.getElementById("clearBtn").onclick=()=>{if(sharedConfirm("清空所有已選景點與天數？")){S=blank();update("清空行程");}};
 function planText(){
-  let out="九州親子行程 2027 春節\n✈️ 華航（已訂）：2/8 CI116 桃園T2 16:25→福岡國際線航廈 19:35；2/13 CI117 福岡國際線航廈 20:35→桃園T2 22:20\n🏨 住宿（已訂）：クインテッサホテル福岡博多 Relax＆Sleep（博多駅東 2-9-29，☎ +81-92-292-6728，入住 15:00／退房 11:00）\n";
+  let out="九州親子行程 2027 春節\n✈️ 華航（已訂）：2/8 CI116 桃園T2 16:25→福岡國際線航廈 19:35；2/13 CI117 福岡國際線航廈 20:35→桃園T2 22:20\n🏨 住宿（已訂）：博多東急REI飯店（博多東急REIホテル，博多駅前1-2-23，博多口步行3分，☎ +81-92-451-0109，入住15:00／退房10:00，2/8–2/13 五晚・2間；2/13 10:00 前退房，行李寄放櫃台）\n";
   S.days.forEach(d=>{out+=`\n【${d.label}】\n`;if(!d.items.length)out+="  （尚未安排）\n";d.items.forEach((id,i)=>{const a=BY[id];out+=`  ${i+1}. ${a.zh}（${a.ja}）\n     ${gmap(a)}\n`;});});
   if(S.pool.length){out+="\n【未排入】\n";S.pool.forEach(id=>out+=`  ・${BY[id].zh}\n`);}
   return out;
@@ -1040,7 +1107,7 @@ panelHead.addEventListener("pointerup",endPanelDrag);panelHead.addEventListener(
 
 
 // ===== 地圖 =====
-const HOTEL={name:"クインテッサホテル福岡博多 Relax＆Sleep",zh:"住宿（已訂）",addr:"〒812-0013 福岡市博多區博多駅東 2-9-29",tel:"+81-92-292-6728",lat:33.587048,lng:130.424911,url:"https://quintessahotels.com/fukuoka-hakata/"};
+const HOTEL={name:"博多東急REI飯店（博多東急REIホテル / Hakata Tokyu REI Hotel）",zh:"住宿（已訂）",addr:"〒812-0011 福岡県福岡市博多区博多駅前1-2-23",tel:"+81-92-451-0109",lat:33.591782,lng:130.418198,url:"https://www.tokyuhotels.co.jp/hakata-r/"};
 let map,layer,allLayer,markers={};
 // 附近景點僅為暫時顯示狀態，不寫入行程或同步資料。
 let nearbyId=null,nearbyReturn=null,nearbyMap=null,nearbyMiniLayer=null,nearbyLayer=null;
@@ -1088,7 +1155,7 @@ function renderMap(){
   if(!map)return;
   clearNearbyMap();
   layer.clearLayers();allLayer.clearLayers();markers={};
-  L.marker([HOTEL.lat,HOTEL.lng],{icon:L.divIcon({className:"hotel-pin",html:"🏨",iconSize:[30,30],iconAnchor:[15,15],popupAnchor:[0,-15]}),zIndexOffset:1000}).bindPopup(`<b>🏨 ${esc(HOTEL.zh)}</b><br>${esc(HOTEL.name)}<br>${esc(HOTEL.addr)}<br>☎ ${esc(HOTEL.tel)}<br>入住 15:00・退房 11:00<br>2/8–2/13 五晚<br><a href="${esc(HOTEL.url)}" target="_blank" rel="noopener">官網</a>`).addTo(layer);
+  L.marker([HOTEL.lat,HOTEL.lng],{icon:L.divIcon({className:"hotel-pin",html:"🏨",iconSize:[30,30],iconAnchor:[15,15],popupAnchor:[0,-15]}),zIndexOffset:1000}).bindPopup(`<b>🏨 ${esc(HOTEL.zh)}</b><br>${esc(HOTEL.name)}<br>${esc(HOTEL.addr)}<br>☎ ${esc(HOTEL.tel)}<br>博多口步行約3分・地下鐵西6出口約1分<br>入住15:00・退房10:00<br>2/8–2/13 五晚・2間<br><strong>2/13 10:00 前退房，行李寄放櫃台</strong><br><a href="${esc(HOTEL.url)}" target="_blank" rel="noopener">官網</a>`).addTo(layer);
   const sel=selected();
   if(document.getElementById("showAll").checked) ATTR.filter(a=>!sel.has(a.id)&&hasCoords(a)).forEach(a=>{const style=CATEGORY_STYLE[a.cat];markers[a.id]=(style?L.marker([a.lat,a.lng],{icon:L.divIcon({className:"category-pin",html:`<span style="display:block;border-radius:8px;background:${style.color}">${style.emoji}</span>`,iconSize:[30,30],iconAnchor:[15,15]})}):L.circleMarker([a.lat,a.lng],{radius:6,color:"#8d97a8",fillColor:"#c3cad6",fillOpacity:.9,weight:1})).bindPopup(popup(a)).addTo(allLayer);});
   S.pool.forEach(id=>{const a=BY[id];if(!hasCoords(a))return;markers[id]=L.marker([a.lat,a.lng],{icon:pin("#a9b6c9","•")}).bindPopup(popup(a,"未排入")).addTo(layer);});
@@ -1186,7 +1253,47 @@ function initDropdowns(){
   });
 }
 
-renderList();renderDays();renderWishes();initMap();initSharing();initDropdowns();
+// ===== 旅行文件：不寫入行程、版本紀錄或同步資料 =====
+let documentsReturn=null;
+function openDocuments(group,trigger){
+  documentsReturn=trigger||document.activeElement;
+  document.getElementById("documentsGroups").innerHTML=TRAVEL_DOCUMENTS.map(g=>`<details id="documents-${g.id}"${g.id===group?" open":""}><summary>${esc(g.title)}</summary><ul><li><a href="${esc(g.folder)}" target="_blank" rel="noopener">全部（資料夾）</a></li>${g.files.map(([label,url])=>`<li><a href="${esc(url)}" target="_blank" rel="noopener">${esc(label)}</a></li>`).join("")}</ul></details>`).join("");
+  document.getElementById("documentsPanel").classList.add("on");
+  document.getElementById("documentsBody").scrollTop=0;
+  document.getElementById("documentsClose").focus();
+}
+function closeDocuments(){document.getElementById("documentsPanel").classList.remove("on");documentsReturn?.focus();documentsReturn=null;}
+document.getElementById("hotelDocsBtn").href=TRAVEL_DOCUMENTS.find(g=>g.id==="lodging").folder;
+document.getElementById("hotelDocsBtn").onclick=e=>{e.preventDefault();openDocuments("lodging",e.currentTarget);};
+document.getElementById("flightDocsBtn").onclick=e=>openDocuments("flights",e.currentTarget);
+document.getElementById("documentsClose").onclick=closeDocuments;
+document.getElementById("documentsPanel").onclick=e=>{if(e.target===e.currentTarget)closeDocuments();};
+document.addEventListener("keydown",e=>{
+  const panel=document.getElementById("documentsPanel");if(!panel.classList.contains("on"))return;
+  if(e.key==="Escape"){e.preventDefault();closeDocuments();}
+  else if(e.key==="Tab"){
+    const items=[...panel.querySelectorAll('button,summary,details[open] a[href]')],first=items[0],last=items[items.length-1];
+    if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus();}
+    else if(!items.includes(document.activeElement)||(!e.shiftKey&&document.activeElement===last)){e.preventDefault();first?.focus();}
+  }
+});
+
+// 離線提示獨立於原有同步狀態；不重新整理，以保留尚未同步的編輯。
+async function initOffline(){
+  const showConnection=()=>{document.getElementById("offlineIndicator").hidden=navigator.onLine!==false;};
+  showConnection();window.addEventListener("online",showConnection);window.addEventListener("offline",showConnection);
+  if(!('serviceWorker' in navigator)||!(location.protocol==="https:"||["localhost","127.0.0.1","[::1]"].includes(location.hostname)))return;
+  try{
+    const registration=await navigator.serviceWorker.register("./sw.js",{scope:"./",updateViaCache:"none"});
+    const hadVersion=!!navigator.serviceWorker.controller||!!registration.active;
+    const updated=()=>{document.getElementById("pwaUpdate").hidden=false;toast("已更新，重新整理即可使用新版");};
+    if(registration.waiting&&hadVersion)updated();
+    const watch=()=>{const worker=registration.installing;if(!worker)return;const changed=()=>{if(worker.state==="installed"&&hadVersion)updated();};worker.addEventListener("statechange",changed);changed();};
+    registration.addEventListener("updatefound",watch);watch();
+  }catch(e){/* 不支援／無法安裝時，保留既有 localStorage 與同步行為。 */}
+}
+
+renderList();renderDays();renderWishes();initMap();initSharing();initDropdowns();initOffline();
 // 測試／除錯用
 window.planner={get state(){return S;},moveTo:(id,d,p)=>{moveTo(id,d,p);update();},select:id=>{if(!selected().has(id)){S.pool.push(id);update();}},unselect:id=>{removeId(id);update();},planText,get ATTR(){return ATTR;},get BY(){return BY;},get customs(){return CUSTOMS;},setCustoms,saveCustomSpot,deleteCustomSpot,openCustomForm,tab,fit,openDetail,haversine,nearbyBand,nearbySpots,openNearby,closeNearby,nearbyAdd,showNearbyOnMap,toggleWish,get wishes(){return WISH;}};
 </script>
