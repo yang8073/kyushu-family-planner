@@ -3,7 +3,7 @@ const fs=require('fs'),path=require('path'),vm=require('vm'),assert=require('ass
 module.exports=async function({html,page,initial,sleep}){
  const root=path.join(__dirname,'..'),swPath=path.join(root,'sw.js');
  assert(fs.existsSync(swPath));const sw=fs.readFileSync(swPath,'utf8');
- assert.match(sw,/kfp-v\d+-\d{8}/);assert.match(sw,/const CACHE_VERSION = 'kfp-v7-20261102';/);assert.match(sw,/api\.php/);
+ assert.match(sw,/kfp-v\d+-\d{8}/);assert.match(sw,/const CACHE_VERSION = 'kfp-v8-20261102';/);assert.match(sw,/api\.php/);
  const manifest=JSON.parse(fs.readFileSync(path.join(root,'manifest.webmanifest'),'utf8'));
  assert.equal(manifest.scope,'./');assert.equal(manifest.start_url,'./');assert.match(html,/rel="manifest" href="\.\/manifest.webmanifest"/);
  const p=page();await initial(p);
