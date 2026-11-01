@@ -135,6 +135,7 @@ const initial=async p=>{await waitFor(()=>p.run('sync.ready'));await p.run('flus
  for(const privateValue of ['189,520','189520','1791493524','6222338535','60626719'])assert(!html.includes(privateValue));
  await require('./test-modalstack.cjs')({html,page,initial,sleep,leaflet});
  await require('./test-hotel-pluscodes.cjs')({page,initial,sleep,leaflet,Database,JsonfileDatabase});
+ await require('./test-nearbysearch.cjs')({html,page,initial,sleep,leaflet});
  await require('./test-offline.cjs')({html,page,initial,sleep});
  console.log('PASS confirmed lodging header, export and map labels; no booking amount or private identifiers');
  // Confirmed flight labels upgrade only exact old defaults, with no load-time save/version.
