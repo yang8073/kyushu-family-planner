@@ -1,0 +1,11 @@
+{
+  "id": "./",
+  "name": "九州親子行程規劃 · 2027 春節",
+  "short_name": "九州親子行程",
+  "lang": "zh-Hant-TW",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f9ff",
+  "theme_color": "#dff0ff"
+}
