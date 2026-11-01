@@ -1127,6 +1127,7 @@ function openDetail(id,trigger){if(BY[id])pushOverlay("detail",{id},trigger);}
 function closeDetail(){closeOverlay("detail");}
 document.getElementById("detailClose").onclick=closeDetail;
 const COORDS_ERROR="無法解析位置，請輸入有效的座標、Google 地圖連結或 Plus Code（例如 HCR9+2X 福岡市）。";
+const PLACES_LOOKUP_URL="https://trip.yi-jia-zi.com/places-lookup.php";
 const MAPS_RESOLVER_URL="https://trip.yi-jia-zi.com/resolve-maps-link.php";
 const MAPS_SHORT_HINT="短網址目前無法自動解析。請在瀏覽器打開此連結，等網址變成 google.com/maps/... 後複製完整網址貼上；或貼 Plus Code / 座標。";
 let mapsResolverFailed=false;
@@ -1145,6 +1146,27 @@ function mapsCategory(tags={},name=""){const values=[tags.amenity,tags.shop,tags
   if(values.some(v=>["restaurant","fast_food","cafe","food_court"].includes(v)))return "餐廳";
   if(values.some(v=>["mall","department_store","marketplace"].includes(v)))return "購物街/商圈";
   if(values.some(v=>["theme_park","zoo","aquarium","museum","park","attraction","playground"].includes(v)))return "親子景點";return "";
+}
+function googleCategory(type="",name=""){
+  if(type==="toy_store")return /lego|レゴ|樂高/i.test(name)?"樂高店":"";
+  if(/(?:^|_)restaurant$|ramen|^food$|^cafe$|^bakery$|^meal_(?:takeaway|delivery)$|^food_court$|^coffee_shop$|^tea_house$|^ice_cream_shop$|^sandwich_shop$|^bar$|^pub$/.test(type))return "餐廳";
+  if(["shopping_mall","department_store","market","store"].includes(type))return "購物街/商圈";
+  if(["tourist_attraction","amusement_park","zoo","aquarium","park","museum","playground"].includes(type))return "親子景點";
+  return type==="lodging"&&CUSTOM_CATEGORIES.includes("住宿")?"住宿":"";
+}
+function normalizeGoogleResult(r={}){return {name:String(r.name||""),addr:String(r.address||""),hours:(Array.isArray(r.hours)?r.hours:[]).slice(0,7).map(String).join("\n"),phone:String(r.phone||""),url:safeURL(r.website)||safeURL(r.maps_uri)||"",mapsUrl:!safeURL(r.website)&&!!safeURL(r.maps_uri),cat:googleCategory(r.type,r.name),rating:typeof r.rating==="number"&&Number.isFinite(r.rating)?r.rating:null,ratingCount:Number.isInteger(r.rating_count)&&r.rating_count>=0?r.rating_count:null};}
+const googlePlacesMemo=new Map();
+async function lookupGooglePlaces(point,name,signal,placeId){
+  const key=JSON.stringify([name.normalize("NFKC").trim().toLowerCase().replace(/\s+/g," "),point.lat,point.lng]);
+  if(googlePlacesMemo.has(key))return googlePlacesMemo.get(key);
+  if(signal.aborted)throw Error("取消");
+  const pending=(async()=>{const controller=new AbortController(),abort=()=>controller.abort();signal.addEventListener("abort",abort,{once:true});const timer=setTimeout(abort,9000);
+    try{const query=new URLSearchParams({name,lat:String(point.lat),lng:String(point.lng)});if(/^[A-Za-z0-9_-]{10,300}$/.test(placeId||""))query.set("place_id",placeId);
+      const response=await fetch(PLACES_LOOKUP_URL+"?"+query,{signal:controller.signal}),data=await response.json();
+      if(!response.ok||!data.ok)return {ok:false,error:typeof data.error==="string"?data.error:"unavailable",remaining:data.remaining};
+      if(!Array.isArray(data.results))throw Error();return data;
+    }catch{return {ok:false,error:"unavailable"};}finally{clearTimeout(timer);signal.removeEventListener("abort",abort);}
+  })();googlePlacesMemo.set(key,pending);return pending;
 }
 // 同一頁的所有查詢依序發送；取消的排程不佔用額度，也不自訂瀏覽器禁止的標頭。
 let nominatimLast=-Infinity,nominatimQueue=Promise.resolve();
@@ -1183,32 +1205,56 @@ function updateCoordsPreview(){const input=customEl("customCoords"),preview=cust
   input.setCustomValidity(error?hint:"");input.setAttribute("aria-invalid",String(error));preview.hidden=!text;preview.classList.toggle("coords-error",error);preview.textContent=error?hint:value?`${value.lat.toFixed(6)}, ${value.lng.toFixed(6)} · ${value.source}${value.warning?"。"+value.warning:""}`:"";
   queueCustomPlanMap(value);return !error;
 }
-const customSuggestionLabels={addr:"地址",hours:"營業時間",url:"網站",phone:"電話",cat:"類型建議"};
-function renderCustomSuggestions(){const state=overlayTop()?.state,panel=customEl("customSuggest"),suggestions=state?.suggestions||{},entries=Object.entries(customSuggestionLabels).filter(([key])=>suggestions[key]);panel.hidden=!entries.length&&!state?.suggestHint;
-  panel.innerHTML=entries.map(([key,label])=>`<p><b>${label}：</b>${esc(suggestions[key])} <button type="button" class="btn alt" data-custom-apply="${key}">套用</button></p>`).join("")+(entries.length?'<button type="button" class="btn alt" data-custom-apply="all">全部套用（僅空白欄位）</button><p class="hint">資料來源：© OpenStreetMap contributors（可能不完整，請自行確認）</p>':`<p>${esc(state?.suggestHint||"")}</p>`);
+const customSuggestionLabels={name:"名稱",addr:"地址",hours:"營業時間",url:"網站",phone:"電話",cat:"類型建議"};
+function renderCustomSuggestions(){const layer=overlayTop(),state=layer?.state,panel=customEl("customSuggest"),suggestions=state?.suggestions||{},entries=Object.entries(customSuggestionLabels).filter(([key])=>suggestions[key]);
+  const canGoogle=layer?.kind==="custom"&&hasCoords(customCoordsInfo())&&!!customEl("customZh").value.trim();
+  panel.hidden=!entries.length&&!state?.suggestHint&&!canGoogle;
+  const google=state?.suggestSource==="google",results=state?.googleResults||[];
+  panel.innerHTML=(google?'<p><b>來源：Google</b></p>':"")+(google&&results.length>1?'<div role="group" aria-label="Google 地點選擇">'+results.map((r,i)=>`<button type="button" class="btn alt" data-google-choice="${i}" aria-pressed="${i===(state.googleChoice||0)}">${esc(r.name)} · ${esc(r.distance_m)} m</button>`).join("")+"</div>":"")+entries.map(([key,label])=>`<p style="white-space:pre-line"><b>${esc(key==="url"&&suggestions.mapsUrl?"Google 地圖頁":label)}：</b>${esc(suggestions[key])} <button type="button" class="btn alt" data-custom-apply="${esc(key)}">套用</button></p>`).join("")+
+    (google&&suggestions.rating!==null?`<p>${esc("★"+suggestions.rating+(suggestions.ratingCount!==null?" · "+suggestions.ratingCount.toLocaleString("en-US")+" 則":""))}</p>`:"")+
+    (entries.length?'<button type="button" class="btn alt" data-custom-apply="all">全部套用（僅空白欄位）</button>'+ (google?"":'<p class="hint">資料來源：© OpenStreetMap contributors（可能不完整，請自行確認）</p>'):"")+(google?'<p class="hint">Google Maps</p>':"")+
+    (state?.suggestHint?`<p class="hint">${esc(state.suggestHint)}</p>`:"")+
+    (Number.isInteger(state?.googleRemaining)?`<p class="hint">${esc("本月 Google 查詢剩餘 "+state.googleRemaining+" 次")}</p>`:"")+
+    (canGoogle?'<button type="button" class="btn alt" data-google-lookup>用 Google 查詢詳細資訊</button>':"");
 }
 function applyCustomSuggestion(key,onlyEmpty=false){const state=overlayTop()?.kind==="custom"?overlayTop().state:null,s=state?.suggestions;if(!s)return;if(key==="all"){state.applyNoteBlocked=!!customEl("customNote").value.trim()||!!customEl("customNote").dataset.edited;Object.keys(customSuggestionLabels).forEach(k=>applyCustomSuggestion(k,true));return;}
-  const id={addr:"customAddr",url:"customUrl",hours:"customNote",phone:"customNote",cat:"customCat"}[key],value=key==="url"?safeURL(s[key]):s[key];if(!id||!value)return;const field=customEl(id);
-  // 全部套用以開始時的備註空白狀態為準，營業時間與電話可一起加入。
-  const note=key==="hours"||key==="phone";if(onlyEmpty&&(note?state.applyNoteBlocked:field.value.trim()||field.dataset.edited))return;
-  if(note){const line=(key==="hours"?"營業時間：":"電話：")+value;if(!field.value.split("\n").includes(line))field.value=(field.value.trim()?field.value.trim()+"\n":"")+line;field.value=field.value.slice(0,1000);}else field.value=String(value).slice(0,id==="customAddr"?200:Infinity);
+  const id={name:"customZh",addr:"customAddr",url:"customUrl",hours:"customNote",phone:"customNote",cat:"customCat"}[key],value=key==="url"?safeURL(s[key]):s[key];if(!id||!value)return;const field=customEl(id);
+  // Google 的個別套用也保護手寫內容；全部套用讓營業時間與電話一起加入原本空白的備註。
+  const note=key==="hours"||key==="phone",google=state.suggestSource==="google";
+  if(onlyEmpty?(note?state.applyNoteBlocked:field.value.trim()||field.dataset.edited):google&&(field.value.trim()||field.dataset.edited))return;
+  if(note){const line=(key==="hours"?"營業時間：":"電話：")+value;if(!field.value.split("\n").includes(line))field.value=(field.value.trim()?field.value.trim()+"\n":"")+line;field.value=field.value.slice(0,1000);}else field.value=String(value).slice(0,id==="customAddr"?200:id==="customZh"?60:Infinity);
   field.dataset.edited="1";
 }
-customEl("customSuggest").onclick=e=>{const button=e.target.closest("[data-custom-apply]");if(!button)return;const state=overlayTop()?.state;if(!state)return;applyCustomSuggestion(button.dataset.customApply);};
+customEl("customSuggest").onclick=e=>{const button=e.target.closest("[data-custom-apply],[data-google-choice],[data-google-lookup]");if(!button)return;const state=overlayTop()?.state;if(!state)return;
+  if(button.hasAttribute("data-google-lookup")){customCoordsInput(undefined,true);return;}
+  if(button.dataset.googleChoice!==undefined){const choice=Number(button.dataset.googleChoice);if(Number.isInteger(choice)&&state.googleResults?.[choice]){state.googleChoice=choice;state.suggestions=normalizeGoogleResult(state.googleResults[choice]);renderCustomSuggestions();}return;}
+  applyCustomSuggestion(button.dataset.customApply);
+};
 function fillCustomMapsName(name){const field=customEl("customZh");if(name&&!field.value.trim()&&!field.dataset.edited)field.value=[...name].slice(0,60).join("");}
-function customCoordsInput(sharedText){cancelCustomLookup();const layer=overlayTop();if(layer?.kind!=="custom")return updateCoordsPreview();const text=customEl("customCoords").value.trim(),maps=parseGoogleMapsLink(typeof sharedText==="string"?sharedText:text);layer.state.resolved=null;layer.state.suggestions={};layer.state.suggestHint="";fillCustomMapsName(maps.name);updateCoordsPreview();renderCustomSuggestions();if(maps.kind==="none")return;
+function customCoordsInput(sharedText,explicitGoogle=false){cancelCustomLookup();const layer=overlayTop();if(layer?.kind!=="custom")return updateCoordsPreview();const text=customEl("customCoords").value.trim(),maps=parseGoogleMapsLink(typeof sharedText==="string"?sharedText:text);
+  // Keep resolved coordinates while editing the name or explicitly requesting details.
+  if(layer.state.resolved?.text!==text)layer.state.resolved=null;
+  Object.assign(layer.state,{suggestions:{},suggestHint:"",suggestSource:"",googleResults:[],googleChoice:0,googleRemaining:null});fillCustomMapsName(maps.name);updateCoordsPreview();renderCustomSuggestions();if(maps.kind==="none"&&!explicitGoogle)return;
   if(navigator.onLine===false){layer.state.suggestHint="目前離線，已略過資料查詢。";renderCustomSuggestions();return;}
   const controller=customLookupController=new AbortController(),token=customLookupId,current=()=>!controller.signal.aborted&&token===customLookupId&&overlayTop()===layer&&customEl("customCoords").value.trim()===text;
-  customLookupTimer=setTimeout(async()=>{customLookupTimer=null;let value=maps;
+  customLookupTimer=setTimeout(async()=>{customLookupTimer=null;let value=maps.kind==="none"?customCoordsInfo():maps;
     if(maps.kind==="short"){value=await resolveMapsLink(text,controller.signal);if(!current())return;if(!value){updateCoordsPreview();return;}value={...value,name:value.name||maps.name};layer.state.resolved={text,value};fillCustomMapsName(value.name);updateCoordsPreview();}
     if(!hasCoords(value)){layer.state.suggestHint="此連結未含座標，請補上圖釘位置後再查詢。";renderCustomSuggestions();return;}
-    layer.state.suggestHint="正在查詢地圖資料…";renderCustomSuggestions();try{const result=await lookupMapsSuggestions(value,value.name,controller.signal);if(!current())return;layer.state.suggestions=result;layer.state.suggestHint=Object.values(result).some(Boolean)?"":"未找到可套用的資料，請自行填寫。";}catch{if(!current())return;layer.state.suggestHint="暫時無法取得地圖資料，請自行填寫。";}if(current())renderCustomSuggestions();
+    const name=value.name||customEl("customZh").value.trim();layer.state.suggestHint="正在查詢地圖資料…";renderCustomSuggestions();let fallback="";
+    try{if(name&&(maps.kind!=="none"||explicitGoogle)){
+        const data=await lookupGooglePlaces(value,name,controller.signal,value.placeId);if(!current())return;
+        if(Number.isInteger(data.remaining))layer.state.googleRemaining=data.remaining;
+        if(data.ok&&data.results.length){Object.assign(layer.state,{suggestSource:"google",googleResults:data.results,suggestions:normalizeGoogleResult(data.results[0]),suggestHint:""});renderCustomSuggestions();return;}
+        if(!data.ok)fallback=data.error==="monthly_quota_reached"?"本月 Google 免費查詢額度已用完，改用 OpenStreetMap":"Google 查詢暫時無法使用，改用 OpenStreetMap";
+      }
+      layer.state.suggestHint=fallback||"正在查詢地圖資料…";renderCustomSuggestions();const result=await lookupMapsSuggestions(value,name,controller.signal);if(!current())return;layer.state.suggestions=result;layer.state.suggestHint=fallback||(Object.values(result).some(Boolean)?"":"未找到可套用的資料，請自行填寫。");
+    }catch{if(!current())return;layer.state.suggestHint=fallback||"暫時無法取得地圖資料，請自行填寫。";}if(current())renderCustomSuggestions();
   },800);
 }
 // 單行輸入框會刪除換行；貼上時先解析 Android 分享的原文，再保留可編輯網址。
 customEl("customCoords").onpaste=e=>{const text=e.clipboardData?.getData("text"),maps=parseGoogleMapsLink(text);if(maps.kind==="none")return;e.preventDefault();customEl("customCoords").value=mapsLinkURL(text).href;customCoordsInput(text);};
 customEl("customCoords").oninput=customCoordsInput;customEl("customCoords").onblur=updateCoordsPreview;
-["customZh","customCat","customArea","customAddr","customNote","customUrl"].forEach(id=>customEl(id).oninput=()=>{customEl(id).dataset.edited="1";});
+["customZh","customCat","customArea","customAddr","customNote","customUrl"].forEach(id=>customEl(id).oninput=()=>{customEl(id).dataset.edited="1";if(id==="customZh")customCoordsInput();});
 
 function openCustomForm(id=null,trigger){
   if(!ME.nick){openNick();return;}
@@ -1577,7 +1623,7 @@ async function initOffline(){
 
 renderList();renderDays();renderWishes();initMap();initSharing();initDropdowns();initOffline();
 // 測試／除錯用
-window.planner={get state(){return S;},moveTo:(id,d,p)=>{if(moveTo(id,d,p))update();},select:id=>{if(canPlan(id)&&!selected().has(id)){S.pool.push(id);update();}},unselect:id=>{if(canPlan(id)){removeId(id);update();}},planText,get ATTR(){return ATTR;},get BY(){return BY;},get customs(){return CUSTOMS;},setCustoms,saveCustomSpot,deleteCustomSpot,openCustomForm,parseGoogleMapsLink,coordsInfo,parseCoords,looseMapsName,selectMapsMatch,mapsCategory,tab,fit,openDetail,haversine,nearbyBand,nearbySpots,normalizeNearbySearch,nearbyMatches,filteredNearbySpots,sheetGesture,openNearby,closeNearby,nearbyAdd,showNearbyOnMap,toggleWish,get wishes(){return WISH;}};
+window.planner={get state(){return S;},moveTo:(id,d,p)=>{if(moveTo(id,d,p))update();},select:id=>{if(canPlan(id)&&!selected().has(id)){S.pool.push(id);update();}},unselect:id=>{if(canPlan(id)){removeId(id);update();}},planText,get ATTR(){return ATTR;},get BY(){return BY;},get customs(){return CUSTOMS;},setCustoms,saveCustomSpot,deleteCustomSpot,openCustomForm,parseGoogleMapsLink,coordsInfo,parseCoords,looseMapsName,selectMapsMatch,mapsCategory,googleCategory,normalizeGoogleResult,lookupGooglePlaces,tab,fit,openDetail,haversine,nearbyBand,nearbySpots,normalizeNearbySearch,nearbyMatches,filteredNearbySpots,sheetGesture,openNearby,closeNearby,nearbyAdd,showNearbyOnMap,toggleWish,get wishes(){return WISH;}};
 </script>
 </body>
 </html>

@@ -8,6 +8,20 @@ function testResolver(){
  assert(!/Access-Control-Allow-Origin:\s*\*/.test(php));assert(!/CURLOPT_FOLLOWLOCATION\s*=>\s*true/.test(php));assert(!/CURLOPT_RETURNTRANSFER|readfile\(|file_get_contents\(/.test(php));
  assert.match(php,/\['ok' => true, 'url' => \$value\]/);assert.match(php,/\['ok' => false, 'error' => \$value\]/);
  assert(fs.readFileSync(path.join(__dirname,'resolver/README.md'),'utf8').includes('尚未部署'));
+ const places=fs.readFileSync(path.join(__dirname,'resolver/places-lookup.php'),'utf8');
+ assert(!places.includes('AIza'),'不得把 Google API key 寫入程式');
+ const mask='places.id,places.displayName,places.formattedAddress,places.location,places.googleMapsUri,places.regularOpeningHours.weekdayDescriptions,places.nationalPhoneNumber,places.websiteUri,places.rating,places.userRatingCount,places.primaryType,places.primaryTypeDisplayName';
+ assert.equal(places.match(/const KFP_FIELD_MASK = '([^']+)'/)[1],mask);
+ for(const pattern of [/declare\(strict_types=1\)/,/const MONTHLY_CAP = 900;/,/const CACHE_TTL = 30 \* 86400;/,/const RATE_PER_MIN = 20;/,/const PAGE_SIZE = 3;/,/const RADIUS_M = 300;/,/getenv\('KFP_PRIVATE_DIR'\)/,/__DIR__ \. '\/\.\.\/kyushu-trip-private'/,/\/places_key\.txt/,/is_readable\(\$keyFile\)/,/file_get_contents\(\$keyFile\)/,/flock\(\$lock, LOCK_EX\)/,/flock\(\$lock, LOCK_UN\)/,/tempnam\(/,/rename\(\$tmp, \$path\)/,/umask\(0077\)/,/mkdir\(\$dir, 0700/,/America\/Los_Angeles/,/REMOTE_ADDR/,/Retry-After:/,/Vary: Origin/,/Cache-Control: no-store/,/X-Content-Type-Options: nosniff/,/forbidden_origin/,/bad_request/,/not_configured/,/rate_limited/,/monthly_quota_reached/,/upstream_error/,/CURLOPT_FOLLOWLOCATION => false/,/CURLOPT_PROTOCOLS => CURLPROTO_HTTPS/,/CURLOPT_REDIR_PROTOCOLS => CURLPROTO_HTTPS/,/CURLOPT_CONNECTTIMEOUT => 4/,/CURLOPT_TIMEOUT => 8/,/CURLOPT_SSL_VERIFYPEER => true/,/CURLOPT_SSL_VERIFYHOST => 2/,/X-Goog-Api-Key:/,/X-Goog-FieldMask:/,/https:\/\/places\.googleapis\.com\/v1\/places:searchText/,/'pageSize' => PAGE_SIZE/,/'languageCode' => 'zh-TW'/,/'regionCode' => 'JP'/,/'radius' => \(float\)RADIUS_M/,/function kfp_places_main\(\): void/,/if \(!defined\('KFP_PLACES_TEST'\)\) kfp_places_main\(\);/])assert.match(places,pattern);
+ assert.match(places,/return \$origin === 'https:\/\/yang8073\.github\.io';/);assert(!places.includes('localhost'));assert(!/Access-Control-Allow-Origin:\s*\*/.test(places));
+ assert(!/echo[^;]*\$(?:body|resp|key)\b/.test(places));assert(!/error_log\(|var_dump\(|print_r\(/.test(places));
+ assert(places.indexOf('$quota = kfp_reserve_quota(')<places.indexOf('$resp = $fetcher('),'先保留額度才呼叫 Google');
+ for(const fn of ['kfp_validate_input','kfp_origin_allowed','kfp_cache_key','kfp_month','kfp_reserve_quota','kfp_quota_status','kfp_normalize_places','kfp_haversine','kfp_lookup'])assert(places.includes('function '+fn+'('));
+ const htaccess=fs.readFileSync(path.join(__dirname,'resolver/htaccess.trip'),'utf8');assert.match(htaccess,/^Options -Indexes/m);assert.match(htaccess,/<Files "test-places\.php">\s+Require all denied\s+<\/Files>/);
+ const rules=[...htaccess.matchAll(/<FilesMatch "([^"\n]+)">\s+Require all (granted|denied)\s+<\/FilesMatch>/g)].map(m=>({regex:new RegExp(m[1]),grant:m[2]==='granted'}));assert.equal(rules.length,2);
+ for(const file of ['api.php','resolve-maps-link.php','places-lookup.php','test-places.php','index.html','secret.txt','.env','places-lookup.php.bak','other.php','API.php','sub-api.php']){const rule=rules.filter(r=>r.regex.test(file));assert.equal(rule.length,1,file);assert.equal(rule[0].grant,['api.php','resolve-maps-link.php','places-lookup.php'].includes(file),file);}
+ const phpTest=fs.readFileSync(path.join(__dirname,'resolver/test-places.php'),'utf8');assert.match(phpTest,/define\('KFP_PLACES_TEST', true\)/);assert.match(phpTest,/sys_get_temp_dir\(\)/);assert.match(phpTest,/PASS places/);assert(!phpTest.includes('kfp_fetch_google('));
+ console.log('PASS Places 代理：金鑰外置、精確 field mask／CORS、900 硬上限／先預留、鎖及原子寫入、Pacific 月界、HTTPS／逾時、不洩漏、測試入口與三檔部署白名單（靜態）');
  console.log('PASS 解析器草案：HTTPS／主機及路徑白名單、逐跳驗證、五次上限、逾時、丟棄本文、限定 CORS、快取及限流（靜態）');
 }
 module.exports=testResolver;if(require.main===module)testResolver();
