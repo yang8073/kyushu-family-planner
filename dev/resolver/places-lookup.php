@@ -29,19 +29,21 @@ function kfp_validate_input(array $get): ?array {
     if (preg_match('/[\p{Cc}\p{Cf}]/u', $get['name'])) return null;
     $name = trim($get['name']);
     if (!preg_match('//u', $name) || preg_match('/[\p{Cc}\p{Cf}]/u', $name) || kfp_length($name) < 1 || kfp_length($name) > 120) return null;
-    foreach (['lat' => 90, 'lng' => 180] as $field => $max) {
+    $hasCoords = array_key_exists('lat', $get);
+    if ($hasCoords !== array_key_exists('lng', $get)) return null;
+    foreach ($hasCoords ? ['lat' => 90, 'lng' => 180] : [] as $field => $max) {
         $v = $get[$field] ?? null;
         if (!is_string($v) || strlen($v) > 20 || !preg_match('/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/D', $v) || !is_finite((float)$v) || abs((float)$v) > $max) return null;
     }
     $id = $get['place_id'] ?? null;
     if (array_key_exists('place_id', $get) && (!is_string($id) || !preg_match('/^[A-Za-z0-9_-]{10,300}$/D', $id))) return null;
-    return ['name' => $name, 'lat' => (float)$get['lat'], 'lng' => (float)$get['lng'], 'place_id' => $id];
+    return ['name' => $name, 'lat' => $hasCoords ? (float)$get['lat'] : null, 'lng' => $hasCoords ? (float)$get['lng'] : null, 'place_id' => $id];
 }
-function kfp_cache_key(string $name, float $lat, float $lng): string {
+function kfp_cache_key(string $name, ?float $lat, ?float $lng): string {
     if (class_exists('Normalizer')) $name = Normalizer::normalize($name, Normalizer::FORM_KC) ?: $name;
     $name = function_exists('mb_strtolower') ? mb_strtolower($name, 'UTF-8') : strtolower($name);
     $name = trim(preg_replace('/\s+/u', ' ', $name) ?? $name);
-    return hash('sha256', $name . '|' . number_format(round($lat, 4) ?: 0, 4, '.', '') . '|' . number_format(round($lng, 4) ?: 0, 4, '.', ''));
+    return hash('sha256', $name . '|' . ($lat === null || $lng === null ? 'none' : number_format(round($lat, 4) ?: 0, 4, '.', '') . '|' . number_format(round($lng, 4) ?: 0, 4, '.', '')));
 }
 function kfp_month(int $ts): string {
     // Google Maps Platform billing months reset in Pacific calendar time, including DST.
@@ -116,14 +118,20 @@ function kfp_url($value): string {
     $url = kfp_text($value, 500);
     return filter_var($url, FILTER_VALIDATE_URL) && in_array(strtolower((string)parse_url($url, PHP_URL_SCHEME)), ['http', 'https'], true) ? $url : '';
 }
-function kfp_sort_places(array $results, float $lat, float $lng, ?string $placeId): array {
+function kfp_sort_places(array $results, ?float $lat, ?float $lng, ?string $placeId): array {
+    if ($lat === null || $lng === null) {
+        foreach ($results as &$r) $r['distance_m'] = null;
+        unset($r);
+        usort($results, fn($a, $b) => ($b['id'] === $placeId) <=> ($a['id'] === $placeId));
+        return $results;
+    }
     foreach ($results as &$r) $r['distance_m'] = (int)round(kfp_haversine($lat, $lng, $r['lat'], $r['lng']));
     unset($r);
     $results = array_values(array_filter($results, fn($r) => kfp_haversine($lat, $lng, $r['lat'], $r['lng']) <= 2000));
     usort($results, fn($a, $b) => (($b['id'] === $placeId) <=> ($a['id'] === $placeId)) ?: ($a['distance_m'] <=> $b['distance_m']));
     return $results;
 }
-function kfp_normalize_places(array $resp, float $lat, float $lng, ?string $placeId): array {
+function kfp_normalize_places(array $resp, ?float $lat, ?float $lng, ?string $placeId): array {
     $results = [];
     foreach (is_array($resp['places'] ?? null) ? array_slice($resp['places'], 0, PAGE_SIZE) : [] as $p) {
         if (!is_array($p)) continue;
@@ -143,6 +151,12 @@ function kfp_normalize_places(array $resp, float $lat, float $lng, ?string $plac
     }
     return kfp_sort_places($results, $lat, $lng, $placeId);
 }
+function kfp_search_body(array $input): array {
+    $bias = $input['lat'] !== null && $input['lng'] !== null
+        ? ['circle' => ['center' => ['latitude' => $input['lat'], 'longitude' => $input['lng']], 'radius' => (float)RADIUS_M]]
+        : ['rectangle' => ['low' => ['latitude' => 30.9, 'longitude' => 129.3], 'high' => ['latitude' => 34.3, 'longitude' => 132.1]]];
+    return ['textQuery' => $input['name'], 'pageSize' => PAGE_SIZE, 'languageCode' => 'zh-TW', 'regionCode' => 'JP', 'locationBias' => $bias];
+}
 function kfp_fetch_google(array $input, string $key): array {
     if (!function_exists('curl_init')) throw new RuntimeException('upstream_error');
     $curl = curl_init('https://places.googleapis.com/v1/places:searchText');
@@ -154,8 +168,7 @@ function kfp_fetch_google(array $input, string $key): array {
             CURLOPT_CONNECTTIMEOUT => 4, CURLOPT_TIMEOUT => 8,
             CURLOPT_SSL_VERIFYPEER => true, CURLOPT_SSL_VERIFYHOST => 2,
             CURLOPT_HTTPHEADER => ['Content-Type: application/json', 'X-Goog-Api-Key: ' . $key, 'X-Goog-FieldMask: ' . KFP_FIELD_MASK],
-            CURLOPT_POSTFIELDS => json_encode(['textQuery' => $input['name'], 'pageSize' => PAGE_SIZE, 'languageCode' => 'zh-TW', 'regionCode' => 'JP',
-                'locationBias' => ['circle' => ['center' => ['latitude' => $input['lat'], 'longitude' => $input['lng']], 'radius' => (float)RADIUS_M]]], JSON_THROW_ON_ERROR | JSON_PRESERVE_ZERO_FRACTION),
+            CURLOPT_POSTFIELDS => json_encode(kfp_search_body($input), JSON_THROW_ON_ERROR | JSON_PRESERVE_ZERO_FRACTION),
         ]);
         $body = curl_exec($curl);
         $status = (int)curl_getinfo($curl, CURLINFO_HTTP_CODE);

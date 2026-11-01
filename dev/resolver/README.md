@@ -29,15 +29,17 @@
 
 ## 查詢、計費與限制
 
-Places 端點只接受 GET `?name=名稱&lat=33.59&lng=130.42`；可選 `place_id` 僅用來優先排列同次搜尋結果，沒有 Place Details 或其他第二次 Google 呼叫。名稱限 1–120 個字、禁止控制字元，座標須在合法範圍內。僅精確來源 `https://yang8073.github.io` 可用；缺少 Origin、localhost 或其他來源均回傳 `403 forbidden_origin`，CLI 測試也必須傳 Origin。允許來源的 OPTIONS 預檢回傳 204。所有回應 `Cache-Control: no-store`、`Vary: Origin`、JSON、`nosniff`。
+Places 端點只接受 GET `?name=名稱&lat=33.59&lng=130.42` 或 `?name=名稱`；lat/lng 為選填，必須一起提供或一起省略（空字串仍視為無效）；可選 `place_id` 僅用來優先排列同次搜尋結果，沒有 Place Details 或其他第二次 Google 呼叫。名稱限 1–120 個字、禁止控制字元，座標須在合法範圍內。僅精確來源 `https://yang8073.github.io` 可用；缺少 Origin、localhost 或其他來源均回傳 `403 forbidden_origin`，CLI 測試也必須傳 Origin。允許來源的 OPTIONS 預檢回傳 204。所有回應 `Cache-Control: no-store`、`Vary: Origin`、JSON、`nosniff`。
 
 本次 field mask 包含營業時間、電話、網站及評分，會使用 **Text Search Enterprise SKU**。[Google 官方全球價格頁](https://developers.google.com/maps/billing-and-pricing/pricing) 最後更新 **2026-10-30 UTC**：每月免費 **1,000 次**，超過後首級為 **US$35／1,000 次**。代理硬上限設為 **900 次／月**，不提供超額付費模式。此計數只管理本代理的呼叫。
 
 月份以 **America/Los_Angeles** 的日曆月計算，對齊 Google Maps Platform 的 Pacific 計費月份，包含夏令時間；不是 UTC 或台灣時間。例如 `2026-12-01 05:00 UTC` 仍屬 `2026-11`。每月各有一個 `usage-YYYY-MM.json`，換月自然使用新的計數檔。所有計數讀寫由同一個 `flock(LOCK_EX)` 鎖保護，以暫存檔加 rename 寫入；**先持久化保留次數才呼叫 Google，失敗也扣次數**，因此併發／上游失敗仍不能繞過硬上限。計數檔毀損或無法寫入會停止查詢，不重設計數。
 
-每個 `REMOTE_ADDR` 每 60 秒最多 **20 次**（包含快取命中），超過回傳 `429 rate_limited` 與 `Retry-After`；不信任轉送 IP 標頭。查詢順序為輸入驗證、限流、快取、金鑰檢查、額度保留、Google。成功結果（含空陣列）快取 **30 天**，鍵為 NFKC（intl 可用時）、小寫、合併空白後的名稱加上小數四位座標之 SHA-256。快取命中不扣次數；回傳當月最新 remaining，並依當次 place_id 重排。每次至多清除 20 個過期快取；不快取上游錯誤，不回傳／記錄上游本文或金鑰。
+每個 `REMOTE_ADDR` 每 60 秒最多 **20 次**（包含快取命中），超過回傳 `429 rate_limited` 與 `Retry-After`；不信任轉送 IP 標頭。查詢順序為輸入驗證、限流、快取、金鑰檢查、額度保留、Google。成功結果（含空陣列）快取 **30 天**，鍵為 NFKC（intl 可用時）、小寫、合併空白後的名稱加上小數四位座標（未提供時使用 `none`）之 SHA-256。快取命中不扣次數；回傳當月最新 remaining，並依當次 place_id 重排。每次至多清除 20 個過期快取；不快取上游錯誤，不回傳／記錄上游本文或金鑰。
 
-Google 只以 HTTPS POST 呼叫 `places:searchText`，搜尋三筆、偏好日本、繁體中文、輸入點周圍 300 公尺；這是偏好而非硬性範圍，代理另剔除超過 2,000 公尺的結果。連線逾時 4 秒、總逾時 8 秒、不跟隨跳轉、驗證 TLS。前端等待 9 秒，以記憶體記錄每頁不同名稱／座標查詢；有名稱的 Maps 連結停止輸入後自動查詢，一般座標／Plus Code 須按「用 Google 查詢詳細資訊」。Google 有結果時略過 Nominatim；無結果、額度用完或其他錯誤則備援至 OSM。Google 建議採用空白且未經使用者編輯的欄位，並顯示 Google Maps 來源標示。
+Google 只以 HTTPS POST 呼叫 `places:searchText`，搜尋三筆、偏好日本、繁體中文、輸入點周圍 300 公尺；這是偏好而非硬性範圍，代理另剔除超過 2,000 公尺的結果。省略座標時改以九州矩形（西南 30.9,129.3／東北 34.3,132.1）作為 locationBias，仍設定 regionCode JP，保留 Google 原始順序，不套用距離篩選，`distance_m` 回傳 null。連線逾時 4 秒、總逾時 8 秒、不跟隨跳轉、驗證 TLS。前端等待 9 秒，以記憶體記錄每頁不同名稱／座標查詢；有名稱的 Maps 連結停止輸入後自動查詢，一般座標／Plus Code 須按「用 Google 查詢詳細資訊」。
+
+含座標的連結直接查 Google；無座標但有地點文字時，先透過序列化的 Nominatim 依地址、郵遞區號、完整文字依序搜尋（countrycodes=jp，最多三次，首筆命中即停止），再以估算點查 Google 一次。找不到估算點時省略 lat/lng 查 Google；尚未更新的伺服器若回傳 400，視為暫時不可用。無座標連結的 Google 查詢有結果時以第一筆的精確座標定位，並沿用日文 OSM 逆查地址與建議面板；無結果、額度用完或其他錯誤則備援至 OSM。若 Google 失敗但有 OSM 點，顯示「座標由地址估算，請確認地圖位置。」並提供 OSM 建議；兩者皆無則提示貼含 @ 座標的完整連結、Plus Code 或座標。輸入變更會取消工作，同一地點文字每頁只呼叫 Google 一次。Google 名稱只填空白或仍等於自動填入的內容，其餘建議採用空白且未經使用者編輯的欄位，並顯示 Google Maps 來源標示。
 
 ## 驗證與部署
 
@@ -63,7 +65,7 @@ Google 只以 HTTPS POST 呼叫 `places:searchText`，搜尋三筆、偏好日�
    ```
 
    前兩項分別應為 200（尚未設定金鑰則 503 not_configured）及 204，第三項應為 403。有效查詢會消耗一次額度，重複查詢應顯示 cached:true 且 remaining 不減。確認 `/test-places.php` 與任意其他檔案均不能公開讀取，既有 `api.php` 仍可使用。
-5. 檢查瀏覽器中來源標示、候選地點、套用欄位、手寫保護與斷線備援。Service Worker 排除整個 `trip.yi-jia-zi.com`（包括 Places 端點）及 Nominatim；版本維持 `kfp-v5-20261101`。
+5. 檢查瀏覽器中來源標示、候選地點、套用欄位、手寫保護與斷線備援。Service Worker 排除整個 `trip.yi-jia-zi.com`（包括 Places 端點）及 Nominatim；版本更新為 `kfp-v6-20261102`。
 
 工作環境未安裝 PHP；Node 靜態檢查不能取代上述 PHP 8.4 語法／離線測試與部署後 smoke test。此草案不包含實際部署。
 
@@ -81,4 +83,4 @@ cat ~/kyushu-trip-private/places-state/usage-2026-11.json
 
 ## 短網址解析器的既有行為
 
-`resolve-maps-link.php` 保留既有行為：每一跳重新驗證 HTTPS 主機／路徑白名單、不轉送頁面本文，最多五次跳轉，每跳連線／總逾時各 5 秒；前端等待上限為 6 秒。Google 同意頁僅解出通過白名單的 continue。成功回應快取一天，以 `Vary: Origin` 分流；錯誤不快取。該端點仍允許精確的 `https://yang8073.github.io` 及 `http://localhost`；此開發來源不適用 Places 端點。解析器限流為每 IP 每分鐘 30 次，使用系統暫存目錄；可排程清除一天以上的 `kfp-maps-*.json`。
+`resolve-maps-link.php` 保留既有行為：每一跳重新驗證 HTTPS 主機／路徑白名單、不轉送頁面本文，最多五次跳轉，每跳連線／總逾時各 5 秒；前端等待上限為 6 秒，失敗後冷卻 30 秒再允許重試，避免一次暫時性錯誤停用整個工作階段。Google 同意頁僅解出通過白名單的 continue。成功回應快取一天，以 `Vary: Origin` 分流；錯誤不快取。該端點仍允許精確的 `https://yang8073.github.io` 及 `http://localhost`；此開發來源不適用 Places 端點。解析器限流為每 IP 每分鐘 30 次，使用系統暫存目錄；可排程清除一天以上的 `kfp-maps-*.json`。

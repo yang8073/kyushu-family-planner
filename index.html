@@ -647,19 +647,21 @@ function parsePlusCoords(text){const match=text.normalize("NFKC").trim().replace
   }catch{return null;}
 }
 // 分享文字只取網址；名稱逐段解碼，避免網址內的加號與編碼互相干擾。
-function mapsLinkURL(str){const match=String(str||"").match(/https?:\/\/[^\s<>"「」]+/i);try{return new URL((match?.[0]||"").replace(/[)）。，]+$/,""));}catch{return null;}}
+function mapsLinkURL(str){const match=String(str||"").match(/https?:\/\/[^\s<>"「」]+/i);try{return new URL((match?.[0]||"").replace(/[)）。，、.!！?？;；:：\]】}》]+$/,""));}catch{return null;}}
 function allowedMapsURL(url){return !!url&&url.protocol==="https:"&&!url.username&&!url.password&&!url.port&&["www.google.com","google.com","maps.google.com","www.google.co.jp","google.co.jp","www.google.com.tw","google.com.tw"].includes(url.hostname)&&(url.hostname==="maps.google.com"&&url.pathname==="/"||/^\/maps(?:\/|$)/.test(url.pathname));}
 function shortMapsURL(url){return !!url&&url.protocol==="https:"&&!url.username&&!url.password&&!url.port&&(url.hostname==="maps.app.goo.gl"&&url.pathname!=="/"||url.hostname==="goo.gl"&&/^\/maps\//.test(url.pathname));}
-function parseGoogleMapsLink(str){const out={kind:"none",lat:null,lng:null,name:"",precise:false},url=mapsLinkURL(str);if(!url)return out;
+function parseGoogleMapsLink(str){const out={kind:"none",lat:null,lng:null,name:"",placeText:"",precise:false},url=mapsLinkURL(str);if(!url)return out;
   const decode=s=>{try{return decodeURIComponent(s.replace(/\+/g," "));}catch{return s.replace(/\+/g," ");}},name=s=>{s=String(s||"").trim();return !s||parseCoordsPair(s)||/^@?[-\d.,\s]+(?:z)?$/.test(s)||/^https?:/i.test(s)?"":s;};
   const first=String(str).trim().split(/\r?\n/)[0];out.name=name(first.includes(url.hostname)?"":first);
   if(shortMapsURL(url))return {...out,kind:"short"};if(!allowedMapsURL(url))return {...out,name:""};out.kind="full";
-  const segment=url.pathname.match(/\/maps\/(?:place|search)\/([^/@]+)/);out.name=name(segment?decode(segment[1]):"")||out.name;
+  const placeText=s=>name(s).replace(/(?:日本|Japan)\s*$/i,"").trim();
+  const segment=url.pathname.match(/\/maps\/(?:place|search)\/([^/@]+)/);out.placeText=placeText(segment?decode(segment[1]):"");out.name=out.placeText||out.name;
   let data=url.pathname+url.search;try{data=decodeURIComponent(data);}catch{}const pairs=[...data.matchAll(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/g)];
   for(const m of pairs.reverse()){const pair=parseCoordsPair(m[1]+","+m[2]);if(pair){Object.assign(out,pair,{precise:true});break;}}
-  for(const key of ["q","query","ll"]){const q=url.searchParams.get(key);if(!q)continue;const pair=parseCoordsPair(q);if(pair&&out.lat===null)Object.assign(out,pair,{precise:key!=="ll"});else if(key!=="ll"&&!pair&&!/^place_id:/.test(q))out.name=out.name||name(q);}
+  for(const key of ["q","query","ll"]){const q=url.searchParams.get(key);if(!q)continue;const pair=parseCoordsPair(q);if(pair&&out.lat===null)Object.assign(out,pair,{precise:key!=="ll"});else if(key!=="ll"&&!pair&&!/^place_id:/.test(q)){out.placeText=out.placeText||placeText(q);out.name=out.name||out.placeText;}}
   if(out.lat===null){const at=data.match(/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/);if(at){const pair=parseCoordsPair(at[1]+","+at[2]);if(pair)Object.assign(out,pair);}}
   for(const key of ["query_place_id","place_id"])if(url.searchParams.get(key))out.placeId=url.searchParams.get(key);
+  const ftid=data.match(/!1s(0x[0-9a-f]+:0x[0-9a-f]+)/i);if(ftid)out.ftid=ftid[1];
   const cid=url.searchParams.get("cid");if(/^\d+$/.test(cid||""))out.cid=cid;return out;
 }
 function coordsInfo(str){if(typeof str!=="string"||!str.trim())return null;const maps=parseGoogleMapsLink(str);if(hasCoords(maps))return {...maps,source:"Google 地圖連結",warning:maps.precise?"":"此座標為地圖視野中心，請確認圖釘位置。"};let text=str.normalize("NFKC").trim();try{text=decodeURIComponent(text);}catch{}
@@ -1130,13 +1132,14 @@ const COORDS_ERROR="無法解析位置，請輸入有效的座標、Google 地�
 const PLACES_LOOKUP_URL="https://trip.yi-jia-zi.com/places-lookup.php";
 const MAPS_RESOLVER_URL="https://trip.yi-jia-zi.com/resolve-maps-link.php";
 const MAPS_SHORT_HINT="短網址目前無法自動解析。請在瀏覽器打開此連結，等網址變成 google.com/maps/... 後複製完整網址貼上；或貼 Plus Code / 座標。";
-let mapsResolverFailed=false;
+let mapsResolverFailed=0; // Retry transient resolver failures after a short cooldown.
+const mapsResolverCoolingDown=()=>Date.now()<mapsResolverFailed;
 const mapsResolved=new Map();
-async function resolveMapsLink(text,signal){const url=mapsLinkURL(text);if(!shortMapsURL(url))return null;if(mapsResolved.has(url.href))return mapsResolved.get(url.href);if(mapsResolverFailed)return null;
+async function resolveMapsLink(text,signal){const url=mapsLinkURL(text);if(!shortMapsURL(url))return null;if(mapsResolved.has(url.href))return mapsResolved.get(url.href);if(mapsResolverCoolingDown())return null;
   const controller=new AbortController(),abort=()=>controller.abort();if(signal?.aborted)return null;signal?.addEventListener("abort",abort,{once:true});const timer=setTimeout(abort,6000);
   try{if(url.href.length>300)throw Error();const response=await fetch(MAPS_RESOLVER_URL+"?url="+encodeURIComponent(url.href),{signal:controller.signal});if(!response.ok)throw Error();const data=await response.json(),final=mapsLinkURL(data.url);
     if(!data.ok||typeof data.url!=="string"||!allowedMapsURL(final)||final.href!==data.url)throw Error();const result=parseGoogleMapsLink(data.url);mapsResolved.set(url.href,result);return result;
-  }catch{if(!signal?.aborted)mapsResolverFailed=true;return null;}finally{clearTimeout(timer);signal?.removeEventListener("abort",abort);}
+  }catch{if(!signal?.aborted)mapsResolverFailed=Date.now()+30000;return null;}finally{clearTimeout(timer);signal?.removeEventListener("abort",abort);}
 }
 function looseMapsName(a,b){const norm=s=>String(s||"").normalize("NFKC").toLowerCase().replace(/[\s\p{P}\p{S}]/gu,"");a=norm(a);b=norm(b);if(!a||!b)return false;if(a.includes(b)||b.includes(a))return true;const x=new Set(a),y=new Set(b);return [...x].filter(c=>y.has(c)).length/Math.max(x.size,y.size)>=.5;}
 function selectMapsMatch(results,point,name){return (Array.isArray(results)?results:[]).map(r=>({r,lat:Number(r.lat),lng:Number(r.lon)})).filter(r=>Number.isFinite(r.lat)&&Number.isFinite(r.lng)&&haversine(point,r)<=150&&looseMapsName(name,r.r.name||r.r.display_name?.split(",")[0])).sort((a,b)=>haversine(point,a)-haversine(point,b))[0]?.r||null;}
@@ -1156,12 +1159,13 @@ function googleCategory(type="",name=""){
 }
 function normalizeGoogleResult(r={}){return {name:String(r.name||""),addr:String(r.address||""),hours:(Array.isArray(r.hours)?r.hours:[]).slice(0,7).map(String).join("\n"),phone:String(r.phone||""),url:safeURL(r.website)||safeURL(r.maps_uri)||"",mapsUrl:!safeURL(r.website)&&!!safeURL(r.maps_uri),cat:googleCategory(r.type,r.name),rating:typeof r.rating==="number"&&Number.isFinite(r.rating)?r.rating:null,ratingCount:Number.isInteger(r.rating_count)&&r.rating_count>=0?r.rating_count:null};}
 const googlePlacesMemo=new Map();
-async function lookupGooglePlaces(point,name,signal,placeId){
-  const key=JSON.stringify([name.normalize("NFKC").trim().toLowerCase().replace(/\s+/g," "),point.lat,point.lng]);
+async function lookupGooglePlaces(point,name,signal,placeId,byText=false){
+  name=[...name.trim()].slice(0,120).join("");
+  const normalized=name.normalize("NFKC").toLowerCase().replace(/\s+/g," "),key=JSON.stringify(byText?["text",normalized]:["point",normalized,point?.lat,point?.lng]);
   if(googlePlacesMemo.has(key))return googlePlacesMemo.get(key);
   if(signal.aborted)throw Error("取消");
   const pending=(async()=>{const controller=new AbortController(),abort=()=>controller.abort();signal.addEventListener("abort",abort,{once:true});const timer=setTimeout(abort,9000);
-    try{const query=new URLSearchParams({name,lat:String(point.lat),lng:String(point.lng)});if(/^[A-Za-z0-9_-]{10,300}$/.test(placeId||""))query.set("place_id",placeId);
+    try{const query=new URLSearchParams({name});if(hasCoords(point)){query.set("lat",String(point.lat));query.set("lng",String(point.lng));}if(/^[A-Za-z0-9_-]{10,300}$/.test(placeId||""))query.set("place_id",placeId);
       const response=await fetch(PLACES_LOOKUP_URL+"?"+query,{signal:controller.signal}),data=await response.json();
       if(!response.ok||!data.ok)return {ok:false,error:typeof data.error==="string"?data.error:"unavailable",remaining:data.remaining};
       if(!Array.isArray(data.results))throw Error();return data;
@@ -1176,19 +1180,56 @@ function nominatimRequest(path,params,signal){const request=nominatimQueue.catch
     try{const query=new URLSearchParams({format:"jsonv2",extratags:"1",addressdetails:"1","accept-language":"ja,zh-TW",...params}),response=await fetch("https://nominatim.openstreetmap.org/"+path+"?"+query,{signal:controller.signal,referrerPolicy:"strict-origin-when-cross-origin"});if(!response.ok)throw Error();return await response.json();}finally{clearTimeout(timer);signal.removeEventListener("abort",abort);}
   });nominatimQueue=request.catch(()=>{});return request;
 }
-function japaneseOsmAddress(address){if(!address||typeof address!=="object")return "";
+// Address first, postcode second, full place text last; all use the shared OSM queue.
+function mapsPlaceCandidates(text){const full=String(text||"").normalize("NFKC").trim(),tokens=full.split(/\s+/);
+  const at=tokens.findIndex((t,i)=>/\d+Chome|\d+-\d+|丁目|〒|\d{3}-\d{4}|[都道府県市区町村]/i.test(t)||/^\d+$/.test(t)&&/^Chome\b/i.test(tokens[i+1]||""));
+  const address=at>=0?tokens.slice(at).join(" "):"",postcode=full.match(/\d{3}-\d{4}/)?.[0]||"";
+  return [...new Set([address,postcode,full].filter(Boolean))].slice(0,3);
+}
+async function approximateMapsPlace(text,signal){for(const q of mapsPlaceCandidates(text)){
+    try{const rows=await nominatimRequest("search",{q,countrycodes:"jp",limit:"3"},signal);if(signal.aborted)throw Error("取消");
+      for(const r of Array.isArray(rows)?rows:[]){const point=parseCoordsPair(r.lat+","+r.lon);if(point)return point;}
+    }catch(e){if(signal.aborted)throw e;}
+  }return null;
+}
+function parseGoogleRomanAddress(str){if(typeof str!=="string")return null;
+  const text=str.normalize("NFKC").replace(/[‐‑‒–—―−－ー]/g,"-"),match=text.match(/(?:^|[\s,])(\d+)[\s-]+ch[oō]me\s*-\s*(\d+)(?:\s*-\s*(\d+))?(?=$|[\s,])/i);if(!match)return null;
+  const postcode=text.match(/\b\d{3}-\d{4}\b/)?.[0]||"",before=text.slice(0,match.index).trim(),after=text.slice(match.index+match[0].length);
+  const partsOf=s=>s.split(",").map(s=>s.replace(/〒?\s*\b\d{3}-\d{4}\b/g,"").trim()).filter(s=>s&&!/^(Japan|日本)$/i.test(s));
+  let area,parts=partsOf(before),ward,city;
+  if((before.endsWith(",")||match[0].startsWith(","))&&parts.length>=2){
+    // Postcode, city, ward, area, numbers; ignore building/floor text after the numbers.
+    area=parts.pop()||"";ward=parts.find(s=>/\bWard$/i.test(s))||"";city=parts[ward?parts.indexOf(ward)-1:parts.length-1]||"";
+  }else{
+    const local=after.match(/^\s+([^,]+)/);if(!local)return null;
+    area=local[1].trim();parts=partsOf(after.slice(local[0].length));ward=parts.find(s=>/\bWard$/i.test(s))||"";city=parts[ward?parts.indexOf(ward)+1:0]||"";
+  }
+  if(!area)return null;
+  return {postcode,chome:Number(match[1]),banchi:Number(match[2]),go:match[3]?Number(match[3]):null,area,ward,city};
+}
+function japaneseOsmAddressParts(address){if(!address||typeof address!=="object")return null;
   const text=key=>typeof address[key]==="string"?address[key].replace(/[０-９]/g,c=>String(c.charCodeAt(0)-0xff10)).trim():"";
   const city=text("city"),ward=text("suburb")||text("city_district"),prefix=city?[city,ward]:[text("province"),text("county"),text("town")||text("village")];
   let area=[text("neighbourhood"),text("administrative"),text("quarter")].find(s=>s.endsWith("丁目"))||text("quarter")||text("neighbourhood")||text("administrative")||ward||text("hamlet")||text("road");
   if(prefix.includes(area))area="";
-  const chome=area.match(/^(.*?)(二十[一二三四五六七八九]?|十[一二三四五六七八九]?|[一二三四五六七八九]|[0-9]+)丁目$/),house=text("house_number");
-  if(chome){const digits="〇一二三四五六七八九",n=chome[2],parts=n.split("十"),number=/^\d+$/.test(n)?Number(n):parts.length===2?(parts[0]?digits.indexOf(parts[0]):1)*10+(parts[1]?digits.indexOf(parts[1]):0):digits.indexOf(n);area=chome[1]+number+(house?"-"+house:"丁目");}
-  else area+=house;
-  const body=prefix.filter(Boolean).join("")+area,postcode=text("postcode");return (postcode?"〒"+postcode+(body?" ":""):"")+body;
+  const match=area.match(/^(.*?)(二十[一二三四五六七八九]?|十[一二三四五六七八九]?|[一二三四五六七八九]|[0-9]+)丁目$/);let chome=null;
+  if(match){const digits="〇一二三四五六七八九",n=match[2],parts=n.split("十"),number=/^\d+$/.test(n)?Number(n):parts.length===2?(parts[0]?digits.indexOf(parts[0]):1)*10+(parts[1]?digits.indexOf(parts[1]):0):digits.indexOf(n);chome={base:match[1],number};}
+  return {city,ward,prefix:prefix.filter(Boolean).join(""),area,chome,house:text("house_number"),postcode:text("postcode")};
+}
+function japaneseOsmAddress(address){const parts=japaneseOsmAddressParts(address);if(!parts)return "";
+  const {prefix,area,chome,house,postcode}=parts,body=prefix+(chome?chome.base+chome.number+(house?"-"+house:"丁目"):area+house);
+  return (postcode?"〒"+postcode+(body?" ":""):"")+body;
+}
+function preferredJapaneseAddress(googleAddress,osmAddressObject){const osm=japaneseOsmAddress(osmAddressObject);if(!osm)return googleAddress;
+  const google=parseGoogleRomanAddress(googleAddress);if(!google)return osm;
+  const {city,ward,chome,postcode}=japaneseOsmAddressParts(osmAddressObject),numbers=[google.chome,google.banchi,google.go].filter(n=>n!==null).join("-");
+  const local=city?city+ward:"",matching=google.postcode&&postcode===google.postcode&&chome?.number===google.chome&&chome.base;
+  const body=matching?local+chome.base+numbers:[local,google.area,numbers].filter(Boolean).join(" ");
+  return (google.postcode?"〒"+google.postcode+" ":"")+body;
 }
 const googleOsmAddressMemo=new Map();
-function lookupGoogleOsmAddress(result,signal){if(!hasCoords(result)||signal.aborted)return Promise.resolve("");const key=[result.lat.toFixed(5),result.lng.toFixed(5)].join(",");
-  if(!googleOsmAddressMemo.has(key))googleOsmAddressMemo.set(key,nominatimRequest("reverse",{lat:String(result.lat),lon:String(result.lng),zoom:"18","accept-language":"ja"},signal).then(r=>r?.error?"":japaneseOsmAddress(r?.address)).catch(()=>""));
+function lookupGoogleOsmAddress(result,signal){if(!hasCoords(result)||signal.aborted)return Promise.resolve(null);const key=[result.lat.toFixed(5),result.lng.toFixed(5)].join(",");
+  if(!googleOsmAddressMemo.has(key))googleOsmAddressMemo.set(key,nominatimRequest("reverse",{lat:String(result.lat),lon:String(result.lng),zoom:"18","accept-language":"ja"},signal).then(r=>r?.error?null:r?.address||null).catch(()=>null));
   return googleOsmAddressMemo.get(key);
 }
 function mapsAddress(result){if(!result||result.error)return "";const a=result.address;if(a){const text=[a.country,a.state,a.province,a.city||a.town||a.village,a.city_district,a.suburb,a.quarter,a.neighbourhood,a.road,a.house_number,a.postcode].filter(Boolean);if(text.length)return [...new Set(text)].join(" ");}return String(result.display_name||"");}
@@ -1201,7 +1242,7 @@ let customCoordsMap=null,customCoordsLayer=null,customCoordsTimer=null,customPla
 const customEl=id=>document.getElementById(id);
 function cancelCustomLookup(){clearTimeout(customLookupTimer);customLookupTimer=null;customLookupController?.abort();customLookupController=null;customLookupId++;}
 function destroyCoordsPreview(){cancelCustomLookup();clearTimeout(customPlanTimer);customPlanTimer=null;clearTimeout(customCoordsTimer);customCoordsTimer=null;customCoordsMap?.remove();customCoordsMap=null;customCoordsLayer=null;customEl("customPlanMap").hidden=true;customEl("customPlanLegend").innerHTML="";customEl("customNearest").innerHTML="";customEl("customSuggest").hidden=true;}
-function customCoordsInfo(){const text=customEl("customCoords").value.trim(),resolved=overlayTop()?.kind==="custom"?overlayTop().state.resolved:null;return resolved?.text===text&&hasCoords(resolved.value)?{...resolved.value,source:"Google 地圖連結",warning:resolved.value.precise?"":"此座標為地圖視野中心，請確認圖釘位置。"}:coordsInfo(text);}
+function customCoordsInfo(){const text=customEl("customCoords").value.trim(),resolved=overlayTop()?.kind==="custom"?overlayTop().state.resolved:null;return resolved?.text===text&&hasCoords(resolved.value)?{...resolved.value,source:"Google 地圖連結",warning:resolved.value.warning??(resolved.value.precise?"":"此座標為地圖視野中心，請確認圖釘位置。")}:coordsInfo(text);}
 function customScheduled(point){return S.days.flatMap((d,day)=>d.items.map((id,order)=>({spot:BY[id],day,order,label:d.label}))).filter(r=>hasCoords(r.spot)).map(r=>({...r,meters:point?haversine(point,r.spot):NaN}));}
 function invalidateCustomMap(){clearTimeout(customCoordsTimer);customCoordsTimer=null;customCoordsMap?.invalidateSize();}
 function renderCustomPlanMap(value){if(!window.L||overlayTop()?.kind!=="custom")return;const host=customEl("customPlanMap");host.hidden=false;
@@ -1216,7 +1257,7 @@ function renderCustomPlanMap(value){if(!window.L||overlayTop()?.kind!=="custom")
 }
 function queueCustomPlanMap(value){clearTimeout(customPlanTimer);if(!customCoordsMap){renderCustomPlanMap(value);return;}const current=customCoordsMap;customPlanTimer=setTimeout(()=>{customPlanTimer=null;if(current===customCoordsMap&&overlayTop()?.kind==="custom")renderCustomPlanMap(value);},60);}
 function updateCoordsPreview(){const input=customEl("customCoords"),preview=customEl("customCoordsPreview"),text=input.value.trim(),value=customCoordsInfo(),maps=parseGoogleMapsLink(text),short=maps.kind==="short"&&!value,error=!!text&&!value;
-  const hint=short?(mapsResolverFailed||navigator.onLine===false?MAPS_SHORT_HINT:"正在解析 Google 地圖短網址…"):maps.kind==="full"&&!value?"此連結未含座標，請貼含圖釘位置的完整網址、Plus Code 或座標。":COORDS_ERROR;
+  const hint=short?(mapsResolverCoolingDown()||navigator.onLine===false?MAPS_SHORT_HINT:"正在解析 Google 地圖短網址…"):maps.kind==="full"&&!value?"此連結未含座標，請貼含圖釘位置的完整網址、Plus Code 或座標。":COORDS_ERROR;
   input.setCustomValidity(error?hint:"");input.setAttribute("aria-invalid",String(error));preview.hidden=!text;preview.classList.toggle("coords-error",error);preview.textContent=error?hint:value?`${value.lat.toFixed(6)}, ${value.lng.toFixed(6)} · ${value.source}${value.warning?"。"+value.warning:""}`:"";
   queueCustomPlanMap(value);return !error;
 }
@@ -1225,7 +1266,7 @@ function renderCustomSuggestions(){const layer=overlayTop(),state=layer?.state,p
   const canGoogle=layer?.kind==="custom"&&hasCoords(customCoordsInfo())&&!!customEl("customZh").value.trim();
   panel.hidden=!entries.length&&!state?.suggestHint&&!canGoogle;
   const google=state?.suggestSource==="google",results=state?.googleResults||[];
-  panel.innerHTML=(google?'<p><b>來源：Google</b></p>':"")+(google&&results.length>1?'<div role="group" aria-label="Google 地點選擇">'+results.map((r,i)=>`<button type="button" class="btn alt" data-google-choice="${i}" aria-pressed="${i===(state.googleChoice||0)}">${esc(r.name)} · ${esc(r.distance_m)} m</button>`).join("")+"</div>":"")+entries.map(([key,label])=>`<p style="white-space:pre-line"><b>${esc(key==="url"&&suggestions.mapsUrl?"Google 地圖頁":label)}：</b>${esc(suggestions[key])} ${key==="addr"&&suggestions.osmAddress?'<small class="hint">地址來源：OpenStreetMap</small> ':""}<button type="button" class="btn alt" data-custom-apply="${esc(key)}">套用</button></p>`).join("")+
+  panel.innerHTML=(google?'<p><b>來源：Google</b></p>':"")+(google&&results.length>1?'<div role="group" aria-label="Google 地點選擇">'+results.map((r,i)=>`<button type="button" class="btn alt" data-google-choice="${i}" aria-pressed="${i===(state.googleChoice||0)}">${esc(r.name)}${Number.isFinite(r.distance_m)?" · "+esc(r.distance_m)+" m":""}</button>`).join("")+"</div>":"")+entries.map(([key,label])=>`<p style="white-space:pre-line"><b>${esc(key==="url"&&suggestions.mapsUrl?"Google 地圖頁":label)}：</b>${esc(suggestions[key])} ${key==="addr"&&suggestions.osmAddress?'<small class="hint">地址來源：'+(suggestions.googleAddressNumbers?'Google＋':'')+'OpenStreetMap</small> ':""}<button type="button" class="btn alt" data-custom-apply="${esc(key)}">套用</button></p>`).join("")+
     (google&&suggestions.rating!==null?`<p>${esc("★"+suggestions.rating+(suggestions.ratingCount!==null?" · "+suggestions.ratingCount.toLocaleString("en-US")+" 則":""))}</p>`:"")+
     (entries.length?'<button type="button" class="btn alt" data-custom-apply="all">全部套用（僅空白欄位）</button>'+ (google&&!suggestions.osmAddress?"":'<p class="hint">資料來源：© OpenStreetMap contributors（可能不完整，請自行確認）</p>'):"")+(google?'<p class="hint">Google Maps</p>':"")+
     (state?.suggestHint?`<p class="hint">${esc(state.suggestHint)}</p>`:"")+
@@ -1244,8 +1285,8 @@ function applyCustomSuggestion(key,onlyEmpty=false){const state=overlayTop()?.ki
 function showGoogleSuggestion(choice){const layer=overlayTop();if(layer?.kind!=="custom")return;const state=layer.state,result=state.googleResults?.[choice];if(!result)return;
   state.googleChoice=choice;const suggestions=state.suggestions=normalizeGoogleResult(result);renderCustomSuggestions();
   const controller=customLookupController??(customLookupController=new AbortController()),token=customLookupId;
-  lookupGoogleOsmAddress(result,controller.signal).then(addr=>{if(!addr||controller.signal.aborted||token!==customLookupId||overlayTop()!==layer||state.suggestions!==suggestions)return;
-    suggestions.addr=addr;suggestions.osmAddress=true;const applied=state.googleAppliedAddress,field=customEl("customAddr");
+  lookupGoogleOsmAddress(result,controller.signal).then(address=>{if(!japaneseOsmAddress(address)||controller.signal.aborted||token!==customLookupId||overlayTop()!==layer||state.suggestions!==suggestions)return;
+    const addr=preferredJapaneseAddress(result.address,address);suggestions.addr=addr;suggestions.osmAddress=true;suggestions.googleAddressNumbers=!!parseGoogleRomanAddress(result.address);const applied=state.googleAppliedAddress,field=customEl("customAddr");
     if(applied?.result===result&&field.value===applied.value){field.value=addr.slice(0,200);applied.value=field.value;}
     renderCustomSuggestions();
   });
@@ -1255,7 +1296,7 @@ customEl("customSuggest").onclick=e=>{const button=e.target.closest("[data-custo
   if(button.dataset.googleChoice!==undefined){const choice=Number(button.dataset.googleChoice);if(Number.isInteger(choice))showGoogleSuggestion(choice);return;}
   applyCustomSuggestion(button.dataset.customApply);
 };
-function fillCustomMapsName(name){const field=customEl("customZh");if(name&&!field.value.trim()&&!field.dataset.edited)field.value=[...name].slice(0,60).join("");}
+function fillCustomMapsName(name,replaceAuto=false){const field=customEl("customZh"),state=overlayTop()?.state;if(name&&!field.dataset.edited&&(!field.value.trim()||replaceAuto&&field.value===state?.autoMapsName)){field.value=[...name].slice(0,60).join("");if(state)state.autoMapsName=field.value;}}
 function customCoordsInput(sharedText,explicitGoogle=false){cancelCustomLookup();const layer=overlayTop();if(layer?.kind!=="custom")return updateCoordsPreview();const text=customEl("customCoords").value.trim(),maps=parseGoogleMapsLink(typeof sharedText==="string"?sharedText:text);
   // Keep resolved coordinates while editing the name or explicitly requesting details.
   if(layer.state.resolved?.text!==text)layer.state.resolved=null;
@@ -1264,13 +1305,24 @@ function customCoordsInput(sharedText,explicitGoogle=false){cancelCustomLookup()
   const controller=customLookupController=new AbortController(),token=customLookupId,current=()=>!controller.signal.aborted&&token===customLookupId&&overlayTop()===layer&&customEl("customCoords").value.trim()===text;
   customLookupTimer=setTimeout(async()=>{customLookupTimer=null;let value=maps.kind==="none"?customCoordsInfo():maps;
     if(maps.kind==="short"){value=await resolveMapsLink(text,controller.signal);if(!current())return;if(!value){updateCoordsPreview();return;}value={...value,name:value.name||maps.name};layer.state.resolved={text,value};fillCustomMapsName(value.name);updateCoordsPreview();}
-    if(!hasCoords(value)){layer.state.suggestHint="此連結未含座標，請補上圖釘位置後再查詢。";renderCustomSuggestions();return;}
-    const name=value.name||customEl("customZh").value.trim();layer.state.suggestHint="正在查詢地圖資料…";renderCustomSuggestions();let fallback="";
-    try{if(name&&(maps.kind!=="none"||explicitGoogle)){
-        const data=await lookupGooglePlaces(value,name,controller.signal,value.placeId);if(!current())return;
+    const name=value.placeText||value.name||customEl("customZh").value.trim(),nameLookup=!hasCoords(value);
+    if(nameLookup&&!name){layer.state.suggestHint="此連結未含座標，請貼含 @ 座標的完整網址、Plus Code 或座標。";renderCustomSuggestions();return;}
+    layer.state.suggestHint=nameLookup?"正在用地點名稱查詢座標…":"正在查詢地圖資料…";renderCustomSuggestions();let fallback="";
+    try{
+      if(nameLookup){const point=await approximateMapsPlace(name,controller.signal);if(!current())return;value={...value,...point};}
+      if(name&&(maps.kind!=="none"||explicitGoogle)){
+        const data=await lookupGooglePlaces(value,name,controller.signal,value.placeId,nameLookup);if(!current())return;
         if(Number.isInteger(data.remaining))layer.state.googleRemaining=data.remaining;
-        if(data.ok&&data.results.length){Object.assign(layer.state,{suggestSource:"google",googleResults:data.results,suggestHint:""});showGoogleSuggestion(0);return;}
+        const results=(data.results||[]).filter(hasCoords);
+        if(data.ok&&results.length){
+          if(nameLookup){value={...value,lat:results[0].lat,lng:results[0].lng,precise:true,warning:""};layer.state.resolved={text,value};fillCustomMapsName(results[0].name,true);updateCoordsPreview();}
+          Object.assign(layer.state,{suggestSource:"google",googleResults:results,suggestHint:""});showGoogleSuggestion(0);return;
+        }
         if(!data.ok)fallback=data.error==="monthly_quota_reached"?"本月 Google 免費查詢額度已用完，改用 OpenStreetMap":"Google 查詢暫時無法使用，改用 OpenStreetMap";
+      }
+      if(nameLookup){
+        if(!hasCoords(value)){layer.state.suggestHint="無法由地點名稱取得座標，請貼含 @ 座標的完整 Google 地圖網址、Plus Code 或座標。";renderCustomSuggestions();return;}
+        value={...value,precise:false,warning:"座標由地址估算，請確認地圖位置。"};layer.state.resolved={text,value};updateCoordsPreview();fallback=[fallback,value.warning].filter(Boolean).join("。 ");
       }
       layer.state.suggestHint=fallback||"正在查詢地圖資料…";renderCustomSuggestions();const result=await lookupMapsSuggestions(value,name,controller.signal);if(!current())return;layer.state.suggestions=result;layer.state.suggestHint=fallback||(Object.values(result).some(Boolean)?"":"未找到可套用的資料，請自行填寫。");
     }catch{if(!current())return;layer.state.suggestHint=fallback||"暫時無法取得地圖資料，請自行填寫。";}if(current())renderCustomSuggestions();
@@ -1594,7 +1646,7 @@ function showOverlay(){let layer=overlayTop();while(layer&&((layer.kind==="detai
   document.getElementById(kind+"Back").hidden=overlayStack.length<2;document.getElementById(close).setAttribute("aria-label",overlayStack.length>1?"返回上一層":"關閉浮窗");
   if(kind==="detail"){detailId=state.id;if(state.position)UI.panel={...state.position};renderDetail();clampPanel();}
   if(kind==="nearby")mountNearby(layer);
-  if(kind==="custom"){document.getElementById("customModalTitle").textContent=state.title;customFields.forEach((id,i)=>{document.getElementById(id).value=state.fields[i];document.getElementById(id).dataset.edited=state.edited?.[i]||"";});if(state.suggestHint==="正在查詢地圖資料…")state.suggestHint="查詢已取消，重新貼上連結可再查詢。";updateCoordsPreview();renderCustomSuggestions();}
+  if(kind==="custom"){document.getElementById("customModalTitle").textContent=state.title;customFields.forEach((id,i)=>{document.getElementById(id).value=state.fields[i];document.getElementById(id).dataset.edited=state.edited?.[i]||"";});if(["正在查詢地圖資料…","正在用地點名稱查詢座標…"].includes(state.suggestHint))state.suggestHint="查詢已取消，重新貼上連結可再查詢。";updateCoordsPreview();renderCustomSuggestions();}
   if(kind==="nick")document.getElementById("nickInput").value=state.value;
   if(kind==="modal"){document.getElementById("mTitle").textContent=state.title;document.getElementById("mText").value=state.text;modalOk=state.onOk;document.getElementById("mOk").style.display=modalOk?"":"none";}
   if(kind==="documents"){renderDocuments(state.group);state.expanded?.forEach(([id,open])=>document.getElementById(id).open=open);}
@@ -1648,7 +1700,7 @@ async function initOffline(){
 
 renderList();renderDays();renderWishes();initMap();initSharing();initDropdowns();initOffline();
 // 測試／除錯用
-window.planner={get state(){return S;},moveTo:(id,d,p)=>{if(moveTo(id,d,p))update();},select:id=>{if(canPlan(id)&&!selected().has(id)){S.pool.push(id);update();}},unselect:id=>{if(canPlan(id)){removeId(id);update();}},planText,get ATTR(){return ATTR;},get BY(){return BY;},get customs(){return CUSTOMS;},setCustoms,saveCustomSpot,deleteCustomSpot,openCustomForm,parseGoogleMapsLink,coordsInfo,parseCoords,looseMapsName,selectMapsMatch,mapsCategory,googleCategory,normalizeGoogleResult,lookupGooglePlaces,japaneseOsmAddress,tab,fit,openDetail,haversine,nearbyBand,nearbySpots,normalizeNearbySearch,nearbyMatches,filteredNearbySpots,sheetGesture,openNearby,closeNearby,nearbyAdd,showNearbyOnMap,toggleWish,get wishes(){return WISH;}};
+window.planner={get state(){return S;},moveTo:(id,d,p)=>{if(moveTo(id,d,p))update();},select:id=>{if(canPlan(id)&&!selected().has(id)){S.pool.push(id);update();}},unselect:id=>{if(canPlan(id)){removeId(id);update();}},planText,get ATTR(){return ATTR;},get BY(){return BY;},get customs(){return CUSTOMS;},setCustoms,saveCustomSpot,deleteCustomSpot,openCustomForm,parseGoogleMapsLink,coordsInfo,parseCoords,looseMapsName,selectMapsMatch,mapsCategory,googleCategory,normalizeGoogleResult,lookupGooglePlaces,parseGoogleRomanAddress,preferredJapaneseAddress,japaneseOsmAddress,tab,fit,openDetail,haversine,nearbyBand,nearbySpots,normalizeNearbySearch,nearbyMatches,filteredNearbySpots,sheetGesture,openNearby,closeNearby,nearbyAdd,showNearbyOnMap,toggleWish,get wishes(){return WISH;}};
 </script>
 </body>
 </html>
