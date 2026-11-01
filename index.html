@@ -1192,19 +1192,44 @@ async function approximateMapsPlace(text,signal){for(const q of mapsPlaceCandida
     }catch(e){if(signal.aborted)throw e;}
   }return null;
 }
-function japaneseOsmAddress(address){if(!address||typeof address!=="object")return "";
+function parseGoogleRomanAddress(str){if(typeof str!=="string")return null;
+  const text=str.normalize("NFKC").replace(/[‐‑‒–—―−－ー]/g,"-"),match=text.match(/(?:^|[\s,])(\d+)[\s-]+ch[oō]me\s*-\s*(\d+)(?:\s*-\s*(\d+))?(?=$|[\s,])/i);if(!match)return null;
+  const postcode=text.match(/\b\d{3}-\d{4}\b/)?.[0]||"",before=text.slice(0,match.index).trim(),after=text.slice(match.index+match[0].length);
+  const partsOf=s=>s.split(",").map(s=>s.replace(/〒?\s*\b\d{3}-\d{4}\b/g,"").trim()).filter(s=>s&&!/^(Japan|日本)$/i.test(s));
+  let area,parts=partsOf(before),ward,city;
+  if((before.endsWith(",")||match[0].startsWith(","))&&parts.length>=2){
+    // Postcode, city, ward, area, numbers; ignore building/floor text after the numbers.
+    area=parts.pop()||"";ward=parts.find(s=>/\bWard$/i.test(s))||"";city=parts[ward?parts.indexOf(ward)-1:parts.length-1]||"";
+  }else{
+    const local=after.match(/^\s+([^,]+)/);if(!local)return null;
+    area=local[1].trim();parts=partsOf(after.slice(local[0].length));ward=parts.find(s=>/\bWard$/i.test(s))||"";city=parts[ward?parts.indexOf(ward)+1:0]||"";
+  }
+  if(!area)return null;
+  return {postcode,chome:Number(match[1]),banchi:Number(match[2]),go:match[3]?Number(match[3]):null,area,ward,city};
+}
+function japaneseOsmAddressParts(address){if(!address||typeof address!=="object")return null;
   const text=key=>typeof address[key]==="string"?address[key].replace(/[０-９]/g,c=>String(c.charCodeAt(0)-0xff10)).trim():"";
   const city=text("city"),ward=text("suburb")||text("city_district"),prefix=city?[city,ward]:[text("province"),text("county"),text("town")||text("village")];
   let area=[text("neighbourhood"),text("administrative"),text("quarter")].find(s=>s.endsWith("丁目"))||text("quarter")||text("neighbourhood")||text("administrative")||ward||text("hamlet")||text("road");
   if(prefix.includes(area))area="";
-  const chome=area.match(/^(.*?)(二十[一二三四五六七八九]?|十[一二三四五六七八九]?|[一二三四五六七八九]|[0-9]+)丁目$/),house=text("house_number");
-  if(chome){const digits="〇一二三四五六七八九",n=chome[2],parts=n.split("十"),number=/^\d+$/.test(n)?Number(n):parts.length===2?(parts[0]?digits.indexOf(parts[0]):1)*10+(parts[1]?digits.indexOf(parts[1]):0):digits.indexOf(n);area=chome[1]+number+(house?"-"+house:"丁目");}
-  else area+=house;
-  const body=prefix.filter(Boolean).join("")+area,postcode=text("postcode");return (postcode?"〒"+postcode+(body?" ":""):"")+body;
+  const match=area.match(/^(.*?)(二十[一二三四五六七八九]?|十[一二三四五六七八九]?|[一二三四五六七八九]|[0-9]+)丁目$/);let chome=null;
+  if(match){const digits="〇一二三四五六七八九",n=match[2],parts=n.split("十"),number=/^\d+$/.test(n)?Number(n):parts.length===2?(parts[0]?digits.indexOf(parts[0]):1)*10+(parts[1]?digits.indexOf(parts[1]):0):digits.indexOf(n);chome={base:match[1],number};}
+  return {city,ward,prefix:prefix.filter(Boolean).join(""),area,chome,house:text("house_number"),postcode:text("postcode")};
+}
+function japaneseOsmAddress(address){const parts=japaneseOsmAddressParts(address);if(!parts)return "";
+  const {prefix,area,chome,house,postcode}=parts,body=prefix+(chome?chome.base+chome.number+(house?"-"+house:"丁目"):area+house);
+  return (postcode?"〒"+postcode+(body?" ":""):"")+body;
+}
+function preferredJapaneseAddress(googleAddress,osmAddressObject){const osm=japaneseOsmAddress(osmAddressObject);if(!osm)return googleAddress;
+  const google=parseGoogleRomanAddress(googleAddress);if(!google)return osm;
+  const {city,ward,chome,postcode}=japaneseOsmAddressParts(osmAddressObject),numbers=[google.chome,google.banchi,google.go].filter(n=>n!==null).join("-");
+  const local=city?city+ward:"",matching=google.postcode&&postcode===google.postcode&&chome?.number===google.chome&&chome.base;
+  const body=matching?local+chome.base+numbers:[local,google.area,numbers].filter(Boolean).join(" ");
+  return (google.postcode?"〒"+google.postcode+" ":"")+body;
 }
 const googleOsmAddressMemo=new Map();
-function lookupGoogleOsmAddress(result,signal){if(!hasCoords(result)||signal.aborted)return Promise.resolve("");const key=[result.lat.toFixed(5),result.lng.toFixed(5)].join(",");
-  if(!googleOsmAddressMemo.has(key))googleOsmAddressMemo.set(key,nominatimRequest("reverse",{lat:String(result.lat),lon:String(result.lng),zoom:"18","accept-language":"ja"},signal).then(r=>r?.error?"":japaneseOsmAddress(r?.address)).catch(()=>""));
+function lookupGoogleOsmAddress(result,signal){if(!hasCoords(result)||signal.aborted)return Promise.resolve(null);const key=[result.lat.toFixed(5),result.lng.toFixed(5)].join(",");
+  if(!googleOsmAddressMemo.has(key))googleOsmAddressMemo.set(key,nominatimRequest("reverse",{lat:String(result.lat),lon:String(result.lng),zoom:"18","accept-language":"ja"},signal).then(r=>r?.error?null:r?.address||null).catch(()=>null));
   return googleOsmAddressMemo.get(key);
 }
 function mapsAddress(result){if(!result||result.error)return "";const a=result.address;if(a){const text=[a.country,a.state,a.province,a.city||a.town||a.village,a.city_district,a.suburb,a.quarter,a.neighbourhood,a.road,a.house_number,a.postcode].filter(Boolean);if(text.length)return [...new Set(text)].join(" ");}return String(result.display_name||"");}
@@ -1241,7 +1266,7 @@ function renderCustomSuggestions(){const layer=overlayTop(),state=layer?.state,p
   const canGoogle=layer?.kind==="custom"&&hasCoords(customCoordsInfo())&&!!customEl("customZh").value.trim();
   panel.hidden=!entries.length&&!state?.suggestHint&&!canGoogle;
   const google=state?.suggestSource==="google",results=state?.googleResults||[];
-  panel.innerHTML=(google?'<p><b>來源：Google</b></p>':"")+(google&&results.length>1?'<div role="group" aria-label="Google 地點選擇">'+results.map((r,i)=>`<button type="button" class="btn alt" data-google-choice="${i}" aria-pressed="${i===(state.googleChoice||0)}">${esc(r.name)}${Number.isFinite(r.distance_m)?" · "+esc(r.distance_m)+" m":""}</button>`).join("")+"</div>":"")+entries.map(([key,label])=>`<p style="white-space:pre-line"><b>${esc(key==="url"&&suggestions.mapsUrl?"Google 地圖頁":label)}：</b>${esc(suggestions[key])} ${key==="addr"&&suggestions.osmAddress?'<small class="hint">地址來源：OpenStreetMap</small> ':""}<button type="button" class="btn alt" data-custom-apply="${esc(key)}">套用</button></p>`).join("")+
+  panel.innerHTML=(google?'<p><b>來源：Google</b></p>':"")+(google&&results.length>1?'<div role="group" aria-label="Google 地點選擇">'+results.map((r,i)=>`<button type="button" class="btn alt" data-google-choice="${i}" aria-pressed="${i===(state.googleChoice||0)}">${esc(r.name)}${Number.isFinite(r.distance_m)?" · "+esc(r.distance_m)+" m":""}</button>`).join("")+"</div>":"")+entries.map(([key,label])=>`<p style="white-space:pre-line"><b>${esc(key==="url"&&suggestions.mapsUrl?"Google 地圖頁":label)}：</b>${esc(suggestions[key])} ${key==="addr"&&suggestions.osmAddress?'<small class="hint">地址來源：'+(suggestions.googleAddressNumbers?'Google＋':'')+'OpenStreetMap</small> ':""}<button type="button" class="btn alt" data-custom-apply="${esc(key)}">套用</button></p>`).join("")+
     (google&&suggestions.rating!==null?`<p>${esc("★"+suggestions.rating+(suggestions.ratingCount!==null?" · "+suggestions.ratingCount.toLocaleString("en-US")+" 則":""))}</p>`:"")+
     (entries.length?'<button type="button" class="btn alt" data-custom-apply="all">全部套用（僅空白欄位）</button>'+ (google&&!suggestions.osmAddress?"":'<p class="hint">資料來源：© OpenStreetMap contributors（可能不完整，請自行確認）</p>'):"")+(google?'<p class="hint">Google Maps</p>':"")+
     (state?.suggestHint?`<p class="hint">${esc(state.suggestHint)}</p>`:"")+
@@ -1260,8 +1285,8 @@ function applyCustomSuggestion(key,onlyEmpty=false){const state=overlayTop()?.ki
 function showGoogleSuggestion(choice){const layer=overlayTop();if(layer?.kind!=="custom")return;const state=layer.state,result=state.googleResults?.[choice];if(!result)return;
   state.googleChoice=choice;const suggestions=state.suggestions=normalizeGoogleResult(result);renderCustomSuggestions();
   const controller=customLookupController??(customLookupController=new AbortController()),token=customLookupId;
-  lookupGoogleOsmAddress(result,controller.signal).then(addr=>{if(!addr||controller.signal.aborted||token!==customLookupId||overlayTop()!==layer||state.suggestions!==suggestions)return;
-    suggestions.addr=addr;suggestions.osmAddress=true;const applied=state.googleAppliedAddress,field=customEl("customAddr");
+  lookupGoogleOsmAddress(result,controller.signal).then(address=>{if(!japaneseOsmAddress(address)||controller.signal.aborted||token!==customLookupId||overlayTop()!==layer||state.suggestions!==suggestions)return;
+    const addr=preferredJapaneseAddress(result.address,address);suggestions.addr=addr;suggestions.osmAddress=true;suggestions.googleAddressNumbers=!!parseGoogleRomanAddress(result.address);const applied=state.googleAppliedAddress,field=customEl("customAddr");
     if(applied?.result===result&&field.value===applied.value){field.value=addr.slice(0,200);applied.value=field.value;}
     renderCustomSuggestions();
   });
@@ -1675,7 +1700,7 @@ async function initOffline(){
 
 renderList();renderDays();renderWishes();initMap();initSharing();initDropdowns();initOffline();
 // 測試／除錯用
-window.planner={get state(){return S;},moveTo:(id,d,p)=>{if(moveTo(id,d,p))update();},select:id=>{if(canPlan(id)&&!selected().has(id)){S.pool.push(id);update();}},unselect:id=>{if(canPlan(id)){removeId(id);update();}},planText,get ATTR(){return ATTR;},get BY(){return BY;},get customs(){return CUSTOMS;},setCustoms,saveCustomSpot,deleteCustomSpot,openCustomForm,parseGoogleMapsLink,coordsInfo,parseCoords,looseMapsName,selectMapsMatch,mapsCategory,googleCategory,normalizeGoogleResult,lookupGooglePlaces,japaneseOsmAddress,tab,fit,openDetail,haversine,nearbyBand,nearbySpots,normalizeNearbySearch,nearbyMatches,filteredNearbySpots,sheetGesture,openNearby,closeNearby,nearbyAdd,showNearbyOnMap,toggleWish,get wishes(){return WISH;}};
+window.planner={get state(){return S;},moveTo:(id,d,p)=>{if(moveTo(id,d,p))update();},select:id=>{if(canPlan(id)&&!selected().has(id)){S.pool.push(id);update();}},unselect:id=>{if(canPlan(id)){removeId(id);update();}},planText,get ATTR(){return ATTR;},get BY(){return BY;},get customs(){return CUSTOMS;},setCustoms,saveCustomSpot,deleteCustomSpot,openCustomForm,parseGoogleMapsLink,coordsInfo,parseCoords,looseMapsName,selectMapsMatch,mapsCategory,googleCategory,normalizeGoogleResult,lookupGooglePlaces,parseGoogleRomanAddress,preferredJapaneseAddress,japaneseOsmAddress,tab,fit,openDetail,haversine,nearbyBand,nearbySpots,normalizeNearbySearch,nearbyMatches,filteredNearbySpots,sheetGesture,openNearby,closeNearby,nearbyAdd,showNearbyOnMap,toggleWish,get wishes(){return WISH;}};
 </script>
 </body>
 </html>

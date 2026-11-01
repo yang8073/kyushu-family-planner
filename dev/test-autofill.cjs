@@ -46,6 +46,31 @@ module.exports=async function({html,page,initial,sleep,leaflet}){
   [{suburb:'博多区',city:'福岡市'},'福岡市博多区'],[{},''],[null,''],[{country:'日本'},'']
  ])assert.equal(japanese(address),expected);
  const kanji=['','一','二','三','四','五','六','七','八','九'];for(let n=1;n<=29;n++){const numeral=n<10?kanji[n]:(n>=20?'二':'')+'十'+kanji[n%10];assert.equal(japanese({quarter:'町'+numeral+'丁目',house_number:'２'}),'町'+n+'-2');}
+ const roman=s=>json(p,'planner.parseGoogleRomanAddress('+JSON.stringify(s)+')');
+ const tenjin='2 Chome-3-24 Tenjin, Chuo Ward, Fukuoka, 810-0001',nakasu='5-chōme-3-2 Nakasu, Hakata Ward, Fukuoka, 810-0801';
+ const liveTenjin='〒810-0001 Fukuoka, Chuo Ward, Tenjin, 2-chōme−3−２４ 天神ルーチェ 6F',bigSumiyoshi='Japan, 〒812-0018 Fukuoka, Hakata Ward, Sumiyoshi, 1-chōme−2−2';
+ for(const address of [tenjin,tenjin+', Japan','天神ルーチェ 6F '+tenjin+', 日本','天神ルーチェ 6F '+tenjin+'日本','天神ルーチェ 6F, '+tenjin])assert.deepEqual(roman(address),{postcode:'810-0001',chome:2,banchi:3,go:24,area:'Tenjin',ward:'Chuo Ward',city:'Fukuoka'});
+ for(const address of [liveTenjin,liveTenjin.replace(/, /g,',')])assert.deepEqual(roman(address),{postcode:'810-0001',chome:2,banchi:3,go:24,area:'Tenjin',ward:'Chuo Ward',city:'Fukuoka'});
+ assert.deepEqual(roman(bigSumiyoshi),{postcode:'812-0018',chome:1,banchi:2,go:2,area:'Sumiyoshi',ward:'Hakata Ward',city:'Fukuoka'});
+ for(const dash of '‐-‒–—―−－ー')for(const address of ['〒８１０-０００１ Fukuoka, Chuo Ward, Tenjin, ２-cho\u0304me-３-２４ 天神ルーチェ 6F','２ Chome-３-２４ Tenjin, Chuo Ward, Fukuoka, ８１０-０００１'])assert.deepEqual(roman(address.replace(/-/g,dash)),{postcode:'810-0001',chome:2,banchi:3,go:24,area:'Tenjin',ward:'Chuo Ward',city:'Fukuoka'},address+' / '+dash);
+ for(const chome of ['chōme','chome','cho\u0304me'])assert.deepEqual(roman('1-'+chome+'-2-2 Sumiyoshi, Hakata Ward, Fukuoka, 812-0018'),{postcode:'812-0018',chome:1,banchi:2,go:2,area:'Sumiyoshi',ward:'Hakata Ward',city:'Fukuoka'});
+ assert.deepEqual(roman(nakasu),{postcode:'810-0801',chome:5,banchi:3,go:2,area:'Nakasu',ward:'Hakata Ward',city:'Fukuoka'});
+ assert.deepEqual(roman('5 Chome-3 Nakasu, Hakata Ward, Fukuoka'),{postcode:'',chome:5,banchi:3,go:null,area:'Nakasu',ward:'Hakata Ward',city:'Fukuoka'});
+ for(const address of ['Tenjin, Chuo Ward, Fukuoka, 810-0001','2 Chome Tenjin, Chuo Ward, Fukuoka','',null])assert.equal(roman(address),null);
+ const preferred=(google,osm)=>p.run('planner.preferredJapaneseAddress('+JSON.stringify(google)+','+JSON.stringify(osm)+')');
+ const tenjinBorder={neighbourhood:'今泉一丁目',quarter:'天神',suburb:'中央区',city:'福岡市',postcode:'810-0021'};
+ assert.equal(preferred(liveTenjin,{neighbourhood:'今泉一丁目',suburb:'中央区',city:'福岡市',postcode:'810-0021'}),'〒810-0001 福岡市中央区 Tenjin 2-3-24');
+ assert.equal(preferred(bigSumiyoshi,{suburb:'博多区',city:'福岡市',postcode:'810-0021'}),'〒812-0018 福岡市博多区 Sumiyoshi 1-2-2');
+ assert.equal(preferred(tenjin,tenjinBorder),'〒810-0001 福岡市中央区 Tenjin 2-3-24');
+ assert.equal(preferred(tenjin,{...tenjinBorder,postcode:'810-0001'}),'〒810-0001 福岡市中央区 Tenjin 2-3-24','郵遞區號相同但丁目不同仍採 Google');
+ assert.equal(preferred(nakasu,jaAddress),'〒810-0801 福岡市博多区中洲5-3-2');
+ assert.equal(preferred(nakasu,{...jaAddress,postcode:'810-0001'}),'〒810-0801 福岡市博多区 Nakasu 5-3-2','丁目相同但郵遞區號不同仍採 Google');
+ assert.equal(preferred(nakasu,{...jaAddress,administrative:'中洲',house_number:'999'}),'〒810-0801 福岡市博多区 Nakasu 5-3-2');
+ assert.equal(preferred(nakasu,{...jaAddress,administrative:'中洲５丁目',postcode:'８１０-０８０１'}),'〒810-0801 福岡市博多区中洲5-3-2');
+ assert.equal(preferred('5 Chome-3 Nakasu, Hakata Ward, Fukuoka, 810-0801',jaAddress),'〒810-0801 福岡市博多区中洲5-3');
+ assert.equal(preferred('Nakasu, Hakata Ward, Fukuoka',jaAddress),jaText);
+ for(const osm of [null,undefined,{}, {country:'日本'}])assert.equal(preferred(tenjin,osm),tenjin);
+ assert.equal(preferred(nakasu,{quarter:'中洲',postcode:'810-0801'}),'〒810-0801 Nakasu 5-3-2');
  assert.equal(parse('https://www.google.com/maps/place/%zz/@33,130,17z').name,'%zz');
  assert.equal(parse('https://www.google.com/maps/@99,200,17z').lat,null);
  for(const value of ['33.59, 130.42','HCR9+2X 福岡市','8Q5GHCR9+2X'])assert(p.run('planner.parseCoords('+JSON.stringify(value)+')'));
@@ -113,10 +138,10 @@ module.exports=async function({html,page,initial,sleep,leaflet}){
  g.run('closeAllOverlays();openCustomForm()');g.els.customZh.value='No Link Name';g.els.customZh.oninput();g.els.customCoords.value='https://maps.google.com/?q=33.59,130.42';g.els.customCoords.oninput();await sleep(900);assert.equal(gCalls.length,4);assert.equal(new URL(gCalls[3].url).searchParams.get('name'),'No Link Name');g.close();
  for(const mode of ['monthly_quota_reached','not_configured','network','empty']){const f=page();await initial(f);const calls=[];f.context.fetch=async(url)=>{calls.push(url);if(url.includes('/places-lookup.php')){if(mode==='network')throw Error('network');return {ok:mode==='empty',json:async()=>mode==='empty'?{ok:true,remaining:899,results:[]}:{ok:false,error:mode,...(mode==='monthly_quota_reached'?{remaining:0}:{})}};}return {ok:true,json:async()=>url.includes('/search?')?[]:{address:{city:'福岡市'}}};};f.run('openCustomForm()');f.els.customCoords.value=link;f.els.customCoords.oninput();await sleep(2000);assert.equal(calls.filter(u=>u.includes('/places-lookup.php')).length,1);assert.equal(calls.filter(u=>u.includes('nominatim')).length,2);assert.match(f.els.customSuggest.innerHTML,/福岡市/);assert.match(f.els.customSuggest.innerHTML,/OpenStreetMap contributors/);if(mode==='monthly_quota_reached'){assert.match(f.els.customSuggest.innerHTML,/本月 Google 免費查詢額度已用完，改用 OpenStreetMap/);assert.match(f.els.customSuggest.innerHTML,/本月 Google 查詢剩餘 0 次/);}else if(mode!=='empty')assert.match(f.els.customSuggest.innerHTML,/Google 查詢暫時無法使用，改用 OpenStreetMap/);f.close();}
  const gt=page();await initial(gt);const gtTimeout=gt.context.setTimeout;gt.context.setTimeout=(cb,ms)=>gtTimeout(cb,ms===9000?5:ms);let gtCalls=0;gt.context.fetch=(url,{signal})=>{gtCalls++;return new Promise((resolve,reject)=>signal.addEventListener('abort',()=>reject(Error('timeout'))));};assert.equal((await gt.run('planner.lookupGooglePlaces({lat:33,lng:130},"Timeout",new AbortController().signal)')).ok,false);await gt.run('planner.lookupGooglePlaces({lat:33,lng:130},"Timeout",new AbortController().signal)');assert.equal(gtCalls,1);gt.close();
- // Google 選中結果的地址先顯示原文，再以日文 OSM 替換；其餘 Google 資料及已套用狀態保留。
+ // Google 選中結果的地址先顯示原文，再以 OSM 日文地名與 Google 番地替換。
  const until=async(check)=>{for(let i=0;i<600;i++){if(check())return;await sleep(10);}throw Error('日文地址查詢未完成');};
  const ja=page();await initial(ja);const jaCalls=[],pendingReverse=[],jaResults=[
-  {...googleResult,address:'1-chōme-2-2 Sumiyoshi, Hakata Ward, Fukuoka',lat:33.590123,lng:130.420123},
+  {...googleResult,address:nakasu,lat:33.590123,lng:130.420123},
   {...googleResult,name:'同一位置',address:'Google second address',lat:33.590124,lng:130.420124},
   {...googleResult,name:'別の場所',address:'Google third address',lat:33.591123,lng:130.421123}
  ];
@@ -126,21 +151,28 @@ module.exports=async function({html,page,initial,sleep,leaflet}){
   return new Promise((resolve,reject)=>{const finish=address=>{activeReverse--;resolve({ok:true,json:async()=>({address})});};pendingReverse.push({finish,signal:opts.signal});opts.signal.addEventListener('abort',()=>{activeReverse--;reject(Error('取消'));},{once:true});});
  };
  ja.run('openCustomForm()');ja.els.customCoords.value=link;ja.els.customCoords.oninput();await until(()=>pendingReverse.length===1);
- assert.match(ja.els.customSuggest.innerHTML,/1-chōme-2-2 Sumiyoshi/);assert(!ja.els.customSuggest.innerHTML.includes('地址來源：OpenStreetMap'));
+ assert.match(ja.els.customSuggest.innerHTML,/5-chōme-3-2 Nakasu/);assert(!ja.els.customSuggest.innerHTML.includes('地址來源：OpenStreetMap'));
  assert.equal(ja.els.customAddr.value,'');ja.run('applyCustomSuggestion("all")');assert.equal(ja.els.customAddr.value,jaResults[0].address);const appliedNote=ja.els.customNote.value;
  const jaReverse=new URL(jaCalls[1].url);assert.equal(jaReverse.pathname,'/reverse');for(const [key,value]of Object.entries({lat:'33.590123',lon:'130.420123',zoom:'18',addressdetails:'1','accept-language':'ja'}))assert.equal(jaReverse.searchParams.get(key),value);
  assert.equal(jaCalls[1].opts.referrerPolicy,'strict-origin-when-cross-origin');assert(!jaCalls[1].opts.headers);
- pendingReverse[0].finish(jaAddress);await until(()=>ja.els.customAddr.value===jaText);
- assert.match(ja.els.customSuggest.innerHTML,/地址來源：OpenStreetMap/);assert.match(ja.els.customSuggest.innerHTML,/© OpenStreetMap contributors/);assert.match(ja.els.customSuggest.innerHTML,/〒810-0801 福岡市博多区中洲5-2/);
+ const bestJaText='〒810-0801 福岡市博多区中洲5-3-2';pendingReverse[0].finish(jaAddress);await until(()=>ja.els.customAddr.value===bestJaText);
+ assert.match(ja.els.customSuggest.innerHTML,/地址來源：Google＋OpenStreetMap/);assert.match(ja.els.customSuggest.innerHTML,/© OpenStreetMap contributors/);assert.match(ja.els.customSuggest.innerHTML,/〒810-0801 福岡市博多区中洲5-3-2/);
  assert.equal(ja.els.customNote.value,appliedNote);assert.equal(ja.els.customCat.value,'餐廳');assert.equal(ja.els.customAddr.dataset.edited,'1');ja.run('applyCustomSuggestion("all")');assert.equal(ja.els.customNote.value,appliedNote);
  click(ja,{googleChoice:'1'});await sleep(20);assert.equal(pendingReverse.length,1,'四捨五入至五位小數的座標共用日文地址');assert.equal(ja.run('overlayTop().state.suggestions.addr'),jaText);
+ assert.match(ja.els.customSuggest.innerHTML,/地址來源：OpenStreetMap/);assert(!ja.els.customSuggest.innerHTML.includes('地址來源：Google＋OpenStreetMap'));
  click(ja,{googleChoice:'2'});await until(()=>pendingReverse.length===2);assert.match(ja.els.customSuggest.innerHTML,/Google third address/);
  ja.els.customAddr.value='我編輯的地址';ja.els.customAddr.oninput();const unsafeAddress={city:'福岡市',quarter:'<img src=x onerror=bad>',house_number:'２'};
  pendingReverse[1].finish(unsafeAddress);await until(()=>ja.run('overlayTop().state.suggestions.osmAddress')===true);
  assert.equal(ja.els.customAddr.value,'我編輯的地址');assert.match(ja.els.customSuggest.innerHTML,/&lt;img src=x onerror=bad&gt;2/);assert(!ja.els.customSuggest.innerHTML.includes('<img'));
- click(ja,{googleChoice:'0'});await sleep(20);assert.equal(ja.run('overlayTop().state.suggestions.addr'),jaText);assert.equal(ja.els.customAddr.value,'我編輯的地址');assert.equal(pendingReverse.length,2);assert.equal(maxActiveReverse,1);assert(jaCalls[2].at-jaCalls[1].at>=995);
+ click(ja,{googleChoice:'0'});await sleep(20);assert.equal(ja.run('overlayTop().state.suggestions.addr'),bestJaText);assert.equal(ja.els.customAddr.value,'我編輯的地址');assert.equal(pendingReverse.length,2);assert.equal(maxActiveReverse,1);assert(jaCalls[2].at-jaCalls[1].at>=995);
  ja.run('closeAllOverlays();openCustomForm()');ja.els.customCoords.value=link;ja.els.customCoords.oninput();await until(()=>ja.run('overlayTop().state.suggestions.osmAddress')===true);
- ja.run('applyCustomSuggestion("all")');assert.equal(ja.els.customAddr.value,jaText,'全部套用使用最佳可用地址');assert.equal(jaCalls.filter(r=>r.url.includes('/places-lookup.php')).length,1,'OSM 與選擇結果不增加 Google 呼叫');assert.equal(jaCalls.filter(r=>r.url.includes('nominatim')).length,2,'跨表單及重選不再逆查');ja.close();
+ ja.run('applyCustomSuggestion("all")');assert.equal(ja.els.customAddr.value,bestJaText,'全部套用使用最佳可用地址');assert.equal(jaCalls.filter(r=>r.url.includes('/places-lookup.php')).length,1,'OSM 與選擇結果不增加 Google 呼叫');assert.equal(jaCalls.filter(r=>r.url.includes('nominatim')).length,2,'跨表單及重選不再逆查');ja.close();
+ const border=page();await initial(border);let borderCalls=0;
+ border.context.fetch=async()=>{borderCalls++;return {ok:true,json:async()=>({address:tenjinBorder})};};
+ border.context.borderResults=[{...googleResult,address:liveTenjin}];border.run('openCustomForm();Object.assign(overlayTop().state,{suggestSource:"google",googleResults:borderResults});showGoogleSuggestion(0)');
+ await until(()=>border.run('overlayTop().state.suggestions.osmAddress')===true);
+ assert.match(border.els.customSuggest.innerHTML,/〒810-0001 福岡市中央区 Tenjin 2-3-24/);assert.match(border.els.customSuggest.innerHTML,/地址來源：Google＋OpenStreetMap/);
+ border.run('applyCustomSuggestion("all")');assert.equal(border.els.customAddr.value,'〒810-0001 福岡市中央区 Tenjin 2-3-24');assert.equal(borderCalls,1);border.close();
  // 錯誤、空結果、逾時都保留 Google 地址；取消、切換結果及手動編輯不讓過期結果覆寫。
  for(const mode of ['failure','empty','timeout','abort','paste','close','edited','edited-back','changed-without-event','choice']){
   const view=page();await initial(view);let calls=0,finish,requestSignal;const originalTimeout=view.context.setTimeout;
@@ -161,7 +193,7 @@ module.exports=async function({html,page,initial,sleep,leaflet}){
   if(['edited','edited-back','changed-without-event','choice'].includes(mode))finish();
   await view.run('googleOsmAddressMemo.values().next().value');await sleep(20);
   assert.equal(view.els.customAddr.value,mode==='edited'?'手寫地址':mode==='changed-without-event'?'另一個地址':jaResults[0].address,mode);
-  if(['failure','empty','timeout','abort'].includes(mode)){assert.match(view.els.customSuggest.innerHTML,/1-chōme-2-2 Sumiyoshi/);assert(!view.els.customSuggest.innerHTML.includes('地址來源：OpenStreetMap'));view.run('showGoogleSuggestion(0)');await sleep(20);assert.equal(calls,1,'失敗／取消的結果亦不重試');}
+  if(['failure','empty','timeout','abort'].includes(mode)){assert.match(view.els.customSuggest.innerHTML,/5-chōme-3-2 Nakasu/);assert(!view.els.customSuggest.innerHTML.includes('地址來源：'));view.run('showGoogleSuggestion(0)');await sleep(20);assert.equal(calls,1,'失敗／取消的結果亦不重試');}
   if(mode==='choice'){assert.equal(view.run('overlayTop().state.suggestions.name'),'同一位置');assert.equal(view.run('overlayTop().state.suggestions.addr'),jaText);assert.equal(calls,1,'選擇同座標時共用進行中的逆查');}
   view.close();
  }
