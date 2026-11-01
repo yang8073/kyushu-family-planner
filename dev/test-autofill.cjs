@@ -24,6 +24,22 @@ module.exports=async function({html,page,initial,sleep,leaflet}){
   ['https://google.com.evil.test/maps/@33.59,130.42',{kind:'none',name:'',lat:null}],
   ['https://goo.gl/elsewhere',{kind:'none'}],['文字',{kind:'none'}]
  ]){const result=parse(url);for(const [key,value]of Object.entries(expected))assert.equal(result[key],value,url+' / '+key);if(result.lat!==null)assert.equal(json(p,'planner.parseCoords('+JSON.stringify(url)+')').lat,result.lat);}
+ // 日本語地址組合是純函式；丁目優先採最細層級，並正規化全形數字。
+ const japanese=address=>p.run('planner.japaneseOsmAddress('+JSON.stringify(address)+')');
+ const jaAddress={house_number:'2',administrative:'中洲五丁目',quarter:'中洲',suburb:'博多区',city:'福岡市',province:'福岡県',postcode:'810-0801'},jaText='〒810-0801 福岡市博多区中洲5-2';
+ for(const [address,expected]of [
+  [jaAddress,jaText],
+  [{neighbourhood:'博多駅東一丁目',quarter:'博多駅中央街',suburb:'博多区',city:'福岡市',postcode:'812-0012'},'〒812-0012 福岡市博多区博多駅東1丁目'],
+  [{quarter:'祇園町',suburb:'博多区',city:'福岡市',postcode:'812-0018'},'〒812-0018 福岡市博多区祇園町'],
+  [{...jaAddress,house_number:'２',postcode:'８１０-０８０１'},jaText],
+  [{province:'熊本県',county:'阿蘇郡',town:'南小国町',quarter:'満願寺'},'熊本県阿蘇郡南小国町満願寺'],
+  [{province:'熊本県',county:'阿蘇郡',village:'産山村',quarter:'田尻',house_number:'２３'},'熊本県阿蘇郡産山村田尻23'],
+  [{neighbourhood:'中洲六丁目',administrative:'中洲五丁目',quarter:'中洲四丁目'},'中洲6丁目'],
+  [{quarter:'中洲１２丁目',house_number:'３-４'},'中洲12-3-4'],
+  [{neighbourhood:'住吉',suburb:'博多区',city:'福岡市'},'福岡市博多区住吉'],
+  [{suburb:'博多区',city:'福岡市'},'福岡市博多区'],[{},''],[null,''],[{country:'日本'},'']
+ ])assert.equal(japanese(address),expected);
+ const kanji=['','一','二','三','四','五','六','七','八','九'];for(let n=1;n<=29;n++){const numeral=n<10?kanji[n]:(n>=20?'二':'')+'十'+kanji[n%10];assert.equal(japanese({quarter:'町'+numeral+'丁目',house_number:'２'}),'町'+n+'-2');}
  assert.equal(parse('https://www.google.com/maps/place/%zz/@33,130,17z').name,'%zz');
  assert.equal(parse('https://www.google.com/maps/@99,200,17z').lat,null);
  for(const value of ['33.59, 130.42','HCR9+2X 福岡市','8Q5GHCR9+2X'])assert(p.run('planner.parseCoords('+JSON.stringify(value)+')'));
@@ -70,7 +86,7 @@ module.exports=async function({html,page,initial,sleep,leaflet}){
  for(const [type,name,expected]of [['restaurant','','餐廳'],['ramen_restaurant','','餐廳'],['cafe','','餐廳'],['coffee_shop','','餐廳'],['food','','餐廳'],['shopping_mall','','購物街/商圈'],['department_store','','購物街/商圈'],['market','','購物街/商圈'],['store','','購物街/商圈'],['toy_store','LEGO Shop','樂高店'],['toy_store','レゴ','樂高店'],['toy_store','樂高','樂高店'],['toy_store','玩具店',''],...['tourist_attraction','amusement_park','zoo','aquarium','park','museum','playground'].map(t=>[t,'','親子景點']),['lodging','',''],['unknown','','']])assert.equal(p.run('planner.googleCategory('+JSON.stringify(type)+','+JSON.stringify(name)+')'),expected);
  const g=page();await initial(g);const gCalls=[],googleResult={id:'ChIJ_123456789',name:'<Cafe & ABC>',address:'<img src=x onerror=bad>',lat:33.59,lng:130.42,distance_m:12,maps_uri:'https://maps.google.com/?q=Cafe',hours:['週一：10–18','週二：休息'],phone:'<script>phone</script>',website:'javascript:alert(1)',rating:4.3,rating_count:1234,type:'cafe'};
  const click=(view,dataset,attribute)=>view.els.customSuggest.onclick({target:{closest:()=>({dataset,hasAttribute:key=>key===attribute})}});
- g.context.fetch=async(url,opts)=>{gCalls.push({url,opts});assert(url.includes('/places-lookup.php'),'Google 成功後略過 OSM');return {ok:true,json:async()=>({ok:true,remaining:898,results:[googleResult,{...googleResult,name:'另一家店',distance_m:35,website:'https://example.test/'}]})};};
+ g.context.fetch=async(url,opts)=>{if(url.includes('nominatim'))return {ok:true,json:async()=>({address:{}})};assert(url.includes('/places-lookup.php'));gCalls.push({url,opts});return {ok:true,json:async()=>({ok:true,remaining:898,results:[googleResult,{...googleResult,name:'另一家店',distance_m:35,website:'https://example.test/'}]})};};
  g.run('openCustomForm()');g.els.customZh.value='手寫名稱';g.els.customZh.oninput();g.els.customCoords.value=link;g.els.customCoords.oninput();await sleep(900);assert.equal(gCalls.length,1);assert.equal(new URL(gCalls[0].url).searchParams.get('name'),'Cafe ABC','查詢優先採用連結名稱');
  let googleHTML=g.els.customSuggest.innerHTML;for(const text of ['來源：Google','Google Maps','Google 地圖頁','本月 Google 查詢剩餘 898 次','★4.3 · 1,234 則','另一家店','12 m','35 m','週一：10–18'])assert(googleHTML.includes(text),text);assert(googleHTML.includes('data-google-choice="1"'));assert(!googleHTML.includes('<img'));assert(!googleHTML.includes('<script>'));assert.match(googleHTML,/&lt;img/);assert(!googleHTML.includes('javascript:'));
  for(const id of ['customAddr','customUrl','customNote','customCat']){g.els[id].value=id==='customCat'?'親子景點':'手寫 '+id;g.els[id].oninput();}
@@ -88,6 +104,64 @@ module.exports=async function({html,page,initial,sleep,leaflet}){
  g.run('closeAllOverlays();openCustomForm()');g.els.customZh.value='No Link Name';g.els.customZh.oninput();g.els.customCoords.value='https://maps.google.com/?q=33.59,130.42';g.els.customCoords.oninput();await sleep(900);assert.equal(gCalls.length,4);assert.equal(new URL(gCalls[3].url).searchParams.get('name'),'No Link Name');g.close();
  for(const mode of ['monthly_quota_reached','not_configured','network','empty']){const f=page();await initial(f);const calls=[];f.context.fetch=async(url)=>{calls.push(url);if(url.includes('/places-lookup.php')){if(mode==='network')throw Error('network');return {ok:mode==='empty',json:async()=>mode==='empty'?{ok:true,remaining:899,results:[]}:{ok:false,error:mode,...(mode==='monthly_quota_reached'?{remaining:0}:{})}};}return {ok:true,json:async()=>url.includes('/search?')?[]:{address:{city:'福岡市'}}};};f.run('openCustomForm()');f.els.customCoords.value=link;f.els.customCoords.oninput();await sleep(2000);assert.equal(calls.filter(u=>u.includes('/places-lookup.php')).length,1);assert.equal(calls.filter(u=>u.includes('nominatim')).length,2);assert.match(f.els.customSuggest.innerHTML,/福岡市/);assert.match(f.els.customSuggest.innerHTML,/OpenStreetMap contributors/);if(mode==='monthly_quota_reached'){assert.match(f.els.customSuggest.innerHTML,/本月 Google 免費查詢額度已用完，改用 OpenStreetMap/);assert.match(f.els.customSuggest.innerHTML,/本月 Google 查詢剩餘 0 次/);}else if(mode!=='empty')assert.match(f.els.customSuggest.innerHTML,/Google 查詢暫時無法使用，改用 OpenStreetMap/);f.close();}
  const gt=page();await initial(gt);const gtTimeout=gt.context.setTimeout;gt.context.setTimeout=(cb,ms)=>gtTimeout(cb,ms===9000?5:ms);let gtCalls=0;gt.context.fetch=(url,{signal})=>{gtCalls++;return new Promise((resolve,reject)=>signal.addEventListener('abort',()=>reject(Error('timeout'))));};assert.equal((await gt.run('planner.lookupGooglePlaces({lat:33,lng:130},"Timeout",new AbortController().signal)')).ok,false);await gt.run('planner.lookupGooglePlaces({lat:33,lng:130},"Timeout",new AbortController().signal)');assert.equal(gtCalls,1);gt.close();
+ // Google 選中結果的地址先顯示原文，再以日文 OSM 替換；其餘 Google 資料及已套用狀態保留。
+ const until=async(check)=>{for(let i=0;i<250;i++){if(check())return;await sleep(10);}throw Error('日文地址查詢未完成');};
+ const ja=page();await initial(ja);const jaCalls=[],pendingReverse=[],jaResults=[
+  {...googleResult,address:'1-chōme-2-2 Sumiyoshi, Hakata Ward, Fukuoka',lat:33.590123,lng:130.420123},
+  {...googleResult,name:'同一位置',address:'Google second address',lat:33.590124,lng:130.420124},
+  {...googleResult,name:'別の場所',address:'Google third address',lat:33.591123,lng:130.421123}
+ ];
+ let activeReverse=0,maxActiveReverse=0;
+ ja.context.fetch=async(url,opts)=>{jaCalls.push({url:String(url),opts,at:Date.now()});if(url.includes('/places-lookup.php'))return {ok:true,json:async()=>({ok:true,remaining:897,results:jaResults})};
+  activeReverse++;maxActiveReverse=Math.max(maxActiveReverse,activeReverse);
+  return new Promise((resolve,reject)=>{const finish=address=>{activeReverse--;resolve({ok:true,json:async()=>({address})});};pendingReverse.push({finish,signal:opts.signal});opts.signal.addEventListener('abort',()=>{activeReverse--;reject(Error('取消'));},{once:true});});
+ };
+ ja.run('openCustomForm()');ja.els.customCoords.value=link;ja.els.customCoords.oninput();await until(()=>pendingReverse.length===1);
+ assert.match(ja.els.customSuggest.innerHTML,/1-chōme-2-2 Sumiyoshi/);assert(!ja.els.customSuggest.innerHTML.includes('地址來源：OpenStreetMap'));
+ assert.equal(ja.els.customAddr.value,'');ja.run('applyCustomSuggestion("all")');assert.equal(ja.els.customAddr.value,jaResults[0].address);const appliedNote=ja.els.customNote.value;
+ const jaReverse=new URL(jaCalls[1].url);assert.equal(jaReverse.pathname,'/reverse');for(const [key,value]of Object.entries({lat:'33.590123',lon:'130.420123',zoom:'18',addressdetails:'1','accept-language':'ja'}))assert.equal(jaReverse.searchParams.get(key),value);
+ assert.equal(jaCalls[1].opts.referrerPolicy,'strict-origin-when-cross-origin');assert(!jaCalls[1].opts.headers);
+ pendingReverse[0].finish(jaAddress);await until(()=>ja.els.customAddr.value===jaText);
+ assert.match(ja.els.customSuggest.innerHTML,/地址來源：OpenStreetMap/);assert.match(ja.els.customSuggest.innerHTML,/© OpenStreetMap contributors/);assert.match(ja.els.customSuggest.innerHTML,/〒810-0801 福岡市博多区中洲5-2/);
+ assert.equal(ja.els.customNote.value,appliedNote);assert.equal(ja.els.customCat.value,'餐廳');assert.equal(ja.els.customAddr.dataset.edited,'1');ja.run('applyCustomSuggestion("all")');assert.equal(ja.els.customNote.value,appliedNote);
+ click(ja,{googleChoice:'1'});await sleep(20);assert.equal(pendingReverse.length,1,'四捨五入至五位小數的座標共用日文地址');assert.equal(ja.run('overlayTop().state.suggestions.addr'),jaText);
+ click(ja,{googleChoice:'2'});await until(()=>pendingReverse.length===2);assert.match(ja.els.customSuggest.innerHTML,/Google third address/);
+ ja.els.customAddr.value='我編輯的地址';ja.els.customAddr.oninput();const unsafeAddress={city:'福岡市',quarter:'<img src=x onerror=bad>',house_number:'２'};
+ pendingReverse[1].finish(unsafeAddress);await until(()=>ja.run('overlayTop().state.suggestions.osmAddress')===true);
+ assert.equal(ja.els.customAddr.value,'我編輯的地址');assert.match(ja.els.customSuggest.innerHTML,/&lt;img src=x onerror=bad&gt;2/);assert(!ja.els.customSuggest.innerHTML.includes('<img'));
+ click(ja,{googleChoice:'0'});await sleep(20);assert.equal(ja.run('overlayTop().state.suggestions.addr'),jaText);assert.equal(ja.els.customAddr.value,'我編輯的地址');assert.equal(pendingReverse.length,2);assert.equal(maxActiveReverse,1);assert(jaCalls[2].at-jaCalls[1].at>=995);
+ ja.run('closeAllOverlays();openCustomForm()');ja.els.customCoords.value=link;ja.els.customCoords.oninput();await until(()=>ja.run('overlayTop().state.suggestions.osmAddress')===true);
+ ja.run('applyCustomSuggestion("all")');assert.equal(ja.els.customAddr.value,jaText,'全部套用使用最佳可用地址');assert.equal(jaCalls.filter(r=>r.url.includes('/places-lookup.php')).length,1,'OSM 與選擇結果不增加 Google 呼叫');assert.equal(jaCalls.filter(r=>r.url.includes('nominatim')).length,2,'跨表單及重選不再逆查');ja.close();
+ // 錯誤、空結果、逾時都保留 Google 地址；取消、切換結果及手動編輯不讓過期結果覆寫。
+ for(const mode of ['failure','empty','timeout','abort','paste','close','edited','edited-back','changed-without-event','choice']){
+  const view=page();await initial(view);let calls=0,finish,requestSignal;const originalTimeout=view.context.setTimeout;
+  if(mode==='timeout')view.context.setTimeout=(cb,ms)=>originalTimeout(cb,ms===6000?5:ms);
+  view.context.fetch=async(url,opts)=>{calls++;assert.equal(new URL(url).pathname,'/reverse');requestSignal=opts.signal;
+   if(mode==='failure')throw Error('OSM unavailable');if(mode==='empty')return {ok:true,json:async()=>({address:{}})};
+   return new Promise((resolve,reject)=>{finish=()=>resolve({ok:true,json:async()=>({address:jaAddress})});opts.signal.addEventListener('abort',()=>reject(Error('取消')),{once:true});});
+  };
+  view.context.jaResults=jaResults;view.run('openCustomForm();Object.assign(overlayTop().state,{suggestSource:"google",googleResults:jaResults});showGoogleSuggestion(0);applyCustomSuggestion("addr")');
+  assert.equal(view.els.customAddr.value,jaResults[0].address);await until(()=>calls===1);
+  if(mode==='edited'||mode==='edited-back'){view.els.customAddr.value='手寫地址';view.els.customAddr.oninput();if(mode==='edited-back')view.els.customAddr.value=jaResults[0].address;}
+  if(mode==='changed-without-event')view.els.customAddr.value='另一個地址';
+  if(mode==='choice')click(view,{googleChoice:'1'});
+  if(mode==='abort')view.run('cancelCustomLookup()');
+  if(mode==='paste')view.els.customCoords.onpaste({clipboardData:{getData:()=>link},preventDefault(){}});
+  if(mode==='close')view.run('closeAllOverlays()');
+  if(['abort','paste','close'].includes(mode))assert(requestSignal.aborted,mode);
+  if(['edited','edited-back','changed-without-event','choice'].includes(mode))finish();
+  await view.run('googleOsmAddressMemo.values().next().value');await sleep(20);
+  assert.equal(view.els.customAddr.value,mode==='edited'?'手寫地址':mode==='changed-without-event'?'另一個地址':jaResults[0].address,mode);
+  if(['failure','empty','timeout','abort'].includes(mode)){assert.match(view.els.customSuggest.innerHTML,/1-chōme-2-2 Sumiyoshi/);assert(!view.els.customSuggest.innerHTML.includes('地址來源：OpenStreetMap'));view.run('showGoogleSuggestion(0)');await sleep(20);assert.equal(calls,1,'失敗／取消的結果亦不重試');}
+  if(mode==='choice'){assert.equal(view.run('overlayTop().state.suggestions.name'),'同一位置');assert.equal(view.run('overlayTop().state.suggestions.addr'),jaText);assert.equal(calls,1,'選擇同座標時共用進行中的逆查');}
+  view.close();
+ }
+ // 不同座標的結果也走同一佇列；新選擇不會被舊結果改回。
+ const queued=page();await initial(queued);let queuedFinish;const queuedCalls=[];
+ queued.context.fetch=async(url,opts)=>{queuedCalls.push({url,at:Date.now()});if(queuedCalls.length===1)return new Promise(resolve=>{queuedFinish=()=>resolve({ok:true,json:async()=>({address:jaAddress})});});return {ok:true,json:async()=>({address:{city:'福岡市',quarter:'祇園町'}})};};
+ queued.context.jaResults=jaResults;queued.run('openCustomForm();Object.assign(overlayTop().state,{suggestSource:"google",googleResults:jaResults});showGoogleSuggestion(0)');await until(()=>queuedCalls.length===1);click(queued,{googleChoice:'2'});await sleep(40);assert.equal(queuedCalls.length,1);queuedFinish();await until(()=>queued.run('overlayTop().state.suggestions.osmAddress')===true);assert.equal(queued.run('overlayTop().state.suggestions.name'),'別の場所');assert.equal(queued.run('overlayTop().state.suggestions.addr'),'福岡市祇園町');assert.equal(queuedCalls.length,2);assert(queuedCalls[1].at-queuedCalls[0].at>=995);queued.close();
+ assert(!/<meta\b[^>]*name=["']referrer["'][^>]*content=["'](?:no-referrer|same-origin)["']/i.test(html));
+ console.log('PASS 日文 OSM 地址：丁目／全形數字／市區及町村、Google 即時替換與全部套用、原值追蹤及編輯保護、跳脫、單次逆查／日文參數／Referer／序列節流、失敗／逾時／取消備援');
  console.log('PASS Google Places：查詢門檻／手動按鈕／防重複／逾時、名稱優先、保護手寫及清空欄位、結果選擇、類型、跳脫、額度提示與 OSM 備援');
  // 一開表單便顯示住宿及所有有座標的已排行程；編號使用原日內順序。
  const L=leaflet(),mapped=page({L});await initial(mapped);mapped.run('setCustoms(Object.fromEntries(Object.entries({u_map_a:{zh:"近<景點>",cat:"親子景點",lat:33.5905,lng:130.418},u_map_empty:{zh:"無座標",cat:"親子景點"},u_map_b:{zh:"中景點",cat:"餐廳",lat:33.601,lng:130.418},u_map_c:{zh:"第三",cat:"餐廳",lat:33.61,lng:130.418},u_map_far:{zh:"遠景點",cat:"餐廳",lat:33.9,lng:130.418}}).map(([id,c])=>[id,{...c,by:ME.nick,byId:ME.id,at:1}])));S.days[0].items=["u_map_a","u_map_empty","u_map_b"];S.days[1].items=["u_map_c","u_map_far"];S.days.slice(2).forEach(d=>d.items=[]);S.days[0].label="日<一>";openCustomForm()');
