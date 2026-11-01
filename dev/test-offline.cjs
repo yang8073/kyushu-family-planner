@@ -3,7 +3,7 @@ const fs=require('fs'),path=require('path'),vm=require('vm'),assert=require('ass
 module.exports=async function({html,page,initial,sleep}){
  const root=path.join(__dirname,'..'),swPath=path.join(root,'sw.js');
  assert(fs.existsSync(swPath));const sw=fs.readFileSync(swPath,'utf8');
- assert.match(sw,/kfp-v\d+-\d{8}/);assert.match(sw,/api\.php/);
+ assert.match(sw,/kfp-v\d+-\d{8}/);assert.match(sw,/const CACHE_VERSION = 'kfp-v2-20261101';/);assert.match(sw,/api\.php/);
  const manifest=JSON.parse(fs.readFileSync(path.join(root,'manifest.webmanifest'),'utf8'));
  assert.equal(manifest.scope,'./');assert.equal(manifest.start_url,'./');assert.match(html,/rel="manifest" href="\.\/manifest.webmanifest"/);
  const p=page();await initial(p);
@@ -113,7 +113,7 @@ async function testWorker(source){
  const shell=await caches.open(value('SHELL_CACHE')),assets=await caches.open(value('STATIC_CACHE'));
  for(const suffix of ['', 'index.html','manifest.webmanifest'])assert(await shell.match(scope+suffix));
  for(const url of value('CDN_ASSETS'))assert(await assets.match(url));
- stores.set('kfp-v0-20261031-shell',new Cache());stores.set('another-app',new Cache());await lifecycle('activate');assert.equal(claimed,1);assert(!stores.has('kfp-v0-20261031-shell'));assert(stores.has('another-app'));
+ stores.set('kfp-v0-20261031-shell',new Cache());for(const suffix of ['shell','static','tiles'])stores.set('kfp-v1-20261101-'+suffix,new Cache());stores.set('another-app',new Cache());await lifecycle('activate');for(const suffix of ['shell','static','tiles'])assert(!stores.has('kfp-v1-20261101-'+suffix));assert.equal(claimed,1);assert(!stores.has('kfp-v0-20261031-shell'));assert(stores.has('another-app'));
  for(const [url,extra]of [
   ['https://trip.yi-jia-zi.com/api.php?op=state',{}],['./api.php?op=rev',{}],['./index.html?file=api.php',{}],
   ['https://drive.google.com/file/d/public/view',{}],['https://accounts.google.com/login',{}],['./index.html',{method:'POST'}],

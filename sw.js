@@ -1,5 +1,5 @@
 // Bump the version whenever the planner shell or its assets change.
-const CACHE_VERSION = 'kfp-v1-20261101';
+const CACHE_VERSION = 'kfp-v2-20261101';
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const TILE_CACHE = `${CACHE_VERSION}-tiles`;
