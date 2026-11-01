@@ -76,7 +76,7 @@ function validateState(mixed $state): bool {
     if (isset($state->customs)) {
         if (!objectValid($state->customs)) return false;
         $allowedCats = ['親子景點', '購物街/商圈', '安全帽店', '樂高店', 'PS5遊戲片店', '餐廳'];
-        $allowedCustomFields = ['zh', 'cat', 'area', 'addr', 'lat', 'lng', 'note', 'url', 'by', 'byId', 'at', 'editBy', 'editAt'];
+        $allowedCustomFields = ['zh', 'cat', 'area', 'addr', 'lat', 'lng', 'note', 'url', 'by', 'byId', 'at', 'editBy', 'editAt', 'tags', 'tagVersion'];
         foreach (get_object_vars($state->customs) as $id => $spot) {
             if (!idValid($id) || !objectValid($spot) || !fieldsValid($spot, $allowedCustomFields)) return false;
             if (!is_string($spot->zh ?? null) || trim($spot->zh) === '' || textLength($spot->zh) < 1 || textLength($spot->zh) > 60) return false;
@@ -92,6 +92,13 @@ function validateState(mixed $state): bool {
             }
             if (isset($spot->note) && (!is_string($spot->note) || textLength($spot->note) > 1000)) return false;
             if (isset($spot->url) && (!is_string($spot->url) || !preg_match('~^https?://~i', $spot->url) || textLength($spot->url) > 2000)) return false;
+            if (isset($spot->tags)) {
+                if (!is_array($spot->tags) || count($spot->tags) > 8) return false;
+                foreach ($spot->tags as $tag) {
+                    if (!is_string($tag) || trim($tag) === '' || textLength($tag) > 12 || preg_match('/[\p{Cc}\p{Cf}]/u', $tag)) return false;
+                }
+            }
+            if (isset($spot->tagVersion) && (!is_int($spot->tagVersion) || $spot->tagVersion < 0 || $spot->tagVersion > 100)) return false;
             if (!nickValid($spot->by ?? null) || !deviceValid($spot->byId ?? null) || !is_int($spot->at ?? null) || $spot->at < 0) return false;
             if (isset($spot->editBy) && !nickValid($spot->editBy)) return false;
             if (isset($spot->editAt) && (!is_int($spot->editAt) || $spot->editAt < 0)) return false;
