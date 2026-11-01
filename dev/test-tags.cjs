@@ -3,8 +3,10 @@ const assert=require('assert/strict');
 module.exports=async function({html,page,initial,sleep,leaflet,Database,JsonfileDatabase}){
  const json=(p,code)=>JSON.parse(p.run('JSON.stringify('+code+')'));
  const L=leaflet(),p=page({L});await initial(p);
- const tags=json(p,'TAGS'),norm=raw=>json(p,'normalizeCustomTags('+JSON.stringify(raw)+')');
- assert(tags.length>8);assert.deepEqual(tags,json(p,'[...new Set(BUILTIN_ATTR.flatMap(a=>a.tags))]'));
+ const allTags=json(p,'TAGS'),tags=allTags.filter(t=>t!=='已訂'),norm=raw=>json(p,'normalizeCustomTags('+JSON.stringify(raw)+')');
+ assert(tags.length>8);assert.deepEqual(allTags,json(p,'[...new Set(BUILTIN_ATTR.flatMap(a=>a.tags))]'));
+ assert(allTags.includes('已訂'));assert.deepEqual([...p.els.tagChips.innerHTML.matchAll(/data-tag="([^"]+)"/g)].map(m=>m[1]),allTags);
+ assert.deepEqual(norm(['已訂','　＃已訂　','燒肉']),['燒肉']);
  for(const tag of tags){assert(tag.trim());assert([...tag].length<=12,tag);assert(!/[\p{Cc}\p{Cf}]/u.test(tag),tag);assert.deepEqual(norm([tag]),[tag]);}
  assert.deepEqual(norm(['　＃燒肉　','燒肉','＃ # 拉麵','自創標籤','RAMEN','<b>',null,4,{}]),['燒肉','拉麵']);
  assert.deepEqual(norm(['拉\u200b麵','燒\u0000肉','燒肉多餘內容','😀'.repeat(20)]),[]);
@@ -25,13 +27,14 @@ module.exports=async function({html,page,initial,sleep,leaflet,Database,Jsonfile
  assert.deepEqual(json(p,'sanitizeCustoms({u_old:{...oldSpot,tags:"燒肉"}}).u_old.tags'),[]);
  assert.deepEqual(json(p,'sanitizeCustoms({u_old:{...oldSpot,tags:[null,"＃拉麵","拉麵",{},"<b>","燒肉"]}}).u_old.tags'),['拉麵','燒肉']);
  assert.deepEqual(json(p,'sanitizeCustoms({u_bad:{tags:["燒肉"]},canal:{...oldSpot,tags:["燒肉"]}})'),{});
- // Loading PR #14 data retains exactly matching names, drops unknown free tags.
- const legacyStorage=new Map([['kyushuPlanner.customs',JSON.stringify({u_legacy:{...old,tags:['自創標籤','燒肉','拉麵'],tagVersion:1}})]]);
+ // Loading PR #14 data drops unknown free tags and the lodging status tag.
+ const legacyStorage=new Map([['kyushuPlanner.customs',JSON.stringify({u_legacy:{...old,tags:['已訂','自創標籤','燒肉','拉麵'],tagVersion:1}})]]);
  const legacyPage=page({storage:legacyStorage});await initial(legacyPage);assert.deepEqual(json(legacyPage,'CUSTOMS.u_legacy.tags'),['燒肉','拉麵']);legacyPage.close();
  p.run('setCustoms({u_a:{...oldSpot,tags:["燒肉","室內"]},u_b:{...oldSpot,zh:"普通店乙",tags:["拉麵","燒肉"],lng:130.419},u_c:{...oldSpot,zh:"普通店丙",tags:["拉麵","自創標籤"]},u_empty:oldSpot});S.pool=["canal","u_a","u_b","u_c","u_empty"];S.days.forEach(d=>d.items=[]);WISH={u_a:{[ME.id]:{pool:"want",nick:ME.nick,at:1}},u_b:{[ME.id]:{pool:"want",nick:ME.nick,at:1}},canal:{[ME.id]:{pool:"want",nick:ME.nick,at:1}}};renderAll()');
  assert.deepEqual(json(p,'BY.u_a.tags'),['燒肉','室內']);assert.deepEqual(json(p,'DETAIL.u_a.tags'),['燒肉','室內']);
  assert.match(p.els.cards.innerHTML,/<span class="tag">燒肉/);assert.match(p.els.wishSections.innerHTML,/<span class="tag">燒肉/);assert.match(p.els.days.innerHTML,/<span class="tag">燒肉/);
- p.run('openDetail("u_a")');assert.match(p.els.detailBody.innerHTML,/<dt>標籤<\/dt>/);assert.match(p.els.detailBody.innerHTML,/<span class="tag">燒肉/);p.run('closeAllOverlays()');
+ assert(!p.els.cards.innerHTML.includes('<span class="tag area"></span>'));assert.match(p.els.cards.innerHTML,/<span class="tag area">福岡市區<\/span>/);
+ p.run('openDetail("u_a")');assert.match(p.els.detailBody.innerHTML,/<dt>標籤<\/dt>/);assert.match(p.els.detailBody.innerHTML,/<span class="tag">燒肉/);assert.match(p.els.detailBody.innerHTML,/<dt>🏷️ 類別／地區<\/dt><dd>餐廳<\/dd>/);assert(!p.els.detailBody.innerHTML.includes('<span class="tag area"></span>'));p.run('closeAllOverlays()');
  const snapshot=p.run('JSON.stringify(snapshot())'),rev=p.run('sync.rev');
  const filterClick=tag=>p.els.tagChips.onclick({target:{dataset:{tag},classList:{toggle(){}}}});
  filterClick('燒肉');
@@ -140,5 +143,5 @@ module.exports=async function({html,page,initial,sleep,leaflet,Database,Jsonfile
  assert(validatedPayloads>20);
  // No Leaflet or session storage is needed to edit existing planner tags.
  const plain=page();await initial(plain);plain.context.sessionStorage={getItem(){throw Error('disabled');},setItem(){throw Error('disabled');}};plain.run('setCustoms({u_plain:{zh:"純文字",cat:"餐廳",tags:["燒肉"],by:ME.nick,byId:ME.id,at:1}});openCustomForm("u_plain")');assert.match(plain.els.customTagPicker.innerHTML,/aria-pressed="true">燒肉/);plain.close();
- console.log('PASS existing planner tags: all-TAGS picker/aria/toggle/8-cap/edit/stack, canonical normalization/legacy loading, shared list/category filters, cards/detail/pool/map/nearby, validated Firebase+JSON payloads, sync/rebase/offline/conflict/history/restore/import/export/legacy merge/explicit clearing');
+ console.log('PASS existing planner tags: picker excludes 已訂/aria/toggle/8-cap/edit/stack, canonical normalization/legacy status removal, unchanged main filters, non-empty area chips, cards/detail/pool/map/nearby, validated Firebase+JSON payloads, sync/rebase/offline/conflict/history/restore/import/export/legacy merge/explicit clearing');
 };

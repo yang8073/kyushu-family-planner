@@ -571,6 +571,7 @@ const BUILTIN_ATTR = [
 ];
 EXTRA.forEach(a=>{DETAIL[a.id]={...a,...DETAIL[a.id]};});
 const TAGS=[...new Set(BUILTIN_ATTR.flatMap(a=>a.tags))];
+const CUSTOM_TAGS=TAGS.filter(t=>t!=="已訂");
 const BUILTIN_IDS = new Set(BUILTIN_ATTR.map(a=>a.id));
 let ATTR = [...BUILTIN_ATTR];
 let BY = Object.fromEntries(ATTR.map(a=>[a.id,a]));
@@ -708,7 +709,7 @@ function genCustomId(){
   return id;
 }
 // Keep canonical planner tags only, in selection order, for form, imports and sync.
-function normalizeCustomTag(value){if(typeof value!=="string")return "";const tag=value.normalize("NFKC").trim().replace(/^(?:#\s*)+/u,"").trim();return TAGS.includes(tag)?tag:"";}
+function normalizeCustomTag(value){if(typeof value!=="string")return "";const tag=value.normalize("NFKC").trim().replace(/^(?:#\s*)+/u,"").trim();return CUSTOM_TAGS.includes(tag)?tag:"";}
 function normalizeCustomTags(raw){const out=[];if(!Array.isArray(raw))return out;for(const value of raw){const tag=normalizeCustomTag(value);if(tag&&!out.includes(tag)){out.push(tag);if(out.length===8)break;}}return out;}
 function sanitizeCustoms(raw){
   const out={};
@@ -1045,7 +1046,7 @@ function renderList(){
     return `<div class="card${sel.has(a.id)?" sel":""}">
     ${a.lodging?"":`<input type="checkbox" aria-label="選取 ${esc(a.zh)}" data-id="${esc(a.id)}" ${sel.has(a.id)?"checked":""}>`}
     <div class="body"><button type="button" class="nm title-button" data-detail="${esc(a.id)}">${esc(a.zh)} <span class="info">ⓘ</span></button>${a.ja?`<div class="ja">${esc(a.ja)}</div>`:""}
-    <div class="tags">${a.custom?`<span class="tag custom-badge">✏️ 自訂・by ${esc(a.by||"家人")}</span>`:""}<span class="tag area">${esc(a.area)}</span><span class="tag cat">${a.lodging?"🏨 ":""}${esc(a.cat)}</span>${a.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join("")}${a.q?'<span class="tag q">⚠️待確認</span>':""}${dl?`<span class="tag" style="background:#e3f6ee;color:#25785a">📅 ${esc(dl)}</span>`:""}</div>
+    <div class="tags">${a.custom?`<span class="tag custom-badge">✏️ 自訂・by ${esc(a.by||"家人")}</span>`:""}${a.area?`<span class="tag area">${esc(a.area)}</span>`:""}<span class="tag cat">${a.lodging?"🏨 ":""}${esc(a.cat)}</span>${a.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join("")}${a.q?'<span class="tag q">⚠️待確認</span>':""}${dl?`<span class="tag" style="background:#e3f6ee;color:#25785a">📅 ${esc(dl)}</span>`:""}</div>
     ${a.lodging?`<div class="note">${esc(a.station)}・☎ ${esc(a.tel)}</div>`:`<div class="ages">2 歲 <b>${stars(a.a2)}</b>　6 歲 <b>${stars(a.a6)}</b></div>`}
     ${a.note?`<div class="note">${esc(a.note)}</div>`:""}
     <div class="links"><a href="${gmap(a)}" target="_blank" rel="noopener">🗺 Google 地圖</a><button type="button" data-show="${esc(a.id)}">📍 在地圖上看</button>${nearbyButton(a)}${a.src?linkHTML(a.src,"🔗 來源"):""}</div>${wishButtons(a.id)}</div></div>`;}).join("");
@@ -1422,7 +1423,7 @@ function deleteCustomSpot(id){
 document.getElementById("addCustomSpotBtn").onclick=e=>openCustomForm(null,e.currentTarget);
 function customTagState(){const layer=overlayTop();return layer?.kind==="custom"?layer.state:null;}
 function renderCustomTags(){const state=customTagState();if(!state)return;state.tags=normalizeCustomTags(state.tags);
-  customEl("customTagPicker").innerHTML=TAGS.map((t,i)=>`<button type="button" class="chip${state.tags.includes(t)?" on":""}" data-tag-toggle="${i}" aria-pressed="${state.tags.includes(t)}">${esc(t)}</button>`).join("");
+  customEl("customTagPicker").innerHTML=CUSTOM_TAGS.map((t,i)=>`<button type="button" class="chip${state.tags.includes(t)?" on":""}" data-tag-toggle="${i}" aria-pressed="${state.tags.includes(t)}">${esc(t)}</button>`).join("");
   customEl("customTagHint").textContent=`已選 ${state.tags.length} / 8 個標籤；點選可加入或取消。`;
 }
 function addCustomTags(values){const state=customTagState();if(!state)return;const tags=normalizeCustomTags(values),exceeded=state.tags.length+tags.filter(t=>!state.tags.includes(t)).length>8;
@@ -1430,8 +1431,8 @@ function addCustomTags(values){const state=customTagState();if(!state)return;con
   if(exceeded){customEl("customTagHint").textContent="最多可選 8 個標籤，請先取消一個再選。";toast("最多可選 8 個標籤");}
 }
 customEl("customForm").addEventListener("click",e=>{const toggle=e.target.closest("[data-tag-toggle]"),add=e.target.closest("[data-tag-add]"),state=customTagState();if(!state)return;
-  if(toggle){const tag=TAGS[Number(toggle.dataset.tagToggle)];if(!tag)return;if(state.tags.includes(tag)){state.tags=state.tags.filter(t=>t!==tag);renderCustomTags();}else addCustomTags([tag]);
-    customEl("customTagPicker").querySelector(`[data-tag-toggle="${TAGS.indexOf(tag)}"]`)?.focus({preventScroll:true});
+  if(toggle){const tag=CUSTOM_TAGS[Number(toggle.dataset.tagToggle)];if(!tag)return;if(state.tags.includes(tag)){state.tags=state.tags.filter(t=>t!==tag);renderCustomTags();}else addCustomTags([tag]);
+    customEl("customTagPicker").querySelector(`[data-tag-toggle="${CUSTOM_TAGS.indexOf(tag)}"]`)?.focus({preventScroll:true});
   }else if(add)addCustomTags([add.dataset.tagAdd]);
 });
 document.getElementById("customCancel").onclick=()=>closeOverlay("custom");
