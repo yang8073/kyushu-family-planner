@@ -1,5 +1,5 @@
 // Bump the version whenever the planner shell or its assets change.
-const CACHE_VERSION = 'kfp-v4-20261101';
+const CACHE_VERSION = 'kfp-v5-20261101';
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const TILE_CACHE = `${CACHE_VERSION}-tiles`;
@@ -15,7 +15,7 @@ const MAX_TILES = 300;
 
 function excluded(request, url) {
   return request.method !== 'GET' || url.href.toLowerCase().includes('api.php') ||
-    url.origin === 'https://trip.yi-jia-zi.com' ||
+    url.origin === 'https://trip.yi-jia-zi.com' || url.hostname === 'nominatim.openstreetmap.org' ||
     /(^|\.)(drive|accounts)\.google\.com$/.test(url.hostname);
 }
 function cacheable(response) { return response.ok || response.type === 'opaque'; }

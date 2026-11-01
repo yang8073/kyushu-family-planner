@@ -117,7 +117,7 @@ section.pane.on{display:block}
 #customForm label{display:block;font-weight:700;font-size:13px;margin:8px 0 3px}
 #customForm input,#customForm select,#customForm textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font:inherit;font-size:14px;color:var(--ink);background:#fff;box-sizing:border-box}
 #customForm textarea{height:auto;resize:vertical}
-#customCoordsPreview{overflow-wrap:anywhere;margin:6px 0;line-height:1.6}#customCoordsPreview.coords-error{color:#b8456e}#customCoordsMap{height:160px;border-radius:10px;margin:8px 0;isolation:isolate}
+#customCoordsPreview{overflow-wrap:anywhere;margin:6px 0;line-height:1.6}#customCoordsPreview.coords-error{color:#b8456e}#customPlanMap{height:200px;border-radius:10px;margin:8px 0;isolation:isolate;touch-action:none}#customPlanLegend{font-size:11px;line-height:1.6}#customPlanLegend span{display:inline-block;margin-right:8px}#customPlanLegend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:3px}#customNearest{font-size:12px;line-height:1.6;margin:5px 0}#customSuggest{font-size:12px;padding:8px;border:1px solid var(--line);border-radius:9px;overflow-wrap:anywhere}#customSuggest p{margin:4px 0}#customSuggest button{font-size:12px;padding:4px 8px;margin:2px;min-height:36px}
 .tag.custom-badge{background:#e8f0fe;color:#1a73e8;border:1px solid #d2e3fc}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#3a4660;color:#fff;padding:8px 14px;border-radius:999px;font-size:14px;z-index:4000;opacity:0;transition:opacity .25s;pointer-events:none}
 .toast.on{opacity:.95}
@@ -301,7 +301,7 @@ body.sheet-open{overscroll-behavior:none}
     <div id="documentsBody"><div id="documentsGroups"></div><p id="documentsHint">離線查看：在手機 Google Drive App 開啟檔案 → ⋮ → 開啟『可離線使用』。本頁可離線開啟，但雲端文件需先在 Drive App 設為離線。</p></div>
   </div>
 </div>
-<div class="modal" id="customModal" role="dialog" aria-modal="true" aria-labelledby="customModalTitle"><form class="box" id="customForm"><div class="overlay-tools"><button type="button" class="btn alt overlay-back" id="customBack" hidden>← 返回</button><h3 id="customModalTitle">＋ 自訂景點</h3><button type="button" class="detail-close" id="customClose" aria-label="關閉浮窗">✕</button></div><div id="customBody"><input type="hidden" id="customId"><label for="customZh">景點名稱 <b style="color:#ef6f6c">*</b></label><input type="text" id="customZh" maxlength="60" required placeholder="例如：博多運河城（必填，60 字內）"><label for="customCat">類型 <b style="color:#ef6f6c">*</b></label><select id="customCat" required><option value="親子景點">親子景點</option><option value="購物街/商圈">購物街/商圈</option><option value="安全帽店">安全帽店</option><option value="樂高店">樂高店</option><option value="PS5遊戲片店">PS5遊戲片店</option><option value="餐廳">餐廳</option></select><label for="customArea">地區</label><input type="text" id="customArea" maxlength="40" placeholder="例如：福岡市區、太宰府（40 字內）"><label for="customAddr">地址</label><input type="text" id="customAddr" maxlength="200" placeholder="例如：福岡県福岡市博多区...（200 字內）"><label for="customCoords">座標、Google 地圖連結或 Plus Code</label><input type="text" id="customCoords" aria-describedby="customCoordsHint customCoordsPreview" placeholder="33.5898, 130.4108 或 HCR9+2X 福岡市"><small class="hint" id="customCoordsHint" style="margin-top:2px;display:block">接受座標、Google 地圖連結或 Plus Code（例如 HCR9+2X 福岡市）。短碼依地名定位；未填地名時以住宿為參考。</small><p class="hint" id="customCoordsPreview" role="status" aria-live="polite" hidden></p><div id="customCoordsMap" role="region" aria-label="自訂景點位置預覽" hidden></div><label for="customUrl">相關網址</label><input type="url" id="customUrl" placeholder="https://...（http 或 https）"><label for="customNote">備註</label><textarea id="customNote" maxlength="1000" rows="3" placeholder="例如：營業時間、推薦原因、注意事項等（1000 字內）"></textarea><div class="row" style="margin-top:12px;justify-content:flex-end"><button type="button" class="btn alt" id="customCancel">取消</button><button type="submit" class="btn" id="customSubmit">儲存</button></div></div></form></div>
+<div class="modal" id="customModal" role="dialog" aria-modal="true" aria-labelledby="customModalTitle"><form class="box" id="customForm"><div class="overlay-tools"><button type="button" class="btn alt overlay-back" id="customBack" hidden>← 返回</button><h3 id="customModalTitle">＋ 自訂景點</h3><button type="button" class="detail-close" id="customClose" aria-label="關閉浮窗">✕</button></div><div id="customBody"><input type="hidden" id="customId"><div id="customPlanMap" role="region" aria-label="自訂景點與已排行程地圖" hidden></div><div id="customPlanLegend"></div><div id="customNearest" aria-live="polite"></div><label for="customZh">景點名稱 <b style="color:#ef6f6c">*</b></label><input type="text" id="customZh" maxlength="60" required placeholder="例如：博多運河城（必填，60 字內）"><label for="customCat">類型 <b style="color:#ef6f6c">*</b></label><select id="customCat" required><option value="">請選擇類型</option><option value="親子景點">親子景點</option><option value="購物街/商圈">購物街/商圈</option><option value="安全帽店">安全帽店</option><option value="樂高店">樂高店</option><option value="PS5遊戲片店">PS5遊戲片店</option><option value="餐廳">餐廳</option></select><label for="customArea">地區</label><input type="text" id="customArea" maxlength="40" placeholder="例如：福岡市區、太宰府（40 字內）"><label for="customAddr">地址</label><input type="text" id="customAddr" maxlength="200" placeholder="例如：福岡県福岡市博多区...（200 字內）"><label for="customCoords">座標、Google 地圖連結或 Plus Code</label><input type="text" id="customCoords" aria-describedby="customCoordsHint customCoordsPreview" placeholder="33.5898, 130.4108 或 HCR9+2X 福岡市"><small class="hint" id="customCoordsHint" style="margin-top:2px;display:block">接受座標、Google 地圖連結或 Plus Code（例如 HCR9+2X 福岡市）。短碼依地名定位；未填地名時以住宿為參考。</small><p class="hint" id="customCoordsPreview" role="status" aria-live="polite" hidden></p><div id="customSuggest" role="region" aria-label="地圖資料建議" aria-live="polite" hidden></div><label for="customUrl">相關網址</label><input type="url" id="customUrl" placeholder="https://...（http 或 https）"><label for="customNote">備註</label><textarea id="customNote" maxlength="1000" rows="3" placeholder="例如：營業時間、推薦原因、注意事項等（1000 字內）"></textarea><div class="row" style="margin-top:12px;justify-content:flex-end"><button type="button" class="btn alt" id="customCancel">取消</button><button type="submit" class="btn" id="customSubmit">儲存</button></div></div></form></div>
 <div class="modal" id="nickModal" role="dialog" aria-modal="true" aria-labelledby="nickLabel"><form class="box" id="nickForm"><div class="overlay-tools"><button type="button" class="btn alt overlay-back" id="nickBack" hidden>← 返回</button><strong>暱稱</strong><button type="button" class="detail-close" id="nickClose" aria-label="關閉浮窗">✕</button></div><div id="nickBody"><label id="nickLabel" for="nickInput">請輸入你的暱稱（顯示在許願池與修改紀錄）</label><input class="nick-input" id="nickInput" maxlength="12" required autocomplete="nickname"><div class="row" style="justify-content:flex-end"><button class="btn" type="submit">確定</button></div></div></form></div>
 <aside class="detail-panel" id="detailPanel" role="dialog" aria-labelledby="detailTitle"><div class="detail-head" id="detailHead"><button type="button" class="btn alt overlay-back" id="detailBack" hidden>← 返回</button><strong>景點詳情</strong><button class="detail-close" id="detailClose" aria-label="關閉景點詳情">✕</button></div><div class="detail-body" id="detailBody"></div></aside>
 <div class="modal" id="nearbyPanel" role="dialog" aria-modal="true" aria-labelledby="nearbyTitle"><div class="box"><div class="detail-head"><button type="button" class="btn alt overlay-back" id="nearbyBack" hidden>← 返回</button><strong id="nearbyTitle">📍 附近景點</strong><button type="button" class="detail-close" id="nearbyClose" aria-label="關閉附近景點">✕</button></div><div id="nearbyMapRegion"><div id="nearbyMap" role="region" aria-label="附近景點地圖"></div></div><div id="nearbyBody"><div class="row"><button type="button" class="btn" id="nearbyBigMap">🗺 在大地圖上顯示</button></div><p class="hint" style="margin-top:8px">紅色 ★ 為起點，藍色數字對應下方景點；虛線圈為 500 m／1.5 km。距離為直線估算，步行時間以親子步速約 4 km/h 估算，實際路線與交通時間請另確認。</p><div id="nearbySearchBar"><div class="nearby-search"><input id="nearbySearch" type="search" aria-label="搜尋附近店名、類別" aria-describedby="nearbyCount" autocomplete="off" placeholder="搜尋店名、類別（例如：燒肉、拉麵、樂高）"><button type="button" class="btn alt" id="nearbySearchClear" aria-label="清除附近搜尋">✕</button></div><p class="count" id="nearbyCount" role="status" aria-live="polite" aria-atomic="true"></p></div><div id="nearbyRows"></div></div></div></div>
@@ -646,7 +646,23 @@ function parsePlusCoords(text){const match=text.normalize("NFKC").trim().replace
     return {lat:area.latitudeCenter,lng:area.longitudeCenter,code,source:short?`Plus Code（參考：${ref?.name||"住宿"}）`:"Plus Code（全球碼）",warning:short&&locality&&!ref?"未辨識地名，已使用住宿為參考；距離住宿較遠時可能有誤，請確認地圖位置。":""};
   }catch{return null;}
 }
-function coordsInfo(str){if(typeof str!=="string"||!str.trim())return null;let text=str.normalize("NFKC").trim();try{text=decodeURIComponent(text);}catch{}
+// 分享文字只取網址；名稱逐段解碼，避免網址內的加號與編碼互相干擾。
+function mapsLinkURL(str){const match=String(str||"").match(/https?:\/\/[^\s<>"「」]+/i);try{return new URL((match?.[0]||"").replace(/[)）。，]+$/,""));}catch{return null;}}
+function allowedMapsURL(url){return !!url&&url.protocol==="https:"&&!url.username&&!url.password&&!url.port&&["www.google.com","google.com","maps.google.com","www.google.co.jp","google.co.jp","www.google.com.tw","google.com.tw"].includes(url.hostname)&&(url.hostname==="maps.google.com"&&url.pathname==="/"||/^\/maps(?:\/|$)/.test(url.pathname));}
+function shortMapsURL(url){return !!url&&url.protocol==="https:"&&!url.username&&!url.password&&!url.port&&(url.hostname==="maps.app.goo.gl"&&url.pathname!=="/"||url.hostname==="goo.gl"&&/^\/maps\//.test(url.pathname));}
+function parseGoogleMapsLink(str){const out={kind:"none",lat:null,lng:null,name:"",precise:false},url=mapsLinkURL(str);if(!url)return out;
+  const decode=s=>{try{return decodeURIComponent(s.replace(/\+/g," "));}catch{return s.replace(/\+/g," ");}},name=s=>{s=String(s||"").trim();return !s||parseCoordsPair(s)||/^@?[-\d.,\s]+(?:z)?$/.test(s)||/^https?:/i.test(s)?"":s;};
+  const first=String(str).trim().split(/\r?\n/)[0];out.name=name(first.includes(url.hostname)?"":first);
+  if(shortMapsURL(url))return {...out,kind:"short"};if(!allowedMapsURL(url))return {...out,name:""};out.kind="full";
+  const segment=url.pathname.match(/\/maps\/(?:place|search)\/([^/@]+)/);out.name=name(segment?decode(segment[1]):"")||out.name;
+  let data=url.pathname+url.search;try{data=decodeURIComponent(data);}catch{}const pairs=[...data.matchAll(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/g)];
+  for(const m of pairs.reverse()){const pair=parseCoordsPair(m[1]+","+m[2]);if(pair){Object.assign(out,pair,{precise:true});break;}}
+  for(const key of ["q","query","ll"]){const q=url.searchParams.get(key);if(!q)continue;const pair=parseCoordsPair(q);if(pair&&out.lat===null)Object.assign(out,pair,{precise:key!=="ll"});else if(key!=="ll"&&!pair&&!/^place_id:/.test(q))out.name=out.name||name(q);}
+  if(out.lat===null){const at=data.match(/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/);if(at){const pair=parseCoordsPair(at[1]+","+at[2]);if(pair)Object.assign(out,pair);}}
+  for(const key of ["query_place_id","place_id"])if(url.searchParams.get(key))out.placeId=url.searchParams.get(key);
+  const cid=url.searchParams.get("cid");if(/^\d+$/.test(cid||""))out.cid=cid;return out;
+}
+function coordsInfo(str){if(typeof str!=="string"||!str.trim())return null;const maps=parseGoogleMapsLink(str);if(hasCoords(maps))return {...maps,source:"Google 地圖連結",warning:maps.precise?"":"此座標為地圖視野中心，請確認圖釘位置。"};let text=str.normalize("NFKC").trim();try{text=decodeURIComponent(text);}catch{}
   const plus=parsePlusCoords(text);if(plus)return plus;const pair=parseCoordsPair(text);if(pair)return {...pair,source:/https?:/i.test(text)?"Google 地圖連結":"座標",warning:""};
   try{const url=new URL(str.normalize("NFKC").trim());for(const key of ["q","query"]){const plus=parsePlusCoords(url.searchParams.get(key)||"");if(plus)return plus;}}catch{}return null;
 }
@@ -1111,20 +1127,164 @@ function openDetail(id,trigger){if(BY[id])pushOverlay("detail",{id},trigger);}
 function closeDetail(){closeOverlay("detail");}
 document.getElementById("detailClose").onclick=closeDetail;
 const COORDS_ERROR="無法解析位置，請輸入有效的座標、Google 地圖連結或 Plus Code（例如 HCR9+2X 福岡市）。";
-let customCoordsMap=null,customCoordsPin=null,customCoordsTimer=null;
-function destroyCoordsPreview(){clearTimeout(customCoordsTimer);customCoordsTimer=null;customCoordsMap?.remove();customCoordsMap=null;customCoordsPin=null;document.getElementById("customCoordsMap").hidden=true;}
-function updateCoordsPreview(){const input=document.getElementById("customCoords"),preview=document.getElementById("customCoordsPreview"),text=input.value.trim(),value=coordsInfo(text),error=!!text&&!value;
-  input.setCustomValidity(error?COORDS_ERROR:"");input.setAttribute("aria-invalid",String(error));preview.hidden=!text;preview.classList.toggle("coords-error",error);preview.textContent=error?COORDS_ERROR:value?`${value.lat.toFixed(6)}, ${value.lng.toFixed(6)} · ${value.source}${value.warning?"。"+value.warning:""}`:"";
-  if(!value||!window.L||overlayTop()?.kind!=="custom"){destroyCoordsPreview();return !error;}
-  const host=document.getElementById("customCoordsMap");host.hidden=false;if(!customCoordsMap){host.innerHTML="";customCoordsMap=L.map(host,{zoomControl:false,scrollWheelZoom:false,dragging:false,doubleClickZoom:false,boxZoom:false,keyboard:false,touchZoom:false});L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'}).addTo(customCoordsMap);}
-  customCoordsPin?.remove();customCoordsPin=L.marker([value.lat,value.lng],{icon:pin("#387cac","★")}).addTo(customCoordsMap);customCoordsMap.setView([value.lat,value.lng],16);const current=customCoordsMap;clearTimeout(customCoordsTimer);customCoordsTimer=setTimeout(()=>{if(current===customCoordsMap)current.invalidateSize();},60);return true;
+const PLACES_LOOKUP_URL="https://trip.yi-jia-zi.com/places-lookup.php";
+const MAPS_RESOLVER_URL="https://trip.yi-jia-zi.com/resolve-maps-link.php";
+const MAPS_SHORT_HINT="短網址目前無法自動解析。請在瀏覽器打開此連結，等網址變成 google.com/maps/... 後複製完整網址貼上；或貼 Plus Code / 座標。";
+let mapsResolverFailed=false;
+const mapsResolved=new Map();
+async function resolveMapsLink(text,signal){const url=mapsLinkURL(text);if(!shortMapsURL(url))return null;if(mapsResolved.has(url.href))return mapsResolved.get(url.href);if(mapsResolverFailed)return null;
+  const controller=new AbortController(),abort=()=>controller.abort();if(signal?.aborted)return null;signal?.addEventListener("abort",abort,{once:true});const timer=setTimeout(abort,6000);
+  try{if(url.href.length>300)throw Error();const response=await fetch(MAPS_RESOLVER_URL+"?url="+encodeURIComponent(url.href),{signal:controller.signal});if(!response.ok)throw Error();const data=await response.json(),final=mapsLinkURL(data.url);
+    if(!data.ok||typeof data.url!=="string"||!allowedMapsURL(final)||final.href!==data.url)throw Error();const result=parseGoogleMapsLink(data.url);mapsResolved.set(url.href,result);return result;
+  }catch{if(!signal?.aborted)mapsResolverFailed=true;return null;}finally{clearTimeout(timer);signal?.removeEventListener("abort",abort);}
 }
-document.getElementById("customCoords").oninput=updateCoordsPreview;document.getElementById("customCoords").onblur=updateCoordsPreview;
+function looseMapsName(a,b){const norm=s=>String(s||"").normalize("NFKC").toLowerCase().replace(/[\s\p{P}\p{S}]/gu,"");a=norm(a);b=norm(b);if(!a||!b)return false;if(a.includes(b)||b.includes(a))return true;const x=new Set(a),y=new Set(b);return [...x].filter(c=>y.has(c)).length/Math.max(x.size,y.size)>=.5;}
+function selectMapsMatch(results,point,name){return (Array.isArray(results)?results:[]).map(r=>({r,lat:Number(r.lat),lng:Number(r.lon)})).filter(r=>Number.isFinite(r.lat)&&Number.isFinite(r.lng)&&haversine(point,r)<=150&&looseMapsName(name,r.r.name||r.r.display_name?.split(",")[0])).sort((a,b)=>haversine(point,a)-haversine(point,b))[0]?.r||null;}
+function mapsCategory(tags={},name=""){const values=[tags.amenity,tags.shop,tags.cuisine,tags.tourism,tags.leisure];if(tags.shop&&/helmet|motorcycle|ヘルメット|安全帽|バイク/i.test([tags.shop,tags.motorcycle,name].join(" ")))return "安全帽店";
+  if(tags.shop==="toys"&&/lego|レゴ|樂高/i.test(name))return "樂高店";
+  if(["video_games","electronics"].includes(tags.shop)&&/game|ゲーム|遊戲|ps5|playstation/i.test(name))return "PS5遊戲片店";
+  if(values.some(v=>["restaurant","fast_food","cafe","food_court"].includes(v)))return "餐廳";
+  if(values.some(v=>["mall","department_store","marketplace"].includes(v)))return "購物街/商圈";
+  if(values.some(v=>["theme_park","zoo","aquarium","museum","park","attraction","playground"].includes(v)))return "親子景點";return "";
+}
+function googleCategory(type="",name=""){
+  if(type==="toy_store")return /lego|レゴ|樂高/i.test(name)?"樂高店":"";
+  if(/(?:^|_)restaurant$|ramen|^food$|^cafe$|^bakery$|^meal_(?:takeaway|delivery)$|^food_court$|^coffee_shop$|^tea_house$|^ice_cream_shop$|^sandwich_shop$|^bar$|^pub$/.test(type))return "餐廳";
+  if(["shopping_mall","department_store","market","store"].includes(type))return "購物街/商圈";
+  if(["tourist_attraction","amusement_park","zoo","aquarium","park","museum","playground"].includes(type))return "親子景點";
+  return type==="lodging"&&CUSTOM_CATEGORIES.includes("住宿")?"住宿":"";
+}
+function normalizeGoogleResult(r={}){return {name:String(r.name||""),addr:String(r.address||""),hours:(Array.isArray(r.hours)?r.hours:[]).slice(0,7).map(String).join("\n"),phone:String(r.phone||""),url:safeURL(r.website)||safeURL(r.maps_uri)||"",mapsUrl:!safeURL(r.website)&&!!safeURL(r.maps_uri),cat:googleCategory(r.type,r.name),rating:typeof r.rating==="number"&&Number.isFinite(r.rating)?r.rating:null,ratingCount:Number.isInteger(r.rating_count)&&r.rating_count>=0?r.rating_count:null};}
+const googlePlacesMemo=new Map();
+async function lookupGooglePlaces(point,name,signal,placeId){
+  const key=JSON.stringify([name.normalize("NFKC").trim().toLowerCase().replace(/\s+/g," "),point.lat,point.lng]);
+  if(googlePlacesMemo.has(key))return googlePlacesMemo.get(key);
+  if(signal.aborted)throw Error("取消");
+  const pending=(async()=>{const controller=new AbortController(),abort=()=>controller.abort();signal.addEventListener("abort",abort,{once:true});const timer=setTimeout(abort,9000);
+    try{const query=new URLSearchParams({name,lat:String(point.lat),lng:String(point.lng)});if(/^[A-Za-z0-9_-]{10,300}$/.test(placeId||""))query.set("place_id",placeId);
+      const response=await fetch(PLACES_LOOKUP_URL+"?"+query,{signal:controller.signal}),data=await response.json();
+      if(!response.ok||!data.ok)return {ok:false,error:typeof data.error==="string"?data.error:"unavailable",remaining:data.remaining};
+      if(!Array.isArray(data.results))throw Error();return data;
+    }catch{return {ok:false,error:"unavailable"};}finally{clearTimeout(timer);signal.removeEventListener("abort",abort);}
+  })();googlePlacesMemo.set(key,pending);return pending;
+}
+// 同一頁的所有查詢依序發送；取消的排程不佔用額度，也不自訂瀏覽器禁止的標頭。
+let nominatimLast=-Infinity,nominatimQueue=Promise.resolve();
+function abortableDelay(ms,signal){return new Promise((resolve,reject)=>{const abort=()=>{clearTimeout(timer);signal.removeEventListener("abort",abort);reject(Error("取消"));},timer=setTimeout(()=>{signal.removeEventListener("abort",abort);resolve();},ms);signal.addEventListener("abort",abort,{once:true});if(signal.aborted)abort();});}
+function nominatimRequest(path,params,signal){const request=nominatimQueue.catch(()=>{}).then(async()=>{if(signal.aborted)throw Error("取消");await abortableDelay(Math.max(0,1000-(Date.now()-nominatimLast)),signal);if(signal.aborted)throw Error("取消");nominatimLast=Date.now();
+    const controller=new AbortController(),abort=()=>controller.abort();signal.addEventListener("abort",abort,{once:true});const timer=setTimeout(abort,6000);
+    try{const query=new URLSearchParams({format:"jsonv2",extratags:"1",addressdetails:"1","accept-language":"ja,zh-TW",...params}),response=await fetch("https://nominatim.openstreetmap.org/"+path+"?"+query,{signal:controller.signal,referrerPolicy:"strict-origin-when-cross-origin"});if(!response.ok)throw Error();return await response.json();}finally{clearTimeout(timer);signal.removeEventListener("abort",abort);}
+  });nominatimQueue=request.catch(()=>{});return request;
+}
+function japaneseOsmAddress(address){if(!address||typeof address!=="object")return "";
+  const text=key=>typeof address[key]==="string"?address[key].replace(/[０-９]/g,c=>String(c.charCodeAt(0)-0xff10)).trim():"";
+  const city=text("city"),ward=text("suburb")||text("city_district"),prefix=city?[city,ward]:[text("province"),text("county"),text("town")||text("village")];
+  let area=[text("neighbourhood"),text("administrative"),text("quarter")].find(s=>s.endsWith("丁目"))||text("quarter")||text("neighbourhood")||text("administrative")||ward||text("hamlet")||text("road");
+  if(prefix.includes(area))area="";
+  const chome=area.match(/^(.*?)(二十[一二三四五六七八九]?|十[一二三四五六七八九]?|[一二三四五六七八九]|[0-9]+)丁目$/),house=text("house_number");
+  if(chome){const digits="〇一二三四五六七八九",n=chome[2],parts=n.split("十"),number=/^\d+$/.test(n)?Number(n):parts.length===2?(parts[0]?digits.indexOf(parts[0]):1)*10+(parts[1]?digits.indexOf(parts[1]):0):digits.indexOf(n);area=chome[1]+number+(house?"-"+house:"丁目");}
+  else area+=house;
+  const body=prefix.filter(Boolean).join("")+area,postcode=text("postcode");return (postcode?"〒"+postcode+(body?" ":""):"")+body;
+}
+const googleOsmAddressMemo=new Map();
+function lookupGoogleOsmAddress(result,signal){if(!hasCoords(result)||signal.aborted)return Promise.resolve("");const key=[result.lat.toFixed(5),result.lng.toFixed(5)].join(",");
+  if(!googleOsmAddressMemo.has(key))googleOsmAddressMemo.set(key,nominatimRequest("reverse",{lat:String(result.lat),lon:String(result.lng),zoom:"18","accept-language":"ja"},signal).then(r=>r?.error?"":japaneseOsmAddress(r?.address)).catch(()=>""));
+  return googleOsmAddressMemo.get(key);
+}
+function mapsAddress(result){if(!result||result.error)return "";const a=result.address;if(a){const text=[a.country,a.state,a.province,a.city||a.town||a.village,a.city_district,a.suburb,a.quarter,a.neighbourhood,a.road,a.house_number,a.postcode].filter(Boolean);if(text.length)return [...new Set(text)].join(" ");}return String(result.display_name||"");}
+async function lookupMapsSuggestions(point,name,signal){let match=null,reverse=null;if(name){const box=[Math.max(-180,point.lng-.003),Math.min(90,point.lat+.003),Math.min(180,point.lng+.003),Math.max(-90,point.lat-.003)].join(",");try{match=selectMapsMatch(await nominatimRequest("search",{q:name,limit:"3",viewbox:box,bounded:"1"},signal),point,name);}catch(e){if(signal.aborted)throw e;}}
+  if(!signal.aborted)try{reverse=await nominatimRequest("reverse",{lat:String(point.lat),lon:String(point.lng),zoom:"18"},signal);}catch(e){if(signal.aborted)throw e;}
+  const tags={...(match?.extratags||{})};if(match?.category&&match.type)tags[match.category]=match.type;
+  return {addr:mapsAddress(match)||mapsAddress(reverse),hours:String(tags.opening_hours||""),url:safeURL(tags.website||"")||safeURL(tags["contact:website"]||""),phone:String(tags.phone||tags["contact:phone"]||""),cat:mapsCategory(tags,match?.name||name)};
+}
+let customCoordsMap=null,customCoordsLayer=null,customCoordsTimer=null,customPlanTimer=null,customLookupTimer=null,customLookupController=null,customLookupId=0;
+const customEl=id=>document.getElementById(id);
+function cancelCustomLookup(){clearTimeout(customLookupTimer);customLookupTimer=null;customLookupController?.abort();customLookupController=null;customLookupId++;}
+function destroyCoordsPreview(){cancelCustomLookup();clearTimeout(customPlanTimer);customPlanTimer=null;clearTimeout(customCoordsTimer);customCoordsTimer=null;customCoordsMap?.remove();customCoordsMap=null;customCoordsLayer=null;customEl("customPlanMap").hidden=true;customEl("customPlanLegend").innerHTML="";customEl("customNearest").innerHTML="";customEl("customSuggest").hidden=true;}
+function customCoordsInfo(){const text=customEl("customCoords").value.trim(),resolved=overlayTop()?.kind==="custom"?overlayTop().state.resolved:null;return resolved?.text===text&&hasCoords(resolved.value)?{...resolved.value,source:"Google 地圖連結",warning:resolved.value.precise?"":"此座標為地圖視野中心，請確認圖釘位置。"}:coordsInfo(text);}
+function customScheduled(point){return S.days.flatMap((d,day)=>d.items.map((id,order)=>({spot:BY[id],day,order,label:d.label}))).filter(r=>hasCoords(r.spot)).map(r=>({...r,meters:point?haversine(point,r.spot):NaN}));}
+function invalidateCustomMap(){clearTimeout(customCoordsTimer);customCoordsTimer=null;customCoordsMap?.invalidateSize();}
+function renderCustomPlanMap(value){if(!window.L||overlayTop()?.kind!=="custom")return;const host=customEl("customPlanMap");host.hidden=false;
+  if(!customCoordsMap){host.innerHTML="";customCoordsMap=L.map(host,{zoomControl:true,scrollWheelZoom:false});L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:'&copy; OpenStreetMap contributors'}).addTo(customCoordsMap);customCoordsLayer=L.layerGroup().addTo(customCoordsMap);const current=customCoordsMap;customCoordsTimer=setTimeout(()=>{if(current===customCoordsMap)invalidateCustomMap();},300);}
+  customCoordsLayer.clearLayers();const rows=customScheduled(value),nearest=value?[...rows].sort((a,b)=>a.meters-b.meters||a.day-b.day||a.order-b.order).slice(0,3):[];
+  L.marker([HOTEL.lat,HOTEL.lng],{icon:pin("#56667e","🏨")}).bindPopup(esc(HOTEL.zh)).addTo(customCoordsLayer);
+  rows.forEach(r=>L.marker([r.spot.lat,r.spot.lng],{icon:pin(COLORS[r.day%COLORS.length],r.order+1)}).bindPopup(esc(`第 ${r.day+1} 天 · ${r.spot.zh}`)).addTo(customCoordsLayer));
+  if(value)L.marker([value.lat,value.lng],{icon:pin("#b74383","★"),zIndexOffset:500}).bindPopup("新景點").addTo(customCoordsLayer);
+  customEl("customPlanLegend").innerHTML='<span>🏨 住宿 · <b style="color:#b74383">★ 新景點</b></span>'+S.days.map((d,i)=>`<span><i style="background:${COLORS[i%COLORS.length]}"></i>第 ${i+1} 天 · ${esc(d.label)}</span>`).join("");
+  customEl("customNearest").innerHTML=value?"<b>最近的已排行程</b>"+(nearest.length?nearest.map(r=>`<div>第 ${r.day+1} 天 · ${esc(r.spot.zh)} · ${r.meters<1000?Math.round(r.meters)+" m":(r.meters/1000).toFixed(1)+" km"}</div>`).join(""):"<div>尚無含座標的已排行程</div>"):"";
+  const points=value?[[value.lat,value.lng],...nearest.map(r=>[r.spot.lat,r.spot.lng])]:rows.map(r=>[r.spot.lat,r.spot.lng]);if(points.length>1)customCoordsMap.fitBounds(points,{padding:[20,20],maxZoom:16});else customCoordsMap.setView(points[0]||[HOTEL.lat,HOTEL.lng],value?16:14);
+}
+function queueCustomPlanMap(value){clearTimeout(customPlanTimer);if(!customCoordsMap){renderCustomPlanMap(value);return;}const current=customCoordsMap;customPlanTimer=setTimeout(()=>{customPlanTimer=null;if(current===customCoordsMap&&overlayTop()?.kind==="custom")renderCustomPlanMap(value);},60);}
+function updateCoordsPreview(){const input=customEl("customCoords"),preview=customEl("customCoordsPreview"),text=input.value.trim(),value=customCoordsInfo(),maps=parseGoogleMapsLink(text),short=maps.kind==="short"&&!value,error=!!text&&!value;
+  const hint=short?(mapsResolverFailed||navigator.onLine===false?MAPS_SHORT_HINT:"正在解析 Google 地圖短網址…"):maps.kind==="full"&&!value?"此連結未含座標，請貼含圖釘位置的完整網址、Plus Code 或座標。":COORDS_ERROR;
+  input.setCustomValidity(error?hint:"");input.setAttribute("aria-invalid",String(error));preview.hidden=!text;preview.classList.toggle("coords-error",error);preview.textContent=error?hint:value?`${value.lat.toFixed(6)}, ${value.lng.toFixed(6)} · ${value.source}${value.warning?"。"+value.warning:""}`:"";
+  queueCustomPlanMap(value);return !error;
+}
+const customSuggestionLabels={name:"名稱",addr:"地址",hours:"營業時間",url:"網站",phone:"電話",cat:"類型建議"};
+function renderCustomSuggestions(){const layer=overlayTop(),state=layer?.state,panel=customEl("customSuggest"),suggestions=state?.suggestions||{},entries=Object.entries(customSuggestionLabels).filter(([key])=>suggestions[key]);
+  const canGoogle=layer?.kind==="custom"&&hasCoords(customCoordsInfo())&&!!customEl("customZh").value.trim();
+  panel.hidden=!entries.length&&!state?.suggestHint&&!canGoogle;
+  const google=state?.suggestSource==="google",results=state?.googleResults||[];
+  panel.innerHTML=(google?'<p><b>來源：Google</b></p>':"")+(google&&results.length>1?'<div role="group" aria-label="Google 地點選擇">'+results.map((r,i)=>`<button type="button" class="btn alt" data-google-choice="${i}" aria-pressed="${i===(state.googleChoice||0)}">${esc(r.name)} · ${esc(r.distance_m)} m</button>`).join("")+"</div>":"")+entries.map(([key,label])=>`<p style="white-space:pre-line"><b>${esc(key==="url"&&suggestions.mapsUrl?"Google 地圖頁":label)}：</b>${esc(suggestions[key])} ${key==="addr"&&suggestions.osmAddress?'<small class="hint">地址來源：OpenStreetMap</small> ':""}<button type="button" class="btn alt" data-custom-apply="${esc(key)}">套用</button></p>`).join("")+
+    (google&&suggestions.rating!==null?`<p>${esc("★"+suggestions.rating+(suggestions.ratingCount!==null?" · "+suggestions.ratingCount.toLocaleString("en-US")+" 則":""))}</p>`:"")+
+    (entries.length?'<button type="button" class="btn alt" data-custom-apply="all">全部套用（僅空白欄位）</button>'+ (google&&!suggestions.osmAddress?"":'<p class="hint">資料來源：© OpenStreetMap contributors（可能不完整，請自行確認）</p>'):"")+(google?'<p class="hint">Google Maps</p>':"")+
+    (state?.suggestHint?`<p class="hint">${esc(state.suggestHint)}</p>`:"")+
+    (Number.isInteger(state?.googleRemaining)?`<p class="hint">${esc("本月 Google 查詢剩餘 "+state.googleRemaining+" 次")}</p>`:"")+
+    (canGoogle?'<button type="button" class="btn alt" data-google-lookup>用 Google 查詢詳細資訊</button>':"");
+}
+function applyCustomSuggestion(key,onlyEmpty=false){const state=overlayTop()?.kind==="custom"?overlayTop().state:null,s=state?.suggestions;if(!s)return;if(key==="all"){state.applyNoteBlocked=!!customEl("customNote").value.trim()||!!customEl("customNote").dataset.edited;Object.keys(customSuggestionLabels).forEach(k=>applyCustomSuggestion(k,true));return;}
+  const id={name:"customZh",addr:"customAddr",url:"customUrl",hours:"customNote",phone:"customNote",cat:"customCat"}[key],value=key==="url"?safeURL(s[key]):s[key];if(!id||!value)return;const field=customEl(id);
+  // Google 的個別套用也保護手寫內容；全部套用讓營業時間與電話一起加入原本空白的備註。
+  const note=key==="hours"||key==="phone",google=state.suggestSource==="google";
+  if(onlyEmpty?(note?state.applyNoteBlocked:field.value.trim()||field.dataset.edited):google&&(field.value.trim()||field.dataset.edited))return;
+  if(note){const line=(key==="hours"?"營業時間：":"電話：")+value;if(!field.value.split("\n").includes(line))field.value=(field.value.trim()?field.value.trim()+"\n":"")+line;field.value=field.value.slice(0,1000);}else field.value=String(value).slice(0,id==="customAddr"?200:id==="customZh"?60:Infinity);
+  field.dataset.edited="1";
+  if(google&&key==="addr")state.googleAppliedAddress={value:field.value,result:state.googleResults?.[state.googleChoice||0]};
+}
+function showGoogleSuggestion(choice){const layer=overlayTop();if(layer?.kind!=="custom")return;const state=layer.state,result=state.googleResults?.[choice];if(!result)return;
+  state.googleChoice=choice;const suggestions=state.suggestions=normalizeGoogleResult(result);renderCustomSuggestions();
+  const controller=customLookupController??(customLookupController=new AbortController()),token=customLookupId;
+  lookupGoogleOsmAddress(result,controller.signal).then(addr=>{if(!addr||controller.signal.aborted||token!==customLookupId||overlayTop()!==layer||state.suggestions!==suggestions)return;
+    suggestions.addr=addr;suggestions.osmAddress=true;const applied=state.googleAppliedAddress,field=customEl("customAddr");
+    if(applied?.result===result&&field.value===applied.value){field.value=addr.slice(0,200);applied.value=field.value;}
+    renderCustomSuggestions();
+  });
+}
+customEl("customSuggest").onclick=e=>{const button=e.target.closest("[data-custom-apply],[data-google-choice],[data-google-lookup]");if(!button)return;const state=overlayTop()?.state;if(!state)return;
+  if(button.hasAttribute("data-google-lookup")){customCoordsInput(undefined,true);return;}
+  if(button.dataset.googleChoice!==undefined){const choice=Number(button.dataset.googleChoice);if(Number.isInteger(choice))showGoogleSuggestion(choice);return;}
+  applyCustomSuggestion(button.dataset.customApply);
+};
+function fillCustomMapsName(name){const field=customEl("customZh");if(name&&!field.value.trim()&&!field.dataset.edited)field.value=[...name].slice(0,60).join("");}
+function customCoordsInput(sharedText,explicitGoogle=false){cancelCustomLookup();const layer=overlayTop();if(layer?.kind!=="custom")return updateCoordsPreview();const text=customEl("customCoords").value.trim(),maps=parseGoogleMapsLink(typeof sharedText==="string"?sharedText:text);
+  // Keep resolved coordinates while editing the name or explicitly requesting details.
+  if(layer.state.resolved?.text!==text)layer.state.resolved=null;
+  Object.assign(layer.state,{suggestions:{},suggestHint:"",suggestSource:"",googleResults:[],googleChoice:0,googleRemaining:null,googleAppliedAddress:null});fillCustomMapsName(maps.name);updateCoordsPreview();renderCustomSuggestions();if(maps.kind==="none"&&!explicitGoogle)return;
+  if(navigator.onLine===false){layer.state.suggestHint="目前離線，已略過資料查詢。";renderCustomSuggestions();return;}
+  const controller=customLookupController=new AbortController(),token=customLookupId,current=()=>!controller.signal.aborted&&token===customLookupId&&overlayTop()===layer&&customEl("customCoords").value.trim()===text;
+  customLookupTimer=setTimeout(async()=>{customLookupTimer=null;let value=maps.kind==="none"?customCoordsInfo():maps;
+    if(maps.kind==="short"){value=await resolveMapsLink(text,controller.signal);if(!current())return;if(!value){updateCoordsPreview();return;}value={...value,name:value.name||maps.name};layer.state.resolved={text,value};fillCustomMapsName(value.name);updateCoordsPreview();}
+    if(!hasCoords(value)){layer.state.suggestHint="此連結未含座標，請補上圖釘位置後再查詢。";renderCustomSuggestions();return;}
+    const name=value.name||customEl("customZh").value.trim();layer.state.suggestHint="正在查詢地圖資料…";renderCustomSuggestions();let fallback="";
+    try{if(name&&(maps.kind!=="none"||explicitGoogle)){
+        const data=await lookupGooglePlaces(value,name,controller.signal,value.placeId);if(!current())return;
+        if(Number.isInteger(data.remaining))layer.state.googleRemaining=data.remaining;
+        if(data.ok&&data.results.length){Object.assign(layer.state,{suggestSource:"google",googleResults:data.results,suggestHint:""});showGoogleSuggestion(0);return;}
+        if(!data.ok)fallback=data.error==="monthly_quota_reached"?"本月 Google 免費查詢額度已用完，改用 OpenStreetMap":"Google 查詢暫時無法使用，改用 OpenStreetMap";
+      }
+      layer.state.suggestHint=fallback||"正在查詢地圖資料…";renderCustomSuggestions();const result=await lookupMapsSuggestions(value,name,controller.signal);if(!current())return;layer.state.suggestions=result;layer.state.suggestHint=fallback||(Object.values(result).some(Boolean)?"":"未找到可套用的資料，請自行填寫。");
+    }catch{if(!current())return;layer.state.suggestHint=fallback||"暫時無法取得地圖資料，請自行填寫。";}if(current())renderCustomSuggestions();
+  },800);
+}
+// 單行輸入框會刪除換行；貼上時先解析 Android 分享的原文，再保留可編輯網址。
+customEl("customCoords").onpaste=e=>{const text=e.clipboardData?.getData("text"),maps=parseGoogleMapsLink(text);if(maps.kind==="none")return;e.preventDefault();customEl("customCoords").value=mapsLinkURL(text).href;customCoordsInput(text);};
+customEl("customCoords").oninput=customCoordsInput;customEl("customCoords").onblur=updateCoordsPreview;
+["customZh","customCat","customArea","customAddr","customNote","customUrl"].forEach(id=>customEl(id).oninput=()=>{customEl(id).dataset.edited="1";if(id==="customAddr"&&overlayTop()?.kind==="custom")overlayTop().state.googleAppliedAddress=null;if(id==="customZh")customCoordsInput();});
 
 function openCustomForm(id=null,trigger){
   if(!ME.nick){openNick();return;}
   const spot=id?CUSTOMS[id]:null;
-  pushOverlay("custom",{title:spot?"✏️ 編輯自訂景點":"＋ 新增自訂景點",fields:[id||"",spot?.zh||"",spot?.cat||"親子景點",spot?.area||"",spot?.addr||"",spot&&hasCoords(spot)?`${spot.lat}, ${spot.lng}`:"",spot?.note||"",spot?.url||""]},trigger);
+  pushOverlay("custom",{title:spot?"✏️ 編輯自訂景點":"＋ 新增自訂景點",fields:[id||"",spot?.zh||"",spot?.cat||"",spot?.area||"",spot?.addr||"",spot&&hasCoords(spot)?`${spot.lat}, ${spot.lng}`:"",spot?.note||"",spot?.url||""]},trigger);
 }
 function saveCustomSpot(data, editId=null){
   if(!ME.nick){openNick();return null;}
@@ -1196,7 +1356,7 @@ document.getElementById("customForm").onsubmit=e=>{
   const coords=document.getElementById("customCoords").value;
   const url=document.getElementById("customUrl").value;
   const note=document.getElementById("customNote").value;
-  const savedId=saveCustomSpot({zh,cat,area,addr,coords,url,note}, editId);
+  const position=customCoordsInfo(),savedId=saveCustomSpot({zh,cat,area,addr,coords,url,note,...(position?{lat:position.lat,lng:position.lng}:{})}, editId);
   if(savedId){
     closeOverlay("custom");
   }
@@ -1392,7 +1552,7 @@ function sheetSurface(layer){const panel=document.getElementById(overlayPanels[l
 function lockOverlayScroll(){overlayPageY=window.scrollY||0;const body=document.body,keys=["overflow","position","top","left","right","width"];overlayBodyStyle=Object.fromEntries(keys.map(k=>[k,body.style[k]||""]));overlayRootOverflow=document.documentElement.style.overflow||"";Object.assign(body.style,{overflow:"hidden",position:"fixed",top:-overlayPageY+"px",left:"0",right:"0",width:"100%"});document.documentElement.style.overflow="hidden";body.classList.add("sheet-open");}
 function unlockOverlayScroll(){if(!overlayBodyStyle)return;Object.assign(document.body.style,overlayBodyStyle);document.documentElement.style.overflow=overlayRootOverflow;document.body.classList.remove("sheet-open");overlayBodyStyle=null;window.scrollTo(0,overlayPageY);}
 function clearSheetTransition(){const a=sheetAnimation;if(!a)return;sheetAnimation=null;clearTimeout(a.timer);if(a.frame)cancelAnimationFrame(a.frame);a.panel.classList.remove("sheet-resizing");a.surface.style.transform="";a.surface.style.transition="";}
-function finishSheetTransition(layer){const a=sheetAnimation;if(!a||a.layer!==layer||overlayTop()!==layer)return;clearSheetTransition();if(layer.kind==="nearby")nearbyMap?.invalidateSize();}
+function finishSheetTransition(layer){const a=sheetAnimation;if(!a||a.layer!==layer||overlayTop()!==layer)return;clearSheetTransition();if(layer.kind==="nearby")nearbyMap?.invalidateSize();if(layer.kind==="custom")invalidateCustomMap();}
 function setSheetExpanded(layer,expanded){if(!layer||overlayTop()!==layer||layer.expanded===expanded)return;clearSheetTransition();const panel=document.getElementById(overlayPanels[layer.kind][0]),surface=sheetSurface(layer),top=surface.getBoundingClientRect().top;
   layer.expanded=expanded;panel.classList.toggle("sheet-expanded",expanded);const delta=top-surface.getBoundingClientRect().top,a=sheetAnimation={layer,panel,surface,frame:0,timer:0};
   if(window.matchMedia?.("(prefers-reduced-motion:reduce)").matches){finishSheetTransition(layer);return;}
@@ -1418,7 +1578,7 @@ nearbySearchInput.addEventListener("focus",()=>{if(!sheetRestoringFocus&&innerWi
 function saveOverlay(){const layer=overlayTop();if(!layer)return;const {kind,state}=layer;layer.scroll=document.getElementById(overlayPanels[kind][1]).scrollTop||0;layer.focus=document.activeElement;
   if(kind==="detail")state.position=UI.panel?{...UI.panel}:null;
   if(kind==="nearby"){state.query=document.getElementById("nearbySearch").value;if(nearbyMap?.getCenter)state.view={center:nearbyMap.getCenter(),zoom:nearbyMap.getZoom()};}
-  if(kind==="custom")state.fields=customFields.map(id=>document.getElementById(id).value);
+  if(kind==="custom"){state.fields=customFields.map(id=>document.getElementById(id).value);state.edited=customFields.map(id=>document.getElementById(id).dataset.edited||"");}
   if(kind==="nick")state.value=document.getElementById("nickInput").value;
   if(kind==="modal")state.text=document.getElementById("mText").value;
   if(kind==="documents")state.expanded=[...document.getElementById("documentsGroups").querySelectorAll("details")].map(el=>[el.id,el.open]);
@@ -1434,7 +1594,7 @@ function showOverlay(){let layer=overlayTop();while(layer&&((layer.kind==="detai
   document.getElementById(kind+"Back").hidden=overlayStack.length<2;document.getElementById(close).setAttribute("aria-label",overlayStack.length>1?"返回上一層":"關閉浮窗");
   if(kind==="detail"){detailId=state.id;if(state.position)UI.panel={...state.position};renderDetail();clampPanel();}
   if(kind==="nearby")mountNearby(layer);
-  if(kind==="custom"){document.getElementById("customModalTitle").textContent=state.title;customFields.forEach((id,i)=>document.getElementById(id).value=state.fields[i]);updateCoordsPreview();}
+  if(kind==="custom"){document.getElementById("customModalTitle").textContent=state.title;customFields.forEach((id,i)=>{document.getElementById(id).value=state.fields[i];document.getElementById(id).dataset.edited=state.edited?.[i]||"";});if(state.suggestHint==="正在查詢地圖資料…")state.suggestHint="查詢已取消，重新貼上連結可再查詢。";updateCoordsPreview();renderCustomSuggestions();}
   if(kind==="nick")document.getElementById("nickInput").value=state.value;
   if(kind==="modal"){document.getElementById("mTitle").textContent=state.title;document.getElementById("mText").value=state.text;modalOk=state.onOk;document.getElementById("mOk").style.display=modalOk?"":"none";}
   if(kind==="documents"){renderDocuments(state.group);state.expanded?.forEach(([id,open])=>document.getElementById(id).open=open);}
@@ -1488,7 +1648,7 @@ async function initOffline(){
 
 renderList();renderDays();renderWishes();initMap();initSharing();initDropdowns();initOffline();
 // 測試／除錯用
-window.planner={get state(){return S;},moveTo:(id,d,p)=>{if(moveTo(id,d,p))update();},select:id=>{if(canPlan(id)&&!selected().has(id)){S.pool.push(id);update();}},unselect:id=>{if(canPlan(id)){removeId(id);update();}},planText,get ATTR(){return ATTR;},get BY(){return BY;},get customs(){return CUSTOMS;},setCustoms,saveCustomSpot,deleteCustomSpot,openCustomForm,tab,fit,openDetail,haversine,nearbyBand,nearbySpots,normalizeNearbySearch,nearbyMatches,filteredNearbySpots,sheetGesture,openNearby,closeNearby,nearbyAdd,showNearbyOnMap,toggleWish,get wishes(){return WISH;}};
+window.planner={get state(){return S;},moveTo:(id,d,p)=>{if(moveTo(id,d,p))update();},select:id=>{if(canPlan(id)&&!selected().has(id)){S.pool.push(id);update();}},unselect:id=>{if(canPlan(id)){removeId(id);update();}},planText,get ATTR(){return ATTR;},get BY(){return BY;},get customs(){return CUSTOMS;},setCustoms,saveCustomSpot,deleteCustomSpot,openCustomForm,parseGoogleMapsLink,coordsInfo,parseCoords,looseMapsName,selectMapsMatch,mapsCategory,googleCategory,normalizeGoogleResult,lookupGooglePlaces,japaneseOsmAddress,tab,fit,openDetail,haversine,nearbyBand,nearbySpots,normalizeNearbySearch,nearbyMatches,filteredNearbySpots,sheetGesture,openNearby,closeNearby,nearbyAdd,showNearbyOnMap,toggleWish,get wishes(){return WISH;}};
 </script>
 </body>
 </html>
