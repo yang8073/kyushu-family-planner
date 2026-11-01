@@ -69,7 +69,7 @@ module.exports=async function({html,page,initial,sleep,leaflet,Database,Jsonfile
  const formClick=(data,selector)=>p.els.customForm.dispatchEvent({type:'click',target:{closest:q=>q===selector?{dataset:data}:null}});
  formClick({tagRemove:'7'},'[data-tag-remove]');assert.equal(p.run('overlayTop().state.tags.length'),7);
  formClick({tagAdd:'<b>'},'[data-tag-add]');assert.match(p.els.customTagChips.innerHTML,/&lt;b&gt;/);assert(!p.els.customTagChips.innerHTML.includes('<b>'));
- input.value='未完成';p.run('openModal("子層","",null)');p.els.modalClose.onclick();assert.equal(input.value,'未完成');assert.equal(p.run('overlayTop().state.tags.length'),8);await sleep(15);
+ input.value='未完成';input.oncompositionstart();p.run('openModal("子層","",null)');p.els.modalClose.onclick();assert.equal(input.value,'未完成');assert.equal(p.run('overlayTop().state.tagComposing'),false);assert.equal(p.run('overlayTop().state.tags.length'),8);await sleep(15);
  // Form edit and save includes explicit removal and pending uncommitted input.
  p.run('overlayTop().state.tags=["燒肉"];renderCustomTags()');type(' #新標籤 ');p.els.customForm.onsubmit({preventDefault(){}});await p.run('flushPending()');assert.deepEqual(json(p,'CUSTOMS.u_a.tags'),['燒肉','新標籤']);
  p.run('openCustomForm("u_a");overlayTop().state.tags=[];renderCustomTags()');p.els.customForm.onsubmit({preventDefault(){}});await p.run('flushPending()');assert.deepEqual(json(p,'CUSTOMS.u_a.tags'),[]);
@@ -106,6 +106,9 @@ module.exports=async function({html,page,initial,sleep,leaflet,Database,Jsonfile
   const legacyWrite=()=>{const current=db.read(['kyushu2027','state']);current.rev++;delete current.customs[id].tags;delete current.customs[id].tagVersion;db.set(['kyushu2027','state'],current);};
   legacyWrite();await a.run('refreshShared()');assert.deepEqual(json(a,`CUSTOMS[${key}].tags`),['燒肉','拉麵']);
   a.run('toggleWish("tower","maybe")');await a.run('flushPending()');assert.deepEqual(db.tree.kyushu2027.state.customs[id].tags,['燒肉','拉麵']);
+  if(backend==='firebase'){
+   const next=String(a.run('sync.rev')+1).padStart(6,'0');db.failPath='/history/'+next;a.run('toggleWish("science","maybe")');await a.run('flushPending()');await a.run('adapter.load()');assert.deepEqual(db.tree.kyushu2027.history[next].customs[id].tags,['燒肉','拉麵']);
+  }
   // Authoritative [] must clear, including after Firebase removes the array field.
   a.run(`saveCustomSpot({zh:"同步店",cat:"餐廳",tags:[]},${key})`);await a.run('flushPending()');await b.run('refreshShared()');assert.deepEqual(json(b,`CUSTOMS[${key}].tags`),[]);
   const cleared=await a.run(`adapter.version(${a.run('sync.rev')})`);assert.deepEqual(Array.from(cleared.customs[id].tags),[]);

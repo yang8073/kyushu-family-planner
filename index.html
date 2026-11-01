@@ -35,6 +35,8 @@ main{display:block}
 section.pane{display:none;padding:10px 10px 90px}
 section.pane.on{display:block}
 #mapPane{padding:0;position:relative}
+#mapFrame{position:relative}
+#mapTagFilters:not([hidden]) + #mapFrame #map{height:calc(100vh - var(--header-height,190px) - 60px);height:calc(100dvh - var(--header-height,190px) - 60px)}
 #map{height:calc(100vh - var(--header-height,190px));height:calc(100dvh - var(--header-height,190px));width:100%}
 .btn{border:0;border-radius:10px;padding:7px 11px;background:#e8f3ff;color:#2f6ea8;font-size:14px;font-weight:600}
 .btn.alt{background:#f1ebff;color:#6a4fb8}.btn.warn{background:#ffeef3;color:#b8456e}
@@ -291,13 +293,13 @@ body.sheet-open{overscroll-behavior:none}
 </section>
 
 <section id="mapPane" class="pane">
-  <div class="custom-tag-filters" id="mapTagFilters" role="group" aria-label="地圖標籤篩選" hidden></div><div id="map"></div>
+  <div class="custom-tag-filters" id="mapTagFilters" role="group" aria-label="地圖標籤篩選" hidden></div><div id="mapFrame"><div id="map"></div>
   <div class="mapbar">
     <label><input type="checkbox" id="showAll"> 顯示全部景點（灰）</label>
     <button class="btn" id="fitBtn" style="padding:4px 8px">🔍 縮放到已選</button>
     <button class="btn warn" id="clearNearby" hidden>清除附近標示</button>
   </div>
-  <div class="legend" id="legend"></div>
+  <div class="legend" id="legend"></div></div>
 </section>
 <section id="wishPane" class="pane"><p class="hint">點選喜好即可許願，再點一次可取消。每個景點每人可選一種喜好。</p><div class="custom-tag-filters" id="wishTagFilters" role="group" aria-label="許願標籤篩選" hidden></div><div id="wishSections"></div></section>
 </main>
@@ -1712,7 +1714,7 @@ function showOverlay(){let layer=overlayTop();while(layer&&((layer.kind==="detai
   document.getElementById(kind+"Back").hidden=overlayStack.length<2;document.getElementById(close).setAttribute("aria-label",overlayStack.length>1?"返回上一層":"關閉浮窗");
   if(kind==="detail"){detailId=state.id;if(state.position)UI.panel={...state.position};renderDetail();clampPanel();}
   if(kind==="nearby")mountNearby(layer);
-  if(kind==="custom"){document.getElementById("customModalTitle").textContent=state.title;customFields.forEach((id,i)=>{document.getElementById(id).value=state.fields[i];document.getElementById(id).dataset.edited=state.edited?.[i]||"";});if(["正在查詢地圖資料…","正在用地點名稱查詢座標…"].includes(state.suggestHint))state.suggestHint="查詢已取消，重新貼上連結可再查詢。";updateCoordsPreview();renderCustomTags();renderCustomSuggestions();}
+  if(kind==="custom"){state.tagComposing=false;document.getElementById("customModalTitle").textContent=state.title;customFields.forEach((id,i)=>{document.getElementById(id).value=state.fields[i];document.getElementById(id).dataset.edited=state.edited?.[i]||"";});if(["正在查詢地圖資料…","正在用地點名稱查詢座標…"].includes(state.suggestHint))state.suggestHint="查詢已取消，重新貼上連結可再查詢。";updateCoordsPreview();renderCustomTags();renderCustomSuggestions();}
   if(kind==="nick")document.getElementById("nickInput").value=state.value;
   if(kind==="modal"){document.getElementById("mTitle").textContent=state.title;document.getElementById("mText").value=state.text;modalOk=state.onOk;document.getElementById("mOk").style.display=modalOk?"":"none";}
   if(kind==="documents"){renderDocuments(state.group);state.expanded?.forEach(([id,open])=>document.getElementById(id).open=open);}
