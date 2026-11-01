@@ -928,9 +928,8 @@ function firebaseAdapter(){const root=backendCfg.url.replace(/\/+$/,"")+"/"+(bac
       return ()=>{stopped=true;source?.close();clearInterval(poll);unfocus();};}
   };
 }
-// The bundled legacy dev/server/api.php custom-field whitelist rejects tags/tagVersion.
-// JSON-file deployments need a separately updated validator; client transport retains
-// these fields (never silently strips them). Server files/config are intentionally unchanged.
+// dev/server/api.php (and the deployed copy) validate custom-spot tags/tagVersion;
+// client transport retains these fields (never silently strips them).
 function jsonfileAdapter(){const url=(op,params={})=>{const u=new URL(backendCfg.url,location.href);u.searchParams.set("op",op);Object.entries(params).forEach(([k,v])=>u.searchParams.set(k,v));return u.href;};return {
   async load(){return {state:normalLiveState((await fetchJSON(url("state"))).data),token:null};},
   async save(baseRev,state){const r=await fetchJSON(url("save"),{method:"POST",body:JSON.stringify({baseRev,state})});return r.status===409?{conflict:true,state:normalLiveState(r.data.state)}:{ok:true,state:normalLiveState(r.data.state)};},
