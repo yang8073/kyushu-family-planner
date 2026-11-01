@@ -23,8 +23,10 @@ class JsonfileDatabase extends Database{
  }
 }
 class El{
- constructor(id=''){this.id=id;this.value='';this.dataset={};this.style={};this.scrollTop=0;this.hidden=false;this.listeners={};this.textContent='';this.innerHTML='';this.open=false;this.classes=new Set;this.classList={add:x=>this.classes.add(x),remove:x=>this.classes.delete(x),contains:x=>this.classes.has(x),toggle:(x,on)=>{if(on===undefined)on=!this.classes.has(x);on?this.classes.add(x):this.classes.delete(x);}};this.isConnected=true;}
- addEventListener(k,cb){(this.listeners[k]??=[]).push(cb);}querySelector(){return null;}querySelectorAll(){return [];}setAttribute(key,value){this[key]=String(value);}contains(el){for(let n=el;n;n=n.parentElement)if(n===this)return true;return false;}focus(){}setCustomValidity(s){this.validation=s;}reportValidity(){}hasAttribute(key){return Object.hasOwn(this,key);}getBoundingClientRect(){return {left:parseFloat(this.style.left)||0,top:parseFloat(this.style.top)||0,width:380,height:500};}closest(){return null;}setPointerCapture(){}
+ get textContent(){return this._textContent||this.children.map(el=>el.textContent).join('');}set textContent(value){this._textContent=String(value);}
+ constructor(id=''){this.id=id;this.value='';this.dataset={};this.style={};this.children=[];this.attributes={};this.scrollTop=0;this.hidden=false;this.listeners={};this.listenerOptions={};this.textContent='';this.innerHTML='';this.open=false;this.classes=new Set;this.classList={add:x=>this.classes.add(x),remove:x=>this.classes.delete(x),contains:x=>this.classes.has(x),toggle:(x,on)=>{if(on===undefined)on=!this.classes.has(x);on?this.classes.add(x):this.classes.delete(x);}};this.isConnected=true;}
+ addEventListener(k,cb,options){(this.listeners[k]??=[]).push(cb);(this.listenerOptions[k]??=[]).push(options);}matches(q){return q.split(',').some(s=>{s=s.trim();if(s[0]==='#')return this.id===s.slice(1);if(s[0]==='.')return this.classes.has(s.slice(1));if(s[0]==='[')return Object.hasOwn(this.attributes,s.slice(1,-1));return this.tagName===s.toUpperCase();});}querySelector(q){for(const child of this.children){if(child.matches(q))return child;const found=child.querySelector(q);if(found)return found;}return null;}querySelectorAll(){return [];}setAttribute(key,value){this.attributes[key]=String(value);this[key]=String(value);}contains(el){for(let n=el;n;n=n.parentElement)if(n===this)return true;return false;}focus(){}setCustomValidity(s){this.validation=s;}reportValidity(){}hasAttribute(key){return Object.hasOwn(this,key);}getBoundingClientRect(){return {left:parseFloat(this.style.left)||0,top:parseFloat(this.style.top)||0,width:380,height:500};}closest(q){for(let n=this;n;n=n.parentElement)if(n.matches(q))return n;return null;}setPointerCapture(){}
+ dispatchEvent(e){e.target??=this;e.currentTarget=this;for(const cb of this.listeners[e.type]||[])cb(e);this['on'+e.type]?.(e);if(e.bubbles&&this.parentElement)this.parentElement.dispatchEvent(e);return !e.defaultPrevented;}
 }
 const instances=[];
 // Leaflet lifecycle double: catches reused containers and records bounds, pins and popup handlers.
@@ -35,6 +37,14 @@ function leaflet(){const maps=[],groups=[],pins=[],circles=[],active=new Set;
 function page({db=null,backend='firebase',hostname='127.0.0.1',storage=new Map(),nick='小明',source=script,L=null,serviceWorker=null,protocol='http:',pathname='/',search='',hash='',historyThrows=false}={}){
  const owner={online:true};const timers=new Set,els={};for(const [,id]of html.matchAll(/\bid="([^"]+)"/g))els[id]=new El(id);
  for(const [tag,id]of html.matchAll(/<[^>]*\bid="([^"]+)"[^>]*>/g))els[id].hidden=/\bhidden\b/.test(tag);
+ // Static ancestry/classes let sheet tests dispatch through the actual HTML structure.
+ const domRoot=new El(),parents=[domRoot];
+ for(const [,close,tag,attrs]of html.slice(html.indexOf('<body'),html.indexOf('<script')).matchAll(/<(\/?)([a-z][\w-]*)\b([^>]*)>/gi)){
+  if(close){while(parents.length>1&&parents.at(-1).tagName!==tag.toUpperCase())parents.pop();if(parents.length>1)parents.pop();continue;}
+  const id=attrs.match(/\bid="([^"]+)"/)?.[1],el=id?els[id]:new El();el.tagName=tag.toUpperCase();el.parentElement=parents.at(-1);el.parentElement.children.push(el);
+  for(const [,key,value]of attrs.matchAll(/([\w-]+)="([^"]*)"/g)){el.attributes[key]=value;if(key==='class')for(const c of value.split(/\s+/))el.classes.add(c);}
+  if(!/^(area|base|br|col|embed|hr|img|input|link|meta|param|source|track|wbr)$/i.test(tag))parents.push(el);
+ }
  const notes=new El('notes-body');notes.textContent=html.match(/<div class="notes-body">([\s\S]*?)<\/div><\/details>/)[1].replace(/<[^>]+>/g,'');els.notes.querySelector=()=>notes;
  const tabs=['listPane','planPane','mapPane','wishPane'].map(id=>{const e=new El;e.dataset.tab=id;return e;});const panes=tabs.map(t=>els[t.dataset.tab]);
  if(nick&&!storage.has('kyushuPlanner.me'))storage.set('kyushuPlanner.me',JSON.stringify({id:'ABCDefgh1234',nick}));
@@ -52,7 +62,7 @@ function page({db=null,backend='firebase',hostname='127.0.0.1',storage=new Map()
  constructor(url){this.path=new URL(url).pathname.replace(/\.json$/,'').split('/').filter(Boolean);this.owner=owner;this.listeners={};db.streams.push(this);context.setTimeout(()=>{if(!this.closed){this.onopen?.();this.emit('put',{path:'/',data:db.read(this.path)});}},3);}
  addEventListener(k,cb){(this.listeners[k]??=[]).push(cb);}emit(type,data){for(const cb of this.listeners[type]||[])cb({type,data:JSON.stringify(data)});}close(){this.closed=true;}
  };}else context.fetch=()=>{throw Error('local should not fetch');};
- owner.docListeners={};context.document.addEventListener=(name,cb)=>{(owner.docListeners[name]??=[]).push(cb);};for(const el of Object.values(els))el.focus=()=>{context.document.activeElement=el;};
+ owner.docListeners={};context.document.addEventListener=(name,cb)=>{(owner.docListeners[name]??=[]).push(cb);};for(const el of Object.values(els))el.focus=()=>{if(context.document.activeElement===el)return;context.document.activeElement=el;for(const cb of el.listeners.focus||[])cb({target:el});};
  Object.defineProperty(context.navigator,'onLine',{get:()=>owner.online});
  if(serviceWorker)context.navigator.serviceWorker=serviceWorker;
  if(L)context.L=L;
@@ -135,6 +145,8 @@ const initial=async p=>{await waitFor(()=>p.run('sync.ready'));await p.run('flus
  for(const privateValue of ['189,520','189520','1791493524','6222338535','60626719'])assert(!html.includes(privateValue));
  await require('./test-modalstack.cjs')({html,page,initial,sleep,leaflet});
  await require('./test-hotel-pluscodes.cjs')({page,initial,sleep,leaflet,Database,JsonfileDatabase});
+ await require('./test-nearbysearch.cjs')({html,page,initial,sleep,leaflet});
+ await require('./test-sheet.cjs')({html,page,initial,sleep,leaflet});
  await require('./test-offline.cjs')({html,page,initial,sleep});
  console.log('PASS confirmed lodging header, export and map labels; no booking amount or private identifiers');
  // Confirmed flight labels upgrade only exact old defaults, with no load-time save/version.
