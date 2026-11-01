@@ -35,6 +35,8 @@ main{display:block}
 section.pane{display:none;padding:10px 10px 90px}
 section.pane.on{display:block}
 #mapPane{padding:0;position:relative}
+#mapFrame{position:relative}
+#mapTagFilters:not([hidden]) + #mapFrame #map{height:calc(100vh - var(--header-height,190px) - 60px);height:calc(100dvh - var(--header-height,190px) - 60px)}
 #map{height:calc(100vh - var(--header-height,190px));height:calc(100dvh - var(--header-height,190px));width:100%}
 .btn{border:0;border-radius:10px;padding:7px 11px;background:#e8f3ff;color:#2f6ea8;font-size:14px;font-weight:600}
 .btn.alt{background:#f1ebff;color:#6a4fb8}.btn.warn{background:#ffeef3;color:#b8456e}
@@ -116,6 +118,14 @@ section.pane.on{display:block}
 #customModal .box{max-width:440px;max-height:85vh;overflow-y:auto}
 #customForm label{display:block;font-weight:700;font-size:13px;margin:8px 0 3px}
 #customForm input,#customForm select,#customForm textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font:inherit;font-size:14px;color:var(--ink);background:#fff;box-sizing:border-box}
+.custom-tag-filters{display:flex;gap:6px;overflow-x:auto;align-items:center;padding:6px 0;margin:6px 0;max-width:100%}
+.custom-tag-filters[hidden]{display:none}
+.custom-tag-filters button,.custom-tag-editor button,.custom-tag-picks button,#customSuggest [data-tag-add]{min-width:36px;min-height:36px;flex-shrink:0}
+.custom-tag-filters .chip,.custom-tag-filters .hint{white-space:nowrap}
+.custom-tag-editor{display:flex;gap:6px;align-items:center;flex-wrap:wrap;border:1px solid var(--line);border-radius:9px;padding:6px;background:#fff}
+.custom-tag-editor .tag{display:inline-flex;align-items:center;gap:3px;max-width:100%;overflow-wrap:anywhere}
+#customForm #customTagInput{font-size:16px;min-height:40px;flex:1;min-width:130px;width:auto;border:0}
+.custom-tag-picks{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
 #customForm textarea{height:auto;resize:vertical}
 #customCoordsPreview{overflow-wrap:anywhere;margin:6px 0;line-height:1.6}#customCoordsPreview.coords-error{color:#b8456e}#customPlanMap{height:200px;border-radius:10px;margin:8px 0;isolation:isolate;touch-action:none}#customPlanLegend{font-size:11px;line-height:1.6}#customPlanLegend span{display:inline-block;margin-right:8px}#customPlanLegend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:3px}#customNearest{font-size:12px;line-height:1.6;margin:5px 0}#customSuggest{font-size:12px;padding:8px;border:1px solid var(--line);border-radius:9px;overflow-wrap:anywhere}#customSuggest p{margin:4px 0}#customSuggest button{font-size:12px;padding:4px 8px;margin:2px;min-height:36px}
 .tag.custom-badge{background:#e8f0fe;color:#1a73e8;border:1px solid #d2e3fc}
@@ -216,7 +226,7 @@ body.sheet-open{overscroll-behavior:none}
         <option value="both">兩人都 ★★ 以上</option>
       </select>
     </div>
-    <div class="chips" id="tagChips"></div>
+    <div class="chips" id="tagChips"></div><div class="custom-tag-filters" id="listTagFilters" role="group" aria-label="自訂景點標籤篩選" hidden></div>
     <div class="chips"><button class="chip" id="onlySel">只看已選</button><button class="chip" id="clearF">清除篩選</button></div>
   </div>
   <div class="count" id="count"></div>
@@ -279,19 +289,19 @@ body.sheet-open{overscroll-behavior:none}
     </div>
   </div>
   <p class="hint" id="planHint">按住 ☰ 拖曳即可排序或移到別天；也可以用右側選單直接換天。行程會自動存在這支手機（localStorage）。</p>
-  <div id="days"></div>
+  <div class="custom-tag-filters" id="poolTagFilters" role="group" aria-label="未排入候選標籤篩選" hidden></div><div id="days"></div>
 </section>
 
 <section id="mapPane" class="pane">
-  <div id="map"></div>
+  <div class="custom-tag-filters" id="mapTagFilters" role="group" aria-label="地圖標籤篩選" hidden></div><div id="mapFrame"><div id="map"></div>
   <div class="mapbar">
     <label><input type="checkbox" id="showAll"> 顯示全部景點（灰）</label>
     <button class="btn" id="fitBtn" style="padding:4px 8px">🔍 縮放到已選</button>
     <button class="btn warn" id="clearNearby" hidden>清除附近標示</button>
   </div>
-  <div class="legend" id="legend"></div>
+  <div class="legend" id="legend"></div></div>
 </section>
-<section id="wishPane" class="pane"><p class="hint">點選喜好即可許願，再點一次可取消。每個景點每人可選一種喜好。</p><div id="wishSections"></div></section>
+<section id="wishPane" class="pane"><p class="hint">點選喜好即可許願，再點一次可取消。每個景點每人可選一種喜好。</p><div class="custom-tag-filters" id="wishTagFilters" role="group" aria-label="許願標籤篩選" hidden></div><div id="wishSections"></div></section>
 </main>
 
 <div id="overlayBackdrop" aria-hidden="true"></div>
@@ -301,10 +311,10 @@ body.sheet-open{overscroll-behavior:none}
     <div id="documentsBody"><div id="documentsGroups"></div><p id="documentsHint">離線查看：在手機 Google Drive App 開啟檔案 → ⋮ → 開啟『可離線使用』。本頁可離線開啟，但雲端文件需先在 Drive App 設為離線。</p></div>
   </div>
 </div>
-<div class="modal" id="customModal" role="dialog" aria-modal="true" aria-labelledby="customModalTitle"><form class="box" id="customForm"><div class="overlay-tools"><button type="button" class="btn alt overlay-back" id="customBack" hidden>← 返回</button><h3 id="customModalTitle">＋ 自訂景點</h3><button type="button" class="detail-close" id="customClose" aria-label="關閉浮窗">✕</button></div><div id="customBody"><input type="hidden" id="customId"><div id="customPlanMap" role="region" aria-label="自訂景點與已排行程地圖" hidden></div><div id="customPlanLegend"></div><div id="customNearest" aria-live="polite"></div><label for="customZh">景點名稱 <b style="color:#ef6f6c">*</b></label><input type="text" id="customZh" maxlength="60" required placeholder="例如：博多運河城（必填，60 字內）"><label for="customCat">類型 <b style="color:#ef6f6c">*</b></label><select id="customCat" required><option value="">請選擇類型</option><option value="親子景點">親子景點</option><option value="購物街/商圈">購物街/商圈</option><option value="安全帽店">安全帽店</option><option value="樂高店">樂高店</option><option value="PS5遊戲片店">PS5遊戲片店</option><option value="餐廳">餐廳</option></select><label for="customArea">地區</label><input type="text" id="customArea" maxlength="40" placeholder="例如：福岡市區、太宰府（40 字內）"><label for="customAddr">地址</label><input type="text" id="customAddr" maxlength="200" placeholder="例如：福岡県福岡市博多区...（200 字內）"><label for="customCoords">座標、Google 地圖連結或 Plus Code</label><input type="text" id="customCoords" aria-describedby="customCoordsHint customCoordsPreview" placeholder="33.5898, 130.4108 或 HCR9+2X 福岡市"><small class="hint" id="customCoordsHint" style="margin-top:2px;display:block">接受座標、Google 地圖連結或 Plus Code（例如 HCR9+2X 福岡市）。短碼依地名定位；未填地名時以住宿為參考。</small><p class="hint" id="customCoordsPreview" role="status" aria-live="polite" hidden></p><div id="customSuggest" role="region" aria-label="地圖資料建議" aria-live="polite" hidden></div><label for="customUrl">相關網址</label><input type="url" id="customUrl" placeholder="https://...（http 或 https）"><label for="customNote">備註</label><textarea id="customNote" maxlength="1000" rows="3" placeholder="例如：營業時間、推薦原因、注意事項等（1000 字內）"></textarea><div class="row" style="margin-top:12px;justify-content:flex-end"><button type="button" class="btn alt" id="customCancel">取消</button><button type="submit" class="btn" id="customSubmit">儲存</button></div></div></form></div>
+<div class="modal" id="customModal" role="dialog" aria-modal="true" aria-labelledby="customModalTitle"><form class="box" id="customForm"><div class="overlay-tools"><button type="button" class="btn alt overlay-back" id="customBack" hidden>← 返回</button><h3 id="customModalTitle">＋ 自訂景點</h3><button type="button" class="detail-close" id="customClose" aria-label="關閉浮窗">✕</button></div><div id="customBody"><input type="hidden" id="customId"><div id="customPlanMap" role="region" aria-label="自訂景點與已排行程地圖" hidden></div><div id="customPlanLegend"></div><div id="customNearest" aria-live="polite"></div><label for="customZh">景點名稱 <b style="color:#ef6f6c">*</b></label><input type="text" id="customZh" maxlength="60" required placeholder="例如：博多運河城（必填，60 字內）"><label for="customCat">類型 <b style="color:#ef6f6c">*</b></label><select id="customCat" required><option value="">請選擇類型</option><option value="親子景點">親子景點</option><option value="購物街/商圈">購物街/商圈</option><option value="安全帽店">安全帽店</option><option value="樂高店">樂高店</option><option value="PS5遊戲片店">PS5遊戲片店</option><option value="餐廳">餐廳</option></select><label for="customTagInput">標籤</label><div class="custom-tag-editor"><span id="customTagChips"></span><input type="text" id="customTagInput" enterkeyhint="done" autocomplete="off" aria-describedby="customTagHint" placeholder="輸入標籤後按 Enter 或逗號"><button type="button" class="chip" id="customTagAdd">加入</button></div><small class="hint" id="customTagHint" role="status" aria-live="polite">每個最多 12 字，最多 8 個；可用 Enter、逗號或頓號分隔。</small><div class="custom-tag-picks" id="customTagPicks" role="group" aria-label="常用標籤"></div><label for="customArea">地區</label><input type="text" id="customArea" maxlength="40" placeholder="例如：福岡市區、太宰府（40 字內）"><label for="customAddr">地址</label><input type="text" id="customAddr" maxlength="200" placeholder="例如：福岡県福岡市博多区...（200 字內）"><label for="customCoords">座標、Google 地圖連結或 Plus Code</label><input type="text" id="customCoords" aria-describedby="customCoordsHint customCoordsPreview" placeholder="33.5898, 130.4108 或 HCR9+2X 福岡市"><small class="hint" id="customCoordsHint" style="margin-top:2px;display:block">接受座標、Google 地圖連結或 Plus Code（例如 HCR9+2X 福岡市）。短碼依地名定位；未填地名時以住宿為參考。</small><p class="hint" id="customCoordsPreview" role="status" aria-live="polite" hidden></p><div id="customSuggest" role="region" aria-label="地圖資料建議" aria-live="polite" hidden></div><label for="customUrl">相關網址</label><input type="url" id="customUrl" placeholder="https://...（http 或 https）"><label for="customNote">備註</label><textarea id="customNote" maxlength="1000" rows="3" placeholder="例如：營業時間、推薦原因、注意事項等（1000 字內）"></textarea><div class="row" style="margin-top:12px;justify-content:flex-end"><button type="button" class="btn alt" id="customCancel">取消</button><button type="submit" class="btn" id="customSubmit">儲存</button></div></div></form></div>
 <div class="modal" id="nickModal" role="dialog" aria-modal="true" aria-labelledby="nickLabel"><form class="box" id="nickForm"><div class="overlay-tools"><button type="button" class="btn alt overlay-back" id="nickBack" hidden>← 返回</button><strong>暱稱</strong><button type="button" class="detail-close" id="nickClose" aria-label="關閉浮窗">✕</button></div><div id="nickBody"><label id="nickLabel" for="nickInput">請輸入你的暱稱（顯示在許願池與修改紀錄）</label><input class="nick-input" id="nickInput" maxlength="12" required autocomplete="nickname"><div class="row" style="justify-content:flex-end"><button class="btn" type="submit">確定</button></div></div></form></div>
 <aside class="detail-panel" id="detailPanel" role="dialog" aria-labelledby="detailTitle"><div class="detail-head" id="detailHead"><button type="button" class="btn alt overlay-back" id="detailBack" hidden>← 返回</button><strong>景點詳情</strong><button class="detail-close" id="detailClose" aria-label="關閉景點詳情">✕</button></div><div class="detail-body" id="detailBody"></div></aside>
-<div class="modal" id="nearbyPanel" role="dialog" aria-modal="true" aria-labelledby="nearbyTitle"><div class="box"><div class="detail-head"><button type="button" class="btn alt overlay-back" id="nearbyBack" hidden>← 返回</button><strong id="nearbyTitle">📍 附近景點</strong><button type="button" class="detail-close" id="nearbyClose" aria-label="關閉附近景點">✕</button></div><div id="nearbyMapRegion"><div id="nearbyMap" role="region" aria-label="附近景點地圖"></div></div><div id="nearbyBody"><div class="row"><button type="button" class="btn" id="nearbyBigMap">🗺 在大地圖上顯示</button></div><p class="hint" style="margin-top:8px">紅色 ★ 為起點，藍色數字對應下方景點；虛線圈為 500 m／1.5 km。距離為直線估算，步行時間以親子步速約 4 km/h 估算，實際路線與交通時間請另確認。</p><div id="nearbySearchBar"><div class="nearby-search"><input id="nearbySearch" type="search" aria-label="搜尋附近店名、類別" aria-describedby="nearbyCount" autocomplete="off" placeholder="搜尋店名、類別（例如：燒肉、拉麵、樂高）"><button type="button" class="btn alt" id="nearbySearchClear" aria-label="清除附近搜尋">✕</button></div><p class="count" id="nearbyCount" role="status" aria-live="polite" aria-atomic="true"></p></div><div id="nearbyRows"></div></div></div></div>
+<div class="modal" id="nearbyPanel" role="dialog" aria-modal="true" aria-labelledby="nearbyTitle"><div class="box"><div class="detail-head"><button type="button" class="btn alt overlay-back" id="nearbyBack" hidden>← 返回</button><strong id="nearbyTitle">📍 附近景點</strong><button type="button" class="detail-close" id="nearbyClose" aria-label="關閉附近景點">✕</button></div><div id="nearbyMapRegion"><div id="nearbyMap" role="region" aria-label="附近景點地圖"></div></div><div id="nearbyBody"><div class="row"><button type="button" class="btn" id="nearbyBigMap">🗺 在大地圖上顯示</button></div><p class="hint" style="margin-top:8px">紅色 ★ 為起點，藍色數字對應下方景點；虛線圈為 500 m／1.5 km。距離為直線估算，步行時間以親子步速約 4 km/h 估算，實際路線與交通時間請另確認。</p><div id="nearbySearchBar"><div class="nearby-search"><input id="nearbySearch" type="search" aria-label="搜尋附近店名、類別" aria-describedby="nearbyCount" autocomplete="off" placeholder="搜尋店名、類別（例如：燒肉、拉麵、樂高）"><button type="button" class="btn alt" id="nearbySearchClear" aria-label="清除附近搜尋">✕</button></div><p class="count" id="nearbyCount" role="status" aria-live="polite" aria-atomic="true"></p></div><div class="custom-tag-filters" id="nearbyTagFilters" role="group" aria-label="附近標籤篩選" hidden></div><div id="nearbyRows"></div></div></div></div>
 
 <aside class="detail-panel" id="historyPanel" role="dialog" aria-labelledby="historyTitle"><div class="detail-head"><button type="button" class="btn alt overlay-back" id="historyBack" hidden>← 返回</button><strong id="historyTitle">🕘 版本紀錄</strong><button class="detail-close" id="historyClose" aria-label="關閉版本紀錄">✕</button></div><div class="detail-body" id="historyBody"></div></aside>
 
@@ -703,6 +713,10 @@ function genCustomId(){
   }while(BUILTIN_IDS.has(id)||(typeof CUSTOMS==="object"&&CUSTOMS&&CUSTOMS[id]));
   return id;
 }
+// One canonical representation for form, imports, sync and search/filter keys.
+function normalizeCustomTag(value,limit=12){return typeof value==="string"?[...value.normalize("NFKC").replace(/\s+/gu," ").replace(/[\p{Cc}\p{Cf}]/gu,"").trim().replace(/^(?:#\s*)+/u,"").trim()].slice(0,limit).join("").trim():"";}
+const customTagKey=value=>normalizeCustomTag(value,Infinity).toLowerCase();
+function normalizeCustomTags(raw){const out=[],seen=new Set();if(!Array.isArray(raw))return out;for(const value of raw){const tag=normalizeCustomTag(value),key=customTagKey(tag);if(tag&&!seen.has(key)){seen.add(key);out.push(tag);if(out.length===8)break;}}return out;}
 function sanitizeCustoms(raw){
   const out={};
   if(!raw||typeof raw!=="object"||Array.isArray(raw)) return out;
@@ -734,7 +748,8 @@ function sanitizeCustoms(raw){
     const byId=val.byId;
     const at=Number(val.at);
     if(!Number.isFinite(at)||at<0) continue;
-    const entry={zh,cat,area,addr,note,by,byId,at:Math.floor(at)};
+    // tagVersion survives Firebase's removal of empty arrays, so clearing all tags is explicit.
+    const entry={zh,cat,area,addr,note,tags:normalizeCustomTags(val.tags),tagVersion:1,by,byId,at:Math.floor(at)};
     if(lat!==undefined&&lng!==undefined){entry.lat=lat;entry.lng=lng;}
     if(url) entry.url=url;
     if(typeof val.editBy==="string"&&nickname(val.editBy)) entry.editBy=nickname(val.editBy);
@@ -756,10 +771,10 @@ function setCustoms(next, rerender=true){
   }
   const customSpots=[];
   for(const [id,c] of Object.entries(CUSTOMS)){
-    DETAIL[id]={zh:c.zh,cat:c.cat,area:c.area,addr:c.addr,note:c.note,url:c.url||"",by:c.by,byId:c.byId,at:c.at,editBy:c.editBy,editAt:c.editAt};
+    DETAIL[id]={zh:c.zh,cat:c.cat,area:c.area,addr:c.addr,tags:[...c.tags],note:c.note,url:c.url||"",by:c.by,byId:c.byId,at:c.at,editBy:c.editBy,editAt:c.editAt};
     if(c.lat!==undefined&&c.lng!==undefined){DETAIL[id].lat=c.lat;DETAIL[id].lng=c.lng;}
     customSpots.push({
-      id,zh:c.zh,ja:"",cat:c.cat,area:c.area,addr:c.addr,tags:[],a2:null,a6:null,note:c.note,lat:c.lat,lng:c.lng,q:false,src:c.url||"",url:c.url||"",by:c.by,byId:c.byId,at:c.at,editBy:c.editBy,editAt:c.editAt,custom:true
+      id,zh:c.zh,ja:"",cat:c.cat,area:c.area,addr:c.addr,tags:[...c.tags],a2:null,a6:null,note:c.note,lat:c.lat,lng:c.lng,q:false,src:c.url||"",url:c.url||"",by:c.by,byId:c.byId,at:c.at,editBy:c.editBy,editAt:c.editAt,custom:true
     });
   }
   ATTR=[...BUILTIN_ATTR,...customSpots];
@@ -791,10 +806,10 @@ function nearbyMatches(spot,query,detail={}){const terms=normalizeNearbySearch(q
   const label=CATEGORY_STYLE[spot.cat]?.label||spot.cat||"";
   const haystack=normalizeNearbySearch([...values.map(text),label,label.replace(/[^\p{L}\p{N}\s/]/gu,"")].join(" "));
   // Restaurant sub-types are stored in tags[0] (燒肉 / 拉麵 / 其他).
-  const labels=[spot.cat,...(spot.cat==="餐廳"?[spot.tags?.[0]]:[])];
+  const labels=[spot.cat,...(spot.custom?spot.tags||[]:spot.cat==="餐廳"?[spot.tags?.[0]]:[])];
   return terms.every(term=>haystack.includes(term)||NEARBY_SEARCH_ALIASES.some(([target,aliases])=>labels.includes(target)&&aliases.includes(term)));
 }
-function filteredNearbySpots(id,query=""){return nearbySpots(id).filter(s=>nearbyMatches(BY[s.id],query,DETAIL[s.id]));}
+function filteredNearbySpots(id,query=""){return nearbySpots(id).filter(s=>matchesCustomTagFilter(BY[s.id])&&nearbyMatches(BY[s.id],query,DETAIL[s.id]));}
 const COLORS = ["#ff8fab","#6fb7f2","#9b7cf0","#3cc4a0","#f5a524","#ef6f6c","#4f7fd9","#c06fd6","#58b368","#e08a3c"];
 const KEY = "kyushuPlanner.v2", OLDKEY = "kyushuPlanner.v1";
 const DATES = ["2/8(一)","2/9(二)","2/10(三)","2/11(四)","2/12(五)","2/13(六)"];
@@ -852,6 +867,16 @@ function normalState(raw){
   const plan=normalPlan(raw.plan, byLookup);
   return plan?{rev:Number(raw.rev)||0,at:Number(raw.at)||0,by:nickname(raw.by),byId:String(raw.byId||""),summary:String(raw.summary||""),plan,wishes:sanitizeWishes(raw.wishes, byLookup),customs}:null;
 }
+// The previous live client whitelists custom fields in sanitizeCustoms and rewrites the
+// entire state, dropping tags (and tagVersion). Preserve known committed tags only for
+// missing fields on the same creation when content is unchanged or the spot is older.
+// A newer legacy edit with different content, or a device with no tagged cache, cannot
+// recover lost tags; archived versions remain exact and can be restored explicitly.
+function preserveLegacyTags(raw,known){const next=sanitizeCustoms(raw);for(const [id,c] of Object.entries(next)){const previous=known?.[id],incoming=raw[id];if(!previous||Object.hasOwn(incoming,"tags")||incoming.tagVersion===1||c.byId!==previous.byId||c.at!==previous.at)continue;
+    const content=spot=>JSON.stringify([spot.zh,spot.cat,spot.area,spot.addr,spot.note,spot.lat,spot.lng,spot.url||""]);
+    if(content(c)===content(previous)||(c.editAt??c.at)<=(previous.editAt??previous.at))c.tags=normalizeCustomTags(previous.tags);
+  }return next;}
+function normalLiveState(raw){return raw?normalState({...raw,customs:preserveLegacyTags(raw.customs, sync.current?.customs||CUSTOMS)}):null;}
 WISH=sanitizeWishes(stored(WISHKEY,{}));
 let dragging=false,renderQueued=false;
 function snapshot(){return {plan:clone(S),wishes:clone(WISH),customs:clone(CUSTOMS)};}
@@ -882,8 +907,8 @@ function metadata(entry){const {rev,at,by,byId,summary}=entry;return {rev,at,by,
 async function fetchJSON(url,opts={}){const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),12000);try{const response=await fetch(url,{...opts,signal:controller.signal,cache:"no-store",headers:{...(opts.body?{"Content-Type":"application/json"}:{}),...opts.headers}});const data=await response.json();if(!response.ok&&![409,412].includes(response.status))throw new Error("HTTP "+response.status);return {data,status:response.status,token:response.headers.get("ETag")};}finally{clearTimeout(timer);}}
 function watchFocus(check){const visible=()=>{if(document.visibilityState!=="hidden")check();};window.addEventListener("focus",check);document.addEventListener("visibilitychange",visible);return ()=>{window.removeEventListener("focus",check);document.removeEventListener("visibilitychange",visible);};}
 function localAdapter(){const entries=()=>stored(HISTORYKEY,[]);return {
-  async load(){const list=entries();return {state:normalState(list.at(-1)),token:null};},
-  async save(baseRev,state){const list=entries(),rev=Number(list.at(-1)?.rev)||0;if(baseRev!==rev)return {conflict:true,state:normalState(list.at(-1))};const entry={...clone(state),rev:rev+1,at:Date.now()};localStorage.setItem(HISTORYKEY,JSON.stringify([...list,entry].slice(-100)));return {ok:true,state:entry};},
+  async load(){const list=entries();return {state:normalLiveState(list.at(-1)),token:null};},
+  async save(baseRev,state){const list=entries(),rev=Number(list.at(-1)?.rev)||0;if(baseRev!==rev)return {conflict:true,state:normalLiveState(list.at(-1))};const entry={...clone(state),rev:rev+1,at:Date.now()};localStorage.setItem(HISTORYKEY,JSON.stringify([...list,entry].slice(-100)));return {ok:true,state:entry};},
   async history(limit=200){return entries().slice(-limit).reverse().map(metadata);},async version(rev){return entries().find(e=>e.rev===rev)||null;},
   subscribe(onState){const handler=e=>{if(e.key===HISTORYKEY)this.load().then(r=>onState(r.state));};window.addEventListener("storage",handler);return ()=>window.removeEventListener("storage",handler);}
 };}
@@ -891,7 +916,7 @@ function firebaseAdapter(){const root=backendCfg.url.replace(/\/+$/,"")+"/"+(bac
   // Repair an interrupted state→archive write on every load and before advancing state.
   async function archive(entry){if(!entry?.rev)return;for(const [path,value] of [["history/"+key(entry.rev),entry],["historyIndex/"+key(entry.rev),metadata(entry)]]){const old=await fetchJSON(url(path),{headers:{"X-Firebase-ETag":"true"}});if(old.data!==null)continue;if(!old.token)throw new Error("缺少 ETag");const r=await fetchJSON(url(path),{method:"PUT",headers:{"if-match":old.token},body:JSON.stringify(value)});if(r.status===412)continue;}}
   return {
-    async load(){const r=await fetchJSON(url("state"),{headers:{"X-Firebase-ETag":"true"}});if(r.data)await archive(r.data);return {state:normalState(r.data),token:r.token};},
+    async load(){const r=await fetchJSON(url("state"),{headers:{"X-Firebase-ETag":"true"}});if(r.data)await archive(r.data);return {state:normalLiveState(r.data),token:r.token};},
     async save(baseRev,state){const latest=await this.load();if((latest.state?.rev||0)!==baseRev)return {conflict:true,state:latest.state};if(!latest.token)throw new Error("缺少 ETag");const entry={...clone(state),rev:baseRev+1,at:Date.now()},r=await fetchJSON(url("state"),{method:"PUT",headers:{"if-match":latest.token},body:JSON.stringify(entry)});if(r.status===412)return {conflict:true,state:(await this.load()).state};
       // The accepted state is durable even if the following connection drops.
       try{await archive(entry);}catch{ /* load/save/history repairs this entry before the next revision */ }
@@ -903,9 +928,11 @@ function firebaseAdapter(){const root=backendCfg.url.replace(/\/+$/,"")+"/"+(bac
       return ()=>{stopped=true;source?.close();clearInterval(poll);unfocus();};}
   };
 }
+// dev/server/api.php (and the deployed copy) validate custom-spot tags/tagVersion;
+// client transport retains these fields (never silently strips them).
 function jsonfileAdapter(){const url=(op,params={})=>{const u=new URL(backendCfg.url,location.href);u.searchParams.set("op",op);Object.entries(params).forEach(([k,v])=>u.searchParams.set(k,v));return u.href;};return {
-  async load(){return {state:normalState((await fetchJSON(url("state"))).data),token:null};},
-  async save(baseRev,state){const r=await fetchJSON(url("save"),{method:"POST",body:JSON.stringify({baseRev,state})});return r.status===409?{conflict:true,state:normalState(r.data.state)}:{ok:true,state:normalState(r.data.state)};},
+  async load(){return {state:normalLiveState((await fetchJSON(url("state"))).data),token:null};},
+  async save(baseRev,state){const r=await fetchJSON(url("save"),{method:"POST",body:JSON.stringify({baseRev,state})});return r.status===409?{conflict:true,state:normalLiveState(r.data.state)}:{ok:true,state:normalLiveState(r.data.state)};},
   async history(limit=200){return (await fetchJSON(url("history",{limit}))).data;},async version(rev){return normalState((await fetchJSON(url("version",{rev}))).data);},
   subscribe(onState){let stopped=false,busy=false,last=-1;const check=async()=>{if(stopped||busy)return;busy=true;try{const rev=(await fetchJSON(url("rev"))).data.rev;if(rev!==last){const r=await this.load();last=r.state?.rev||0;onState(r.state);}else if(sync.offline){sync.offline=false;renderSync();}if(sync.queue.length||sync.stage)flushPending();}catch{offline();}finally{busy=false;}};const timer=setInterval(check,8000),unfocus=watchFocus(check);return ()=>{stopped=true;clearInterval(timer);unfocus();};}
 };}
@@ -925,7 +952,7 @@ function markPlan(summary=""){markChange(true,summary);}
 function queueWish(){markChange(false);}
 function scheduleFlush(){clearTimeout(flushTimer);flushTimer=setTimeout(flushPending,600);}
 function offline(){sync.offline=true;renderSync();}
-function acceptState(raw){if(raw?.customs)setCustoms(raw.customs,false);const state=normalState(raw);if(!state)return;if(dragging||sync.busy||sync.stage||sync.queue.length){if(!sync.deferred||state.rev>=sync.deferred.rev)sync.deferred=state;renderQueued=true;return;}if(state.rev<sync.rev)return;setCustoms(state.customs||{},false);sync.current=state;sync.rev=state.rev;S=clone(state.plan);WISH=clone(state.wishes);sync.head=snapshot();sync.offline=false;cachePlan();cacheWishes();cacheCustoms();persistSync();renderAll();}
+function acceptState(raw){const state=normalLiveState(raw);if(!state)return;if(dragging||sync.busy||sync.stage||sync.queue.length){if(!sync.deferred||state.rev>=sync.deferred.rev)sync.deferred=state;renderQueued=true;return;}if(state.rev<sync.rev)return;setCustoms(state.customs||{},false);sync.current=state;sync.rev=state.rev;S=clone(state.plan);WISH=clone(state.wishes);sync.head=snapshot();sync.offline=false;cachePlan();cacheWishes();cacheCustoms();persistSync();renderAll();}
 function acceptMirror(){const state=sync.deferred||sync.current;sync.deferred=null;if(state)acceptState(state);else renderAll();}
 function conflict(remote){const drafts=stored("kyushuPlanner.conflicts",[]);for(const batch of sync.queue)drafts.push({...clone(batch.state),at:Date.now(),by:ME.nick,byId:ME.id,summary:batch.summary,scope:scope(),id:deviceId()});if(sync.stage)drafts.push({...clone(sync.stage.state),at:Date.now(),by:ME.nick,byId:ME.id,summary:sync.stage.summary||summarize(diffState(sync.stage.before,sync.stage.state)),scope:scope(),id:deviceId()});localStorage.setItem("kyushuPlanner.conflicts",JSON.stringify(drafts));clearTimeout(flushTimer);sync.queue=[];sync.stage=null;sync.current=remote;sync.rev=remote?.rev||0;sync.deferred=null;setCustoms(remote?.customs||{},false);S=remote?clone(remote.plan):blank();WISH=remote?clone(remote.wishes):{};sync.head=snapshot();cachePlan();cacheWishes();cacheCustoms();persistSync();toast("其他人剛修改了行程，已載入最新版本；你的變更可在「版本紀錄」找到或重做");}
 async function refreshShared(){if(refreshing||sync.busy)return;refreshing=true;try{const {state}=await adapter.load();sync.offline=false;
@@ -991,9 +1018,26 @@ function moveTo(id,dayIdx,pos){if(!canPlan(id))return false;removeId(id);const a
 function update(summary=""){save(summary);renderAll();}
 function toast(t){const e=document.getElementById("toast");e.textContent=t;e.classList.add("on");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove("on"),1600);}
 
+// All browsing bars share session-only OR selection. Active tags show matching custom
+// spots only; scheduled day rows remain editable and the hotel stays a map anchor.
+const CUSTOM_TAG_FILTER_KEY="kyushuPlanner.customTagFilter";
+let customTagFilter=new Set();try{const values=JSON.parse(sessionStorage.getItem(CUSTOM_TAG_FILTER_KEY)||"[]");if(Array.isArray(values))customTagFilter=new Set(values.filter(t=>typeof t==="string").map(customTagKey));}catch{}
+// Counts are per custom spot across the shared catalogue (also used for quick-pick ranking).
+function customTagCounts(){const counts=new Map();for(const c of Object.values(CUSTOMS))for(const tag of c.tags){const key=customTagKey(tag),entry=counts.get(key);if(entry)entry.count++;else counts.set(key,{tag,key,count:1});}return [...counts.values()].sort((a,b)=>b.count-a.count||a.tag.localeCompare(b.tag,"zh-Hant"));}
+function customTagSuggestions(){return normalizeTagSuggestions([...customTagCounts().map(t=>t.tag),...CUSTOM_CATEGORIES.filter(t=>t!=="親子景點"),...BUILTIN_ATTR.filter(a=>a.cat==="餐廳").map(a=>a.tags[0]).filter(Boolean)]);}
+function normalizeTagSuggestions(values){const seen=new Set();return values.map(t=>normalizeCustomTag(t)).filter(t=>t&&!seen.has(customTagKey(t))&&seen.add(customTagKey(t)));}
+function matchesCustomTagFilter(spot){return !customTagFilter.size||!!spot?.custom&&(spot.tags||[]).some(t=>customTagFilter.has(customTagKey(t)));}
+function renderCustomTagFilters(){const counts=customTagCounts();for(const key of customTagFilter)if(!counts.some(t=>t.key===key))customTagFilter.delete(key);
+  try{sessionStorage.setItem(CUSTOM_TAG_FILTER_KEY,JSON.stringify([...customTagFilter]));}catch{}
+  for(const id of ["listTagFilters","poolTagFilters","mapTagFilters","wishTagFilters","nearbyTagFilters"]){const bar=document.getElementById(id);bar.hidden=!counts.length;bar.innerHTML=counts.length?`<span class="hint">自訂標籤</span><button type="button" class="chip${customTagFilter.size?"":" on"}" data-custom-tag="" aria-pressed="${!customTagFilter.size}">全部</button>`+counts.map(t=>`<button type="button" class="chip${customTagFilter.has(t.key)?" on":""}" data-custom-tag="${esc(t.key)}" aria-pressed="${customTagFilter.has(t.key)}">${esc(t.tag)} (${t.count})</button>`).join("")+(customTagFilter.size?'<button type="button" class="chip" data-custom-tag="">清除篩選</button>':""):"";
+    bar.onclick=e=>{const button=e.target.closest("[data-custom-tag]");if(button)setCustomTagFilter(button.dataset.customTag);};
+  }
+}
+function setCustomTagFilter(tag){const key=customTagKey(tag);if(!key)customTagFilter.clear();else if(customTagFilter.has(key))customTagFilter.delete(key);else customTagFilter.add(key);try{sessionStorage.setItem(CUSTOM_TAG_FILTER_KEY,JSON.stringify([...customTagFilter]));}catch{}renderAll();if(nearbyMap&&nearbyId)fitNearby(nearbyMap,nearbyId,filteredNearbySpots(nearbyId,overlayTop().state.query));}
+function customTagsHTML(a){return a?.custom?(a.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join(""):"";}
 // ===== 清單 =====
 const AREAS=[...new Set(ATTR.map(a=>a.area))];
-const TAGS=[...new Set(ATTR.flatMap(a=>a.tags))];
+const TAGS=[...new Set(BUILTIN_ATTR.flatMap(a=>a.tags))];
 const F={q:"",area:"",age:"",cat:"",tags:new Set(),only:false};
 const areaSel=document.getElementById("area");
 areaSel.innerHTML='<option value="">地區：全部</option>'+AREAS.map(a=>`<option>${esc(a)}</option>`).join("");
@@ -1004,12 +1048,14 @@ areaSel.onchange=e=>{F.area=e.target.value;renderList();};
 document.getElementById("age").onchange=e=>{F.age=e.target.value;renderList();};
 document.getElementById("cat").onchange=e=>{F.cat=e.target.value;renderList();};
 document.getElementById("onlySel").onclick=e=>{F.only=!F.only;e.target.classList.toggle("on",F.only);renderList();};
-document.getElementById("clearF").onclick=()=>{F.q="";F.area="";F.age="";F.cat="";document.getElementById("cat").value="";F.tags.clear();F.only=false;document.getElementById("q").value="";areaSel.value="";document.getElementById("age").value="";document.querySelectorAll(".filters .chip.on").forEach(c=>c.classList.remove("on"));renderList();};
+document.getElementById("clearF").onclick=()=>{F.q="";F.area="";F.age="";F.cat="";document.getElementById("cat").value="";F.tags.clear();F.only=false;document.getElementById("q").value="";areaSel.value="";document.getElementById("age").value="";document.querySelectorAll(".filters .chip.on").forEach(c=>c.classList.remove("on"));setCustomTagFilter("");};
 const stars=n=>n==null?"—":"★".repeat(n)+"☆".repeat(3-n);
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 function renderList(){
+  renderCustomTagFilters();
   const sel=selected();
   const list=ATTR.filter(a=>{
+    if(!matchesCustomTagFilter(a))return false;
     if(F.only&&!sel.has(a.id))return false;
     if(F.area&&a.area!==F.area)return false;
     if(F.cat&&a.cat!==F.cat)return false;
@@ -1047,19 +1093,21 @@ function dayBlock(title,color,idx,items,isPool){
   ${isPool?"":`<button data-ren="${idx}">✎</button><button data-del="${idx}">✕</button>`}</h3>
   <ul data-idx="${idx}">${items.map((id,i)=>{const a=BY[id];return `<li class="it" data-id="${esc(id)}">
     <span class="h">☰</span><span class="n" style="background:${isPool?"#a9b6c9":color}">${isPool?"•":i+1}</span>
-    <span class="t">${esc(a.zh)} <span class="info">ⓘ</span><small>${esc(a.area)}・${esc(a.note||a.ja)}</small></span>
+    <span class="t">${esc(a.zh)} <span class="info">ⓘ</span><small>${esc(a.area)}・${esc(a.note||a.ja)}</small>${customTagsHTML(a)}</span>
     <select aria-label="移動 ${esc(a.zh)}" data-mv="${esc(id)}"><option value="-1"${isPool?" selected":""}>未排入</option>${S.days.map((d,j)=>`<option value="${j}"${j===idx?" selected":""}>${esc(d.label)}</option>`).join("")}</select>
     <button class="x" data-rm="${esc(id)}" title="移除">×</button></li>`;}).join("")}</ul></div>`;
 }
 function renderDays(){
   sortables.forEach(s=>s.destroy());sortables=[];
   const el=document.getElementById("days");
-  el.innerHTML=dayBlock("🧺 未排入行程（已勾選）","#a9b6c9",-1,S.pool,true)+S.days.map((d,i)=>dayBlock(d.label,COLORS[i%COLORS.length],i,d.items,false)).join("");
+  el.innerHTML=dayBlock("🧺 未排入行程（已勾選）","#a9b6c9",-1,S.pool.filter(id=>matchesCustomTagFilter(BY[id])),true)+S.days.map((d,i)=>dayBlock(d.label,COLORS[i%COLORS.length],i,d.items,false)).join("");
   if(window.Sortable) el.querySelectorAll("ul").forEach(ul=>sortables.push(Sortable.create(ul,{group:"plan",handle:".h",animation:150,delay:0,touchStartThreshold:4,fallbackOnBody:true,forceFallback:true,onStart:()=>{dragging=true;},onEnd:syncFromDom})));
 }
+// Reordering the visible pool must retain hidden candidates in their existing slots.
+function mergeFilteredPool(original,visible){const remaining=[...visible],result=[];for(const id of original){if(!matchesCustomTagFilter(BY[id]))result.push(id);else if(remaining.length)result.push(remaining.shift());}return [...result,...remaining];}
 function syncFromDom(){
   const queued=renderQueued;
-  document.querySelectorAll("#days ul").forEach(ul=>{const idx=+ul.dataset.idx;const ids=[...ul.querySelectorAll("li")].map(li=>li.dataset.id);if(idx<0)S.pool=ids;else S.days[idx].items=ids;});
+  document.querySelectorAll("#days ul").forEach(ul=>{const idx=+ul.dataset.idx;const ids=[...ul.querySelectorAll("li")].map(li=>li.dataset.id);if(idx<0)S.pool=mergeFilteredPool(S.pool,ids);else S.days[idx].items=ids;});
   dragging=false;update();if(queued)acceptMirror();
 }
 document.getElementById("days").addEventListener("change",e=>{const id=e.target.dataset.mv;if(id){moveTo(id,+e.target.value);update();}});
@@ -1096,7 +1144,7 @@ function importJSON(txt){try{const o=JSON.parse(txt);if(!o||!Array.isArray(o.day
 // ===== 許願池與景點詳情 =====
 function wishButtons(id){if(!canPlan(id))return "";const mine=WISH[id]?.[ME.id]?.pool;return `<div class="wish-buttons" aria-label="景點許願">${Object.entries(POOLS).map(([pool,label])=>`<button type="button" class="wish-btn${mine===pool?" on":""}" data-wish="${pool}" data-spot="${esc(id)}" aria-pressed="${mine===pool}">${label}</button>`).join("")}</div><div class="wish-names">${Object.keys(POOLS).map(pool=>{const names=Object.values(WISH[id]||{}).filter(w=>w.pool===pool).map(w=>esc(w.nick));return names.length?`${POOLS[pool].split(" ")[0]} ${names.join("、")}`:"";}).filter(Boolean).join("　")||"還沒有人許願"}</div>`;}
 function toggleWish(id,pool){if(!canPlan(id)||!Object.hasOwn(POOLS,pool))return;if(!ME.nick){openNick();return;}const old=WISH[id]?.[ME.id],value=old?.pool===pool?null:{pool,nick:ME.nick,at:Date.now()};if(value)(WISH[id]??={})[ME.id]=value;else if(WISH[id])delete WISH[id][ME.id];cacheWishes();queueWish();renderAll();}
-function renderWishes(){const sel=selected();document.getElementById("wishSections").innerHTML=Object.entries(POOLS).map(([pool,title])=>{const spots=ATTR.map(a=>({a,votes:Object.values(WISH[a.id]||{}).filter(w=>w.pool===pool)})).filter(x=>x.votes.length).sort((a,b)=>b.votes.length-a.votes.length||a.a.zh.localeCompare(b.a.zh,"zh-Hant"));return `<section class="wish-section"><h2>${title}</h2>${spots.map(({a,votes})=>`<div class="wish-row" data-detail="${esc(a.id)}" tabindex="0" role="button" aria-label="${esc(a.zh)} 詳情"><span class="wish-count">${votes.length} 人</span><strong>${esc(a.zh)}</strong><div class="meta">${esc(a.area)}／${esc(a.cat)}</div><div>${votes.map(w=>`<span class="nick-chip">${esc(w.nick)}</span>`).join("")}</div>${!sel.has(a.id)?`<button class="btn" type="button" data-add="${esc(a.id)}">＋ 加入行程（未排入）</button>`:""}</div>`).join("")||'<p class="hint">目前還沒有許願</p>'}</section>`;}).join("");}
+function renderWishes(){const sel=selected();document.getElementById("wishSections").innerHTML=Object.entries(POOLS).map(([pool,title])=>{const spots=ATTR.filter(matchesCustomTagFilter).map(a=>({a,votes:Object.values(WISH[a.id]||{}).filter(w=>w.pool===pool)})).filter(x=>x.votes.length).sort((a,b)=>b.votes.length-a.votes.length||a.a.zh.localeCompare(b.a.zh,"zh-Hant"));return `<section class="wish-section"><h2>${title}</h2>${spots.map(({a,votes})=>`<div class="wish-row" data-detail="${esc(a.id)}" tabindex="0" role="button" aria-label="${esc(a.zh)} 詳情"><span class="wish-count">${votes.length} 人</span><strong>${esc(a.zh)}</strong><div class="meta">${esc(a.area)}／${esc(a.cat)}</div><div class="tags">${customTagsHTML(a)}</div><div>${votes.map(w=>`<span class="nick-chip">${esc(w.nick)}</span>`).join("")}</div>${!sel.has(a.id)?`<button class="btn" type="button" data-add="${esc(a.id)}">＋ 加入行程（未排入）</button>`:""}</div>`).join("")||'<p class="hint">目前還沒有許願</p>'}</section>`;}).join("");}
 function currentPlace(id){if(BY[id]?.lodging)return "🏨 住宿（已訂）";if(!selected().has(id))return "未選";const idx=where(id);return idx<0?"未排入":S.days[idx].label;}
 function renderDetail(){if(!detailId||!BY[detailId])return;const a=BY[detailId],d=DETAIL[detailId]||{},val=k=>d[k]??a[k],rows=[];
   const row=(label,value,html=false)=>{if(value!==undefined&&value!==null&&value!=="")rows.push(`<dt>${label}</dt><dd>${html?value:esc(value)}</dd>`);};
@@ -1105,6 +1153,7 @@ function renderDetail(){if(!detailId||!BY[detailId])return;const a=BY[detailId],
     row("🏨 住宿",a.cat);row("📍 地址",a.addr);row("☎ 電話",a.tel);row("🚉 博多口步行",a.station);row("📝 入住／退房",a.note);row("🔗 官網",linkHTML(a.url,"飯店官網"),true);row("🗺 Google 地圖",linkHTML(gmap(a),"開啟地圖／導航"),true);
   }else if(a.custom){
     row("🏷️ 類別／地區",[a.cat,a.area].filter(Boolean).join("・"));
+    row("標籤",customTagsHTML(a),true);
     row("👤 新增者",`${esc(a.by||"家人")}・${esc(taipeiTime(a.at))}`,true);
     if(a.editBy&&a.editAt)row("✏️ 最後修改",`${esc(a.editBy)}・${esc(taipeiTime(a.editAt))}`,true);
     row("📍 地址",a.addr);
@@ -1157,7 +1206,7 @@ function googleCategory(type="",name=""){
   if(["tourist_attraction","amusement_park","zoo","aquarium","park","museum","playground"].includes(type))return "親子景點";
   return type==="lodging"&&CUSTOM_CATEGORIES.includes("住宿")?"住宿":"";
 }
-function normalizeGoogleResult(r={}){return {name:String(r.name||""),addr:String(r.address||""),hours:(Array.isArray(r.hours)?r.hours:[]).slice(0,7).map(String).join("\n"),phone:String(r.phone||""),url:safeURL(r.website)||safeURL(r.maps_uri)||"",mapsUrl:!safeURL(r.website)&&!!safeURL(r.maps_uri),cat:googleCategory(r.type,r.name),rating:typeof r.rating==="number"&&Number.isFinite(r.rating)?r.rating:null,ratingCount:Number.isInteger(r.rating_count)&&r.rating_count>=0?r.rating_count:null};}
+function normalizeGoogleResult(r={}){return {suggestedTag:normalizeCustomTag((typeof r.primaryTypeDisplayName==="object"?r.primaryTypeDisplayName?.text:r.primaryTypeDisplayName)||r.type_label||r.type_display_name||googleCategory(r.type,r.name)),name:String(r.name||""),addr:String(r.address||""),hours:(Array.isArray(r.hours)?r.hours:[]).slice(0,7).map(String).join("\n"),phone:String(r.phone||""),url:safeURL(r.website)||safeURL(r.maps_uri)||"",mapsUrl:!safeURL(r.website)&&!!safeURL(r.maps_uri),cat:googleCategory(r.type,r.name),rating:typeof r.rating==="number"&&Number.isFinite(r.rating)?r.rating:null,ratingCount:Number.isInteger(r.rating_count)&&r.rating_count>=0?r.rating_count:null};}
 const googlePlacesMemo=new Map();
 async function lookupGooglePlaces(point,name,signal,placeId,byText=false){
   name=[...name.trim()].slice(0,120).join("");
@@ -1236,7 +1285,7 @@ function mapsAddress(result){if(!result||result.error)return "";const a=result.a
 async function lookupMapsSuggestions(point,name,signal){let match=null,reverse=null;if(name){const box=[Math.max(-180,point.lng-.003),Math.min(90,point.lat+.003),Math.min(180,point.lng+.003),Math.max(-90,point.lat-.003)].join(",");try{match=selectMapsMatch(await nominatimRequest("search",{q:name,limit:"3",viewbox:box,bounded:"1"},signal),point,name);}catch(e){if(signal.aborted)throw e;}}
   if(!signal.aborted)try{reverse=await nominatimRequest("reverse",{lat:String(point.lat),lon:String(point.lng),zoom:"18"},signal);}catch(e){if(signal.aborted)throw e;}
   const tags={...(match?.extratags||{})};if(match?.category&&match.type)tags[match.category]=match.type;
-  return {addr:mapsAddress(match)||mapsAddress(reverse),hours:String(tags.opening_hours||""),url:safeURL(tags.website||"")||safeURL(tags["contact:website"]||""),phone:String(tags.phone||tags["contact:phone"]||""),cat:mapsCategory(tags,match?.name||name)};
+  return {addr:mapsAddress(match)||mapsAddress(reverse),hours:String(tags.opening_hours||""),url:safeURL(tags.website||"")||safeURL(tags["contact:website"]||""),phone:String(tags.phone||tags["contact:phone"]||""),cat:mapsCategory(tags,match?.name||name),suggestedTag:normalizeCustomTag(tags.cuisine||mapsCategory(tags,match?.name||name)||match?.category||reverse?.category)};
 }
 let customCoordsMap=null,customCoordsLayer=null,customCoordsTimer=null,customPlanTimer=null,customLookupTimer=null,customLookupController=null,customLookupId=0;
 const customEl=id=>document.getElementById(id);
@@ -1264,13 +1313,14 @@ function updateCoordsPreview(){const input=customEl("customCoords"),preview=cust
 const customSuggestionLabels={name:"名稱",addr:"地址",hours:"營業時間",url:"網站",phone:"電話",cat:"類型建議"};
 function renderCustomSuggestions(){const layer=overlayTop(),state=layer?.state,panel=customEl("customSuggest"),suggestions=state?.suggestions||{},entries=Object.entries(customSuggestionLabels).filter(([key])=>suggestions[key]);
   const canGoogle=layer?.kind==="custom"&&hasCoords(customCoordsInfo())&&!!customEl("customZh").value.trim();
-  panel.hidden=!entries.length&&!state?.suggestHint&&!canGoogle;
+  panel.hidden=!entries.length&&!suggestions.suggestedTag&&!state?.suggestHint&&!canGoogle;
   const google=state?.suggestSource==="google",results=state?.googleResults||[];
   panel.innerHTML=(google?'<p><b>來源：Google</b></p>':"")+(google&&results.length>1?'<div role="group" aria-label="Google 地點選擇">'+results.map((r,i)=>`<button type="button" class="btn alt" data-google-choice="${i}" aria-pressed="${i===(state.googleChoice||0)}">${esc(r.name)}${Number.isFinite(r.distance_m)?" · "+esc(r.distance_m)+" m":""}</button>`).join("")+"</div>":"")+entries.map(([key,label])=>`<p style="white-space:pre-line"><b>${esc(key==="url"&&suggestions.mapsUrl?"Google 地圖頁":label)}：</b>${esc(suggestions[key])} ${key==="addr"&&suggestions.osmAddress?'<small class="hint">地址來源：'+(suggestions.googleAddressNumbers?'Google＋':'')+'OpenStreetMap</small> ':""}<button type="button" class="btn alt" data-custom-apply="${esc(key)}">套用</button></p>`).join("")+
     (google&&suggestions.rating!==null?`<p>${esc("★"+suggestions.rating+(suggestions.ratingCount!==null?" · "+suggestions.ratingCount.toLocaleString("en-US")+" 則":""))}</p>`:"")+
     (entries.length?'<button type="button" class="btn alt" data-custom-apply="all">全部套用（僅空白欄位）</button>'+ (google&&!suggestions.osmAddress?"":'<p class="hint">資料來源：© OpenStreetMap contributors（可能不完整，請自行確認）</p>'):"")+(google?'<p class="hint">Google Maps</p>':"")+
     (state?.suggestHint?`<p class="hint">${esc(state.suggestHint)}</p>`:"")+
     (Number.isInteger(state?.googleRemaining)?`<p class="hint">${esc("本月 Google 查詢剩餘 "+state.googleRemaining+" 次")}</p>`:"")+
+    (suggestions.suggestedTag?`<p>建議標籤：<button type="button" class="chip" data-tag-add="${esc(suggestions.suggestedTag)}">＋ ${esc(suggestions.suggestedTag)}</button></p>`:"")+
     (canGoogle?'<button type="button" class="btn alt" data-google-lookup>用 Google 查詢詳細資訊</button>':"");
 }
 function applyCustomSuggestion(key,onlyEmpty=false){const state=overlayTop()?.kind==="custom"?overlayTop().state:null,s=state?.suggestions;if(!s)return;if(key==="all"){state.applyNoteBlocked=!!customEl("customNote").value.trim()||!!customEl("customNote").dataset.edited;Object.keys(customSuggestionLabels).forEach(k=>applyCustomSuggestion(k,true));return;}
@@ -1336,7 +1386,7 @@ customEl("customCoords").oninput=customCoordsInput;customEl("customCoords").onbl
 function openCustomForm(id=null,trigger){
   if(!ME.nick){openNick();return;}
   const spot=id?CUSTOMS[id]:null;
-  pushOverlay("custom",{title:spot?"✏️ 編輯自訂景點":"＋ 新增自訂景點",fields:[id||"",spot?.zh||"",spot?.cat||"",spot?.area||"",spot?.addr||"",spot&&hasCoords(spot)?`${spot.lat}, ${spot.lng}`:"",spot?.note||"",spot?.url||""]},trigger);
+  pushOverlay("custom",{title:spot?"✏️ 編輯自訂景點":"＋ 新增自訂景點",fields:[id||"",spot?.zh||"",spot?.cat||"",spot?.area||"",spot?.addr||"",spot&&hasCoords(spot)?`${spot.lat}, ${spot.lng}`:"",spot?.note||"",spot?.url||"",""],tags:[...(spot?.tags||[])]},trigger);
 }
 function saveCustomSpot(data, editId=null){
   if(!ME.nick){openNick();return null;}
@@ -1347,13 +1397,14 @@ function saveCustomSpot(data, editId=null){
   const addr=String(data.addr||"").trim().slice(0,200);
   const note=String(data.note||"").trim().slice(0,1000);
   const url=safeURL(String(data.url||"").trim());
+  const tags=Object.hasOwn(data,"tags")?normalizeCustomTags(data.tags):normalizeCustomTags(CUSTOMS[editId]?.tags);
   let coords=null;
   if(Number.isFinite(data.lat)&&Number.isFinite(data.lng))coords={lat:data.lat,lng:data.lng};
   else if(data.coords){coords=parseCoords(data.coords);if(String(data.coords).trim()&&!coords){toast(COORDS_ERROR);return null;}}
   if(editId&&CUSTOMS[editId]){
     CUSTOMS[editId]={
       ...CUSTOMS[editId],
-      zh,cat,area,addr,note,
+      zh,cat,area,addr,note,tags,tagVersion:1,
       editBy:ME.nick,
       editAt:Date.now()
     };
@@ -1368,7 +1419,7 @@ function saveCustomSpot(data, editId=null){
   }else{
     const id=genCustomId();
     CUSTOMS[id]={
-      zh,cat,area,addr,note,
+      zh,cat,area,addr,note,tags,tagVersion:1,
       by:ME.nick,
       byId:ME.id,
       at:Date.now()
@@ -1396,6 +1447,21 @@ function deleteCustomSpot(id){
   toast(`已刪除「${name}」`);
 }
 document.getElementById("addCustomSpotBtn").onclick=e=>openCustomForm(null,e.currentTarget);
+function customTagState(){const layer=overlayTop();return layer?.kind==="custom"?layer.state:null;}
+function renderCustomTags(){const state=customTagState();if(!state)return;state.tags=normalizeCustomTags(state.tags);customEl("customTagChips").innerHTML=state.tags.map((t,i)=>`<span class="tag">${esc(t)}<button type="button" class="chip" data-tag-remove="${i}" aria-label="移除標籤 ${esc(t)}">×</button></span>`).join("");
+  customEl("customTagPicks").innerHTML=customTagSuggestions().filter(t=>!state.tags.some(v=>customTagKey(v)===customTagKey(t))).map(t=>`<button type="button" class="chip" data-tag-add="${esc(t)}">＋ ${esc(t)}</button>`).join("");
+  customEl("customTagHint").textContent=`${state.tags.length} / 8 個標籤；每個最多 12 字，可用 Enter、逗號或頓號分隔。`;
+}
+function addCustomTags(values){const state=customTagState();if(!state)return;state.tags=normalizeCustomTags([...(state.tags||[]),...values]);renderCustomTags();}
+function commitCustomTagInput(all=true){const state=customTagState(),input=customEl("customTagInput");if(!state||state.tagComposing)return;const parts=input.value.split(/[,，、\n]/u);if(!all&&parts.length===1)return;const remaining=all?"":parts.pop();addCustomTags(parts);input.value=remaining;}
+const customTagInput=customEl("customTagInput");
+customTagInput.oncompositionstart=()=>{const state=customTagState();if(state)state.tagComposing=true;};
+customTagInput.oncompositionend=()=>{const state=customTagState();if(state)state.tagComposing=false;commitCustomTagInput(false);};
+customTagInput.oninput=e=>{if(!e.isComposing&&!customTagState()?.tagComposing)commitCustomTagInput(false);};
+customTagInput.onkeydown=e=>{if(e.isComposing||e.keyCode===229||customTagState()?.tagComposing)return;if(["Enter",",","，","、"].includes(e.key)){e.preventDefault();commitCustomTagInput();}else if(e.key==="Backspace"&&!customTagInput.value){customTagState()?.tags.pop();renderCustomTags();}};
+customTagInput.onbeforeinput=e=>{if(!e.isComposing&&!customTagState()?.tagComposing&&["insertLineBreak","insertParagraph"].includes(e.inputType)){e.preventDefault();commitCustomTagInput();}};
+customEl("customTagAdd").onclick=()=>commitCustomTagInput();
+customEl("customForm").addEventListener("click",e=>{const add=e.target.closest("[data-tag-add]"),remove=e.target.closest("[data-tag-remove]");if(add){addCustomTags([add.dataset.tagAdd]);}else if(remove){const state=customTagState();if(state){state.tags.splice(Number(remove.dataset.tagRemove),1);renderCustomTags();}}});
 document.getElementById("customCancel").onclick=()=>closeOverlay("custom");
 document.getElementById("customForm").onsubmit=e=>{
   if(e&&e.preventDefault)e.preventDefault();
@@ -1408,7 +1474,8 @@ document.getElementById("customForm").onsubmit=e=>{
   const coords=document.getElementById("customCoords").value;
   const url=document.getElementById("customUrl").value;
   const note=document.getElementById("customNote").value;
-  const position=customCoordsInfo(),savedId=saveCustomSpot({zh,cat,area,addr,coords,url,note,...(position?{lat:position.lat,lng:position.lng}:{})}, editId);
+  if(overlayTop()?.state.tagComposing)return;commitCustomTagInput();
+  const position=customCoordsInfo(),savedId=saveCustomSpot({zh,cat,area,addr,coords,url,note,tags:overlayTop().state.tags,...(position?{lat:position.lat,lng:position.lng}:{})}, editId);
   if(savedId){
     closeOverlay("custom");
   }
@@ -1445,8 +1512,8 @@ function drawNearby(group,source,spots){const a=BY[source];group.clearLayers();[
 }
 function fitNearby(target,source,spots){const a=BY[source],pts=[[a.lat,a.lng],...spots.map(s=>[BY[s.id].lat,BY[s.id].lng])];if(pts.length===1)target.setView(pts[0],15);else target.fitBounds(pts,{padding:[28,28],maxZoom:16});}
 function bindNearbyPopups(target){target.on("popupopen",e=>{const buttons=e.popup.getElement().querySelectorAll("[data-near-add],[data-near-detail]");if(target===nearbyMap&&overlayTop()?.kind==="nearby")overlayTop().state.popup=[...buttons].find(b=>b.dataset.nearDetail)?.dataset.nearDetail;buttons.forEach(b=>b.onclick=handleNearbyClick);});target.on("popupclose",()=>{if(target===nearbyMap&&overlayTop()?.kind==="nearby")overlayTop().state.popup=null;});}
-function renderNearby(){if(!nearbyId)return;if(!hasCoords(BY[nearbyId])){closeNearby();return;}const a=BY[nearbyId],query=overlayTop().state.query||"",all=nearbySpots(nearbyId),spots=all.filter(s=>nearbyMatches(BY[s.id],query,DETAIL[s.id]));document.getElementById("nearbyTitle").textContent=`📍 ${a.zh} 附近`;
-  document.getElementById("nearbyRows").innerHTML=NEARBY_BANDS.map(b=>{const rows=spots.map((spot,i)=>({...spot,index:i+1})).filter(s=>s.band===b.label);return rows.length?`<section><h3>${b.label}・${rows.length} 處</h3>${rows.map(spot=>{const a=BY[spot.id];return `<div class="nearby-row"><strong>${spot.index}. ${CATEGORY_STYLE[a.cat]?.emoji||"🎡"} ${esc(a.zh)}</strong><div class="meta">${esc(a.area||"未填地區")}・${nearbyDistance(spot.meters)}・步行 ≈ ${spot.walkMin} 分鐘<br>📅 ${esc(currentPlace(a.id))}</div><div class="row"><button type="button" class="btn alt" data-near-detail="${esc(a.id)}">詳情</button>${nearbyAction(nearbyId,a.id)}</div></div>`;}).join("")}</section>`:"";}).join("")||(normalizeNearbySearch(query)?'<p class="hint">找不到符合的地點</p>':'<p class="hint">5 km 內沒有其他已登錄且有座標的景點，可以新增自訂地點再一起安排。</p>');
+function renderNearby(){if(!nearbyId)return;if(!hasCoords(BY[nearbyId])){closeNearby();return;}const a=BY[nearbyId],query=overlayTop().state.query||"",all=nearbySpots(nearbyId),spots=filteredNearbySpots(nearbyId,query);document.getElementById("nearbyTitle").textContent=`📍 ${a.zh} 附近`;
+  document.getElementById("nearbyRows").innerHTML=NEARBY_BANDS.map(b=>{const rows=spots.map((spot,i)=>({...spot,index:i+1})).filter(s=>s.band===b.label);return rows.length?`<section><h3>${b.label}・${rows.length} 處</h3>${rows.map(spot=>{const a=BY[spot.id];return `<div class="nearby-row"><strong>${spot.index}. ${CATEGORY_STYLE[a.cat]?.emoji||"🎡"} ${esc(a.zh)}</strong><div class="meta">${esc(a.area||"未填地區")}・${nearbyDistance(spot.meters)}・步行 ≈ ${spot.walkMin} 分鐘<br>📅 ${esc(currentPlace(a.id))}</div><div class="tags">${customTagsHTML(a)}</div><div class="row"><button type="button" class="btn alt" data-near-detail="${esc(a.id)}">詳情</button>${nearbyAction(nearbyId,a.id)}</div></div>`;}).join("")}</section>`:"";}).join("")||(normalizeNearbySearch(query)?'<p class="hint">找不到符合的地點</p>':'<p class="hint">5 km 內沒有其他已登錄且有座標的景點，可以新增自訂地點再一起安排。</p>');
   document.getElementById("nearbyCount").textContent=`符合 ${spots.length} / 共 ${all.length} 處`;
   document.getElementById("nearbyBigMap").disabled=!map||!window.L;
   if(nearbyMap&&window.L)drawNearby(nearbyMiniLayer,nearbyId,spots);
@@ -1487,15 +1554,15 @@ function renderMap(){
   layer.clearLayers();allLayer.clearLayers();markers={};
   markers[HOTEL.id]=L.marker([HOTEL.lat,HOTEL.lng],{icon:L.divIcon({className:"hotel-pin",html:"🏨",iconSize:[30,30],iconAnchor:[15,15],popupAnchor:[0,-15]}),zIndexOffset:1000}).bindPopup(popup(BY[HOTEL.id])+`<br>${esc(HOTEL.addr)}<br>☎ ${esc(HOTEL.tel)}<br>${esc(HOTEL.station)}`).addTo(layer);
   const sel=selected();
-  if(document.getElementById("showAll").checked) ATTR.filter(a=>!a.lodging&&!sel.has(a.id)&&hasCoords(a)).forEach(a=>{const style=CATEGORY_STYLE[a.cat];markers[a.id]=(style?L.marker([a.lat,a.lng],{icon:L.divIcon({className:"category-pin",html:`<span style="display:block;border-radius:8px;background:${style.color}">${style.emoji}</span>`,iconSize:[30,30],iconAnchor:[15,15]})}):L.circleMarker([a.lat,a.lng],{radius:6,color:"#8d97a8",fillColor:"#c3cad6",fillOpacity:.9,weight:1})).bindPopup(popup(a)).addTo(allLayer);});
-  S.pool.forEach(id=>{const a=BY[id];if(!hasCoords(a))return;markers[id]=L.marker([a.lat,a.lng],{icon:pin("#a9b6c9","•")}).bindPopup(popup(a,"未排入")).addTo(layer);});
+  if(document.getElementById("showAll").checked) ATTR.filter(a=>!a.lodging&&!sel.has(a.id)&&hasCoords(a)&&matchesCustomTagFilter(a)).forEach(a=>{const style=CATEGORY_STYLE[a.cat];markers[a.id]=(style?L.marker([a.lat,a.lng],{icon:L.divIcon({className:"category-pin",html:`<span style="display:block;border-radius:8px;background:${style.color}">${style.emoji}</span>`,iconSize:[30,30],iconAnchor:[15,15]})}):L.circleMarker([a.lat,a.lng],{radius:6,color:"#8d97a8",fillColor:"#c3cad6",fillOpacity:.9,weight:1})).bindPopup(popup(a)).addTo(allLayer);});
+  S.pool.forEach(id=>{const a=BY[id];if(!hasCoords(a)||!matchesCustomTagFilter(a))return;markers[id]=L.marker([a.lat,a.lng],{icon:pin("#a9b6c9","•")}).bindPopup(popup(a,"未排入")).addTo(layer);});
   S.days.forEach((d,i)=>{const c=COLORS[i%COLORS.length];const pts=[];
-    d.items.forEach((id,k)=>{const a=BY[id];if(!hasCoords(a))return;pts.push([a.lat,a.lng]);markers[id]=L.marker([a.lat,a.lng],{icon:pin(c,k+1),zIndexOffset:100}).bindPopup(popup(a,`${d.label} 第 ${k+1} 站`)).addTo(layer);});
+    d.items.forEach((id,k)=>{const a=BY[id];if(!hasCoords(a)||!matchesCustomTagFilter(a))return;pts.push([a.lat,a.lng]);markers[id]=L.marker([a.lat,a.lng],{icon:pin(c,k+1),zIndexOffset:100}).bindPopup(popup(a,`${d.label} 第 ${k+1} 站`)).addTo(layer);});
     if(pts.length>1)L.polyline(pts,{color:c,weight:4,opacity:.8,dashArray:"6 6"}).addTo(layer);});
-  document.getElementById("legend").innerHTML=S.days.map((d,i)=>`<span><i style="background:${COLORS[i%COLORS.length]}"></i>${esc(d.label)}</span>`).join("")+(S.pool.length?'<span><i style="background:#a9b6c9"></i>未排入</span>':"")+(document.getElementById("showAll").checked?Object.entries(CATEGORY_STYLE).filter(([cat])=>ATTR.some(a=>a.cat===cat&&!sel.has(a.id)&&hasCoords(a))).map(([cat,style])=>`<span><i style="background:${style.color}"></i>${style.emoji} ${esc(cat)}</span>`).join(""):"");
+  document.getElementById("legend").innerHTML=S.days.map((d,i)=>`<span><i style="background:${COLORS[i%COLORS.length]}"></i>${esc(d.label)}</span>`).join("")+(S.pool.length?'<span><i style="background:#a9b6c9"></i>未排入</span>':"")+(document.getElementById("showAll").checked?Object.entries(CATEGORY_STYLE).filter(([cat])=>ATTR.some(a=>a.cat===cat&&!sel.has(a.id)&&hasCoords(a)&&matchesCustomTagFilter(a))).map(([cat,style])=>`<span><i style="background:${style.color}"></i>${style.emoji} ${esc(cat)}</span>`).join(""):"");
 }
-function fit(){if(!map)return;const pts=[[HOTEL.lat,HOTEL.lng],...[...selected()].map(id=>BY[id]).filter(hasCoords).map(a=>[a.lat,a.lng])];if(pts.length===1)map.setView(pts[0],14);else if(pts.length)map.fitBounds(pts,{padding:[30,30]});}
-function showOnMap(id){tab("mapPane");const a=BY[id];if(!map||!hasCoords(a)){toast("此景點尚無地圖座標");return;}if(!markers[id]){document.getElementById("showAll").checked=true;renderMap();}map.setView([a.lat,a.lng],14);setTimeout(()=>markers[id]&&markers[id].openPopup(),200);}
+function fit(){if(!map)return;const pts=[[HOTEL.lat,HOTEL.lng],...[...selected()].map(id=>BY[id]).filter(a=>hasCoords(a)&&matchesCustomTagFilter(a)).map(a=>[a.lat,a.lng])];if(pts.length===1)map.setView(pts[0],14);else if(pts.length)map.fitBounds(pts,{padding:[30,30]});}
+function showOnMap(id){if(!matchesCustomTagFilter(BY[id]))setCustomTagFilter("");tab("mapPane");const a=BY[id];if(!map||!hasCoords(a)){toast("此景點尚無地圖座標");return;}if(!markers[id]){document.getElementById("showAll").checked=true;renderMap();}map.setView([a.lat,a.lng],14);setTimeout(()=>markers[id]&&markers[id].openPopup(),200);}
 
 // ===== 分頁 =====
 function tab(id){document.querySelectorAll("nav.tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tab===id));document.querySelectorAll("section.pane").forEach(p=>p.classList.toggle("on",p.id===id));if(id==="mapPane"&&map)setTimeout(()=>{map.invalidateSize();},50);window.scrollTo(0,0);}
@@ -1594,7 +1661,7 @@ document.getElementById("hotelDocsBtn").onclick=e=>{e.preventDefault();openDocum
 document.getElementById("flightDocsBtn").onclick=e=>openDocuments("flights",e.currentTarget);
 document.getElementById("documentsClose").onclick=closeDocuments;
 // ===== 共用浮窗堆疊：DOM 只呈現最上層，歷史記錄不改動網址 =====
-const overlayStack=[],overlaySession=deviceId(),customFields=["customId","customZh","customCat","customArea","customAddr","customCoords","customNote","customUrl"];
+const overlayStack=[],overlaySession=deviceId(),customFields=["customId","customZh","customCat","customArea","customAddr","customCoords","customNote","customUrl","customTagInput"];
 const overlayPanels={detail:["detailPanel","detailBody","detailClose"],nearby:["nearbyPanel","nearbyBody","nearbyClose"],documents:["documentsPanel","documentsBody","documentsClose"],history:["historyPanel","historyBody","historyClose"],custom:["customModal","customBody","customClose"],nick:["nickModal","nickBody","nickClose"],modal:["modal","mText","modalClose"]};
 let overlayHistoryDepth=0,overlayHistoryPending=false,overlayHistoryEnabled=true,overlayBodyStyle=null,overlayRootOverflow="",overlayPageY=0,sheetAnimation=null,sheetTouch=null,sheetRestoringFocus=false;
 const overlayTop=()=>overlayStack[overlayStack.length-1];
@@ -1646,7 +1713,7 @@ function showOverlay(){let layer=overlayTop();while(layer&&((layer.kind==="detai
   document.getElementById(kind+"Back").hidden=overlayStack.length<2;document.getElementById(close).setAttribute("aria-label",overlayStack.length>1?"返回上一層":"關閉浮窗");
   if(kind==="detail"){detailId=state.id;if(state.position)UI.panel={...state.position};renderDetail();clampPanel();}
   if(kind==="nearby")mountNearby(layer);
-  if(kind==="custom"){document.getElementById("customModalTitle").textContent=state.title;customFields.forEach((id,i)=>{document.getElementById(id).value=state.fields[i];document.getElementById(id).dataset.edited=state.edited?.[i]||"";});if(["正在查詢地圖資料…","正在用地點名稱查詢座標…"].includes(state.suggestHint))state.suggestHint="查詢已取消，重新貼上連結可再查詢。";updateCoordsPreview();renderCustomSuggestions();}
+  if(kind==="custom"){state.tagComposing=false;document.getElementById("customModalTitle").textContent=state.title;customFields.forEach((id,i)=>{document.getElementById(id).value=state.fields[i];document.getElementById(id).dataset.edited=state.edited?.[i]||"";});if(["正在查詢地圖資料…","正在用地點名稱查詢座標…"].includes(state.suggestHint))state.suggestHint="查詢已取消，重新貼上連結可再查詢。";updateCoordsPreview();renderCustomTags();renderCustomSuggestions();}
   if(kind==="nick")document.getElementById("nickInput").value=state.value;
   if(kind==="modal"){document.getElementById("mTitle").textContent=state.title;document.getElementById("mText").value=state.text;modalOk=state.onOk;document.getElementById("mOk").style.display=modalOk?"":"none";}
   if(kind==="documents"){renderDocuments(state.group);state.expanded?.forEach(([id,open])=>document.getElementById(id).open=open);}
