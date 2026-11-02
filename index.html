@@ -117,6 +117,8 @@ section.pane.on{display:block}
 #customModal .box{max-width:440px;max-height:85vh;overflow-y:auto}
 #customForm label{display:block;font-weight:700;font-size:13px;margin:8px 0 3px}
 #customForm input,#customForm select,#customForm textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font:inherit;font-size:14px;color:var(--ink);background:#fff;box-sizing:border-box}
+#tagChips .chip,#customTagPicker .chip{-webkit-touch-callout:none;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+#tagDefRow{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}#tagDefRow[hidden]{display:none}#tagDefName{flex:1;min-width:100px}#mMessage{margin:12px;overflow:auto}
 #customTagPicker{display:flex;flex-wrap:wrap;gap:6px;min-width:0;max-width:100%;margin:6px 0}
 #customTagPicker .chip{min-width:36px;min-height:36px;max-width:100%;white-space:normal;overflow-wrap:anywhere;touch-action:manipulation}
 #customForm textarea{height:auto;resize:vertical}
@@ -304,7 +306,7 @@ body.sheet-open{overscroll-behavior:none}
     <div id="documentsBody"><div id="documentsGroups"></div><p id="documentsHint">離線查看：在手機 Google Drive App 開啟檔案 → ⋮ → 開啟『可離線使用』。本頁可離線開啟，但雲端文件需先在 Drive App 設為離線。</p></div>
   </div>
 </div>
-<div class="modal" id="customModal" role="dialog" aria-modal="true" aria-labelledby="customModalTitle"><form class="box" id="customForm"><div class="overlay-tools"><button type="button" class="btn alt overlay-back" id="customBack" hidden>← 返回</button><h3 id="customModalTitle">＋ 自訂景點</h3><button type="button" class="detail-close" id="customClose" aria-label="關閉浮窗">✕</button></div><div id="customBody"><input type="hidden" id="customId"><div id="customPlanMap" role="region" aria-label="自訂景點與已排行程地圖" hidden></div><div id="customPlanLegend"></div><div id="customNearest" aria-live="polite"></div><label for="customZh">景點名稱 <b style="color:#ef6f6c">*</b></label><input type="text" id="customZh" maxlength="60" required placeholder="例如：博多運河城（必填，60 字內）"><label for="customCat">類型 <b style="color:#ef6f6c">*</b></label><select id="customCat" required><option value="">請選擇類型</option><option value="親子景點">親子景點</option><option value="購物街/商圈">購物街/商圈</option><option value="安全帽店">安全帽店</option><option value="樂高店">樂高店</option><option value="PS5遊戲片店">PS5遊戲片店</option><option value="餐廳">餐廳</option></select><label id="customTagLabel">分類標籤（可複選，最多 8 個）</label><div id="customTagPicker" role="group" aria-labelledby="customTagLabel" aria-describedby="customTagHint"></div><small class="hint" id="customTagHint" role="status" aria-live="polite">請從既有標籤選擇，最多 8 個。</small><label for="customArea">地區</label><input type="text" id="customArea" maxlength="40" placeholder="例如：福岡市區、太宰府（40 字內）"><label for="customAddr">地址</label><input type="text" id="customAddr" maxlength="200" placeholder="例如：福岡県福岡市博多区...（200 字內）"><label for="customCoords">座標、Google 地圖連結或 Plus Code</label><input type="text" id="customCoords" aria-describedby="customCoordsHint customCoordsPreview" placeholder="33.5898, 130.4108 或 HCR9+2X 福岡市"><small class="hint" id="customCoordsHint" style="margin-top:2px;display:block">接受座標、Google 地圖連結或 Plus Code（例如 HCR9+2X 福岡市）。短碼依地名定位；未填地名時以住宿為參考。</small><p class="hint" id="customCoordsPreview" role="status" aria-live="polite" hidden></p><div id="customSuggest" role="region" aria-label="地圖資料建議" aria-live="polite" hidden></div><label for="customUrl">相關網址</label><input type="url" id="customUrl" placeholder="https://...（http 或 https）"><label for="customNote">備註</label><textarea id="customNote" maxlength="1000" rows="3" placeholder="例如：營業時間、推薦原因、注意事項等（1000 字內）"></textarea><div class="row" style="margin-top:12px;justify-content:flex-end"><button type="button" class="btn alt" id="customCancel">取消</button><button type="submit" class="btn" id="customSubmit">儲存</button></div></div></form></div>
+<div class="modal" id="customModal" role="dialog" aria-modal="true" aria-labelledby="customModalTitle"><form class="box" id="customForm"><div class="overlay-tools"><button type="button" class="btn alt overlay-back" id="customBack" hidden>← 返回</button><h3 id="customModalTitle">＋ 自訂景點</h3><button type="button" class="detail-close" id="customClose" aria-label="關閉浮窗">✕</button></div><div id="customBody"><input type="hidden" id="customId"><div id="customPlanMap" role="region" aria-label="自訂景點與已排行程地圖" hidden></div><div id="customPlanLegend"></div><div id="customNearest" aria-live="polite"></div><label for="customZh">景點名稱 <b style="color:#ef6f6c">*</b></label><input type="text" id="customZh" maxlength="60" required placeholder="例如：博多運河城（必填，60 字內）"><label for="customCat">類型 <b style="color:#ef6f6c">*</b></label><select id="customCat" required><option value="">請選擇類型</option><option value="親子景點">親子景點</option><option value="購物街/商圈">購物街/商圈</option><option value="安全帽店">安全帽店</option><option value="樂高店">樂高店</option><option value="PS5遊戲片店">PS5遊戲片店</option><option value="餐廳">餐廳</option></select><label id="customTagLabel">分類標籤（可複選，最多 8 個）</label><div id="customTagPicker" role="group" aria-labelledby="customTagLabel" aria-describedby="customTagHint"></div><div id="tagDefRow" hidden><input id="tagDefName" type="text" aria-label="新增分類名稱" aria-describedby="tagDefError" autocomplete="off" placeholder="分類名稱（12 字內）"><button type="button" class="btn" id="tagDefSave">確定</button><button type="button" class="btn alt" id="tagDefCancel">取消</button></div><small id="tagDefError" role="status" aria-live="polite"></small><small class="hint" id="customTagHint" role="status" aria-live="polite">可多選，最多 8 個；按「＋ 新增分類」可自訂，長按自訂分類可刪除。</small><label for="customArea">地區</label><input type="text" id="customArea" maxlength="40" placeholder="例如：福岡市區、太宰府（40 字內）"><label for="customAddr">地址</label><input type="text" id="customAddr" maxlength="200" placeholder="例如：福岡県福岡市博多区...（200 字內）"><label for="customCoords">座標、Google 地圖連結或 Plus Code</label><input type="text" id="customCoords" aria-describedby="customCoordsHint customCoordsPreview" placeholder="33.5898, 130.4108 或 HCR9+2X 福岡市"><small class="hint" id="customCoordsHint" style="margin-top:2px;display:block">接受座標、Google 地圖連結或 Plus Code（例如 HCR9+2X 福岡市）。短碼依地名定位；未填地名時以住宿為參考。</small><p class="hint" id="customCoordsPreview" role="status" aria-live="polite" hidden></p><div id="customSuggest" role="region" aria-label="地圖資料建議" aria-live="polite" hidden></div><label for="customUrl">相關網址</label><input type="url" id="customUrl" placeholder="https://...（http 或 https）"><label for="customNote">備註</label><textarea id="customNote" maxlength="1000" rows="3" placeholder="例如：營業時間、推薦原因、注意事項等（1000 字內）"></textarea><div class="row" style="margin-top:12px;justify-content:flex-end"><button type="button" class="btn alt" id="customCancel">取消</button><button type="submit" class="btn" id="customSubmit">儲存</button></div></div></form></div>
 <div class="modal" id="nickModal" role="dialog" aria-modal="true" aria-labelledby="nickLabel"><form class="box" id="nickForm"><div class="overlay-tools"><button type="button" class="btn alt overlay-back" id="nickBack" hidden>← 返回</button><strong>暱稱</strong><button type="button" class="detail-close" id="nickClose" aria-label="關閉浮窗">✕</button></div><div id="nickBody"><label id="nickLabel" for="nickInput">請輸入你的暱稱（顯示在許願池與修改紀錄）</label><input class="nick-input" id="nickInput" maxlength="12" required autocomplete="nickname"><div class="row" style="justify-content:flex-end"><button class="btn" type="submit">確定</button></div></div></form></div>
 <aside class="detail-panel" id="detailPanel" role="dialog" aria-labelledby="detailTitle"><div class="detail-head" id="detailHead"><button type="button" class="btn alt overlay-back" id="detailBack" hidden>← 返回</button><strong>景點詳情</strong><button class="detail-close" id="detailClose" aria-label="關閉景點詳情">✕</button></div><div class="detail-body" id="detailBody"></div></aside>
 <div class="modal" id="nearbyPanel" role="dialog" aria-modal="true" aria-labelledby="nearbyTitle"><div class="box"><div class="detail-head"><button type="button" class="btn alt overlay-back" id="nearbyBack" hidden>← 返回</button><strong id="nearbyTitle">📍 附近景點</strong><button type="button" class="detail-close" id="nearbyClose" aria-label="關閉附近景點">✕</button></div><div id="nearbyMapRegion"><div id="nearbyMap" role="region" aria-label="附近景點地圖"></div></div><div id="nearbyBody"><div class="row"><button type="button" class="btn" id="nearbyBigMap">🗺 在大地圖上顯示</button></div><p class="hint" style="margin-top:8px">紅色 ★ 為起點，藍色數字對應下方景點；虛線圈為 500 m／1.5 km。距離為直線估算，步行時間以親子步速約 4 km/h 估算，實際路線與交通時間請另確認。</p><div id="nearbySearchBar"><div class="nearby-search"><input id="nearbySearch" type="search" aria-label="搜尋附近店名、類別" aria-describedby="nearbyCount" autocomplete="off" placeholder="搜尋店名、類別（例如：燒肉、拉麵、樂高）"><button type="button" class="btn alt" id="nearbySearchClear" aria-label="清除附近搜尋">✕</button></div><p class="count" id="nearbyCount" role="status" aria-live="polite" aria-atomic="true"></p></div><div id="nearbyRows"></div></div></div></div>
@@ -312,7 +314,7 @@ body.sheet-open{overscroll-behavior:none}
 <aside class="detail-panel" id="historyPanel" role="dialog" aria-labelledby="historyTitle"><div class="detail-head"><button type="button" class="btn alt overlay-back" id="historyBack" hidden>← 返回</button><strong id="historyTitle">🕘 版本紀錄</strong><button class="detail-close" id="historyClose" aria-label="關閉版本紀錄">✕</button></div><div class="detail-body" id="historyBody"></div></aside>
 
 <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="mTitle"><div class="box"><div class="overlay-tools"><button type="button" class="btn alt overlay-back" id="modalBack" hidden>← 返回</button><strong id="mTitle"></strong><button type="button" class="detail-close" id="modalClose" aria-label="關閉浮窗">✕</button></div>
-  <textarea id="mText"></textarea>
+  <p id="mMessage" hidden></p><textarea id="mText"></textarea>
   <div class="row" style="margin-top:8px;justify-content:flex-end">
     <button class="btn alt" id="mCopy">複製</button>
     <button class="btn" id="mOk">確定</button>
@@ -708,10 +710,36 @@ function genCustomId(){
   }while(BUILTIN_IDS.has(id)||(typeof CUSTOMS==="object"&&CUSTOMS&&CUSTOMS[id]));
   return id;
 }
-// Keep canonical planner tags only, in selection order, for form, imports and sync.
-function normalizeCustomTag(value){if(typeof value!=="string")return "";const tag=value.normalize("NFKC").trim().replace(/^(?:#\s*)+/u,"").trim();return CUSTOM_TAGS.includes(tag)?tag:"";}
-function normalizeCustomTags(raw){const out=[];if(!Array.isArray(raw))return out;for(const value of raw){const tag=normalizeCustomTag(value);if(tag&&!out.includes(tag)){out.push(tag);if(out.length===8)break;}}return out;}
-function sanitizeCustoms(raw){
+// Shared definitions retain deletion tombstones; incoming state is authoritative.
+function tagName(value){return typeof value==="string"?value.normalize("NFKC").trim():"";}
+function validTagName(name){return !!name&&[...name].length<=12&&!/[\p{Cc}\p{Cf}]/u.test(name);}
+function sanitizeTagDefs(raw){const out={};if(!raw||typeof raw!=="object"||Array.isArray(raw))return out;
+  for(const [id,v] of Object.entries(raw).slice(0,200)){if(!/^[a-z0-9_]{1,40}$/.test(id)||["__proto__","constructor","prototype"].includes(id)||!v||typeof v!=="object"||Array.isArray(v))continue;
+    const name=tagName(v.name);if(!validTagName(name)||typeof v.by!=="string"||!nickname(v.by)||typeof v.byId!=="string"||!/^[A-Za-z0-9_-]{1,64}$/.test(v.byId)||["__proto__","constructor","prototype"].includes(v.byId)||!Number.isInteger(v.at)||v.at<0)continue;
+    if(v.deleted!==undefined&&v.deleted!==true)continue;
+    if(v.deletedAt!==undefined&&(!Number.isInteger(v.deletedAt)||v.deletedAt<0))continue;
+    if(v.deletedBy!==undefined&&(typeof v.deletedBy!=="string"||!nickname(v.deletedBy)))continue;
+    out[id]={name,by:nickname(v.by),byId:v.byId,at:v.at};if(v.deleted===true)out[id].deleted=true;
+    if(v.deletedAt!==undefined)out[id].deletedAt=v.deletedAt;if(v.deletedBy!==undefined)out[id].deletedBy=nickname(v.deletedBy);
+  }return out;
+}
+const TAGDEFKEY="kyushuPlanner.tagDefs";
+let TAGDEFS=sanitizeTagDefs(stored(TAGDEFKEY,{}));
+function plannerTags(defs=TAGDEFS){return [...new Set([...TAGS,...Object.values(defs).filter(d=>!d.deleted).map(d=>d.name)])];}
+function pickerTags(){return plannerTags().filter(t=>t!=="已訂");}
+function cacheTagDefs(){try{localStorage.setItem(TAGDEFKEY,JSON.stringify(TAGDEFS));}catch{}}
+function setTagDefs(next,rerender=true){TAGDEFS=sanitizeTagDefs(next);cacheTagDefs();
+  for(const t of F.tags)if(!plannerTags().includes(t))F.tags.delete(t);
+  for(const layer of overlayStack)if(layer.kind==="custom")layer.state.tags=normalizeCustomTags(layer.state.tags);
+  setCustoms(CUSTOMS,false);if(rerender)renderAll();
+}
+// Keep known tags only, in selection order, for forms, imports and sync.
+function normalizeCustomTag(value,defs=TAGDEFS){if(typeof value!=="string")return "";const name=tagName(value),tags=plannerTags(defs).filter(t=>t!=="已訂");if(tags.includes(name))return name;
+  if(Object.values(defs).some(d=>d.deleted&&d.name===name))return "";
+  const tag=name.replace(/^(?:#\s*)+/u,"").trim();return tags.includes(tag)?tag:"";
+}
+function normalizeCustomTags(raw,defs=TAGDEFS){const out=[];if(!Array.isArray(raw))return out;for(const value of raw){const tag=normalizeCustomTag(value,defs);if(tag&&!out.includes(tag)){out.push(tag);if(out.length===8)break;}}return out;}
+function sanitizeCustoms(raw,defs=TAGDEFS){
   const out={};
   if(!raw||typeof raw!=="object"||Array.isArray(raw)) return out;
   for(const [id,val] of Object.entries(raw)){
@@ -743,7 +771,7 @@ function sanitizeCustoms(raw){
     const at=Number(val.at);
     if(!Number.isFinite(at)||at<0) continue;
     // tagVersion survives Firebase's removal of empty arrays, so clearing all tags is explicit.
-    const entry={zh,cat,area,addr,note,tags:normalizeCustomTags(val.tags),tagVersion:1,by,byId,at:Math.floor(at)};
+    const entry={zh,cat,area,addr,note,tags:normalizeCustomTags(val.tags,defs),tagVersion:1,by,byId,at:Math.floor(at)};
     if(lat!==undefined&&lng!==undefined){entry.lat=lat;entry.lng=lng;}
     if(url) entry.url=url;
     if(typeof val.editBy==="string"&&nickname(val.editBy)) entry.editBy=nickname(val.editBy);
@@ -853,32 +881,35 @@ function sanitizeWishes(raw, byLookup=BY){const out={};if(!raw||typeof raw!=="ob
 function normalPlan(p, byLookup=BY){if(!p||typeof p!=="object"||!Object.hasOwn(p,"days"))return null;const list=x=>Array.isArray(x)?x:(x&&typeof x==="object"?Object.values(x):[]);return clean({days:list(p.days).filter(d=>d&&typeof d==="object").map(d=>({id:typeof d.id==="string"?d.id:uid(),label:String(d.label||"新的一天"),items:list(d.items)})),pool:list(p.pool)}, byLookup);}
 function normalState(raw){
   if(!raw||!raw.plan)return null;
-  const customs=sanitizeCustoms(raw.customs);
+  const tagDefs=sanitizeTagDefs(raw.tagDefs),customs=sanitizeCustoms(raw.customs,tagDefs);
   const byLookup={...BY};
   for(const [id,c] of Object.entries(customs)){
     if(!byLookup[id]) byLookup[id]={id,zh:c.zh,cat:c.cat,area:c.area||"",addr:c.addr||"",custom:true};
   }
   const plan=normalPlan(raw.plan, byLookup);
-  return plan?{rev:Number(raw.rev)||0,at:Number(raw.at)||0,by:nickname(raw.by),byId:String(raw.byId||""),summary:String(raw.summary||""),plan,wishes:sanitizeWishes(raw.wishes, byLookup),customs}:null;
+  return plan?{rev:Number(raw.rev)||0,at:Number(raw.at)||0,by:nickname(raw.by),byId:String(raw.byId||""),summary:String(raw.summary||""),plan,wishes:sanitizeWishes(raw.wishes, byLookup),customs,tagDefs}:null;
 }
 // The previous live client whitelists custom fields in sanitizeCustoms and rewrites the
 // entire state, dropping tags (and tagVersion). Preserve known committed tags only for
 // missing fields on the same creation when content is unchanged or the spot is older.
 // A newer legacy edit with different content, or a device with no tagged cache, cannot
 // recover lost tags; archived versions remain exact and can be restored explicitly.
-function preserveLegacyTags(raw,known){const next=sanitizeCustoms(raw);for(const [id,c] of Object.entries(next)){const previous=known?.[id],incoming=raw[id];if(!previous||Object.hasOwn(incoming,"tags")||incoming.tagVersion===1||c.byId!==previous.byId||c.at!==previous.at)continue;
+function preserveLegacyTags(raw,known,defs=TAGDEFS){const next=sanitizeCustoms(raw,defs);for(const [id,c] of Object.entries(next)){const previous=known?.[id],incoming=raw[id];if(!previous||Object.hasOwn(incoming,"tags")||incoming.tagVersion===1||c.byId!==previous.byId||c.at!==previous.at)continue;
     const content=spot=>JSON.stringify([spot.zh,spot.cat,spot.area,spot.addr,spot.note,spot.lat,spot.lng,spot.url||""]);
-    if(content(c)===content(previous)||(c.editAt??c.at)<=(previous.editAt??previous.at))c.tags=normalizeCustomTags(previous.tags);
+    if(content(c)===content(previous)||(c.editAt??c.at)<=(previous.editAt??previous.at))c.tags=normalizeCustomTags(previous.tags,defs);
   }return next;}
-function normalLiveState(raw){return raw?normalState({...raw,customs:preserveLegacyTags(raw.customs, sync.current?.customs||CUSTOMS)}):null;}
+function normalLiveState(raw){return raw?normalState({...raw,customs:preserveLegacyTags(raw.customs, sync.current?.customs||CUSTOMS,sanitizeTagDefs(raw.tagDefs))}):null;}
 WISH=sanitizeWishes(stored(WISHKEY,{}));
 let dragging=false,renderQueued=false;
-function snapshot(){return {plan:clone(S),wishes:clone(WISH),customs:clone(CUSTOMS)};}
+function snapshot(){return {plan:clone(S),wishes:clone(WISH),customs:clone(CUSTOMS),tagDefs:clone(TAGDEFS)};}
 function wishOps(before,after){const ops={};for(const spot of new Set([...Object.keys(before),...Object.keys(after)]))for(const dev of new Set([...Object.keys(before[spot]||{}),...Object.keys(after[spot]||{})])){const a=before[spot]?.[dev]||null,b=after[spot]?.[dev]||null;if(JSON.stringify(a)!==JSON.stringify(b))ops[spot+"/"+dev]=b;}return ops;}
 function applyWishOps(wishes,ops){const next=clone(wishes||{});for(const [path,value] of Object.entries(ops)){const [spot,dev]=path.split("/");if(!Object.hasOwn(BY,spot)||["__proto__","constructor","prototype"].includes(dev))continue;if(value)(next[spot]??={})[dev]=clone(value);else if(next[spot])delete next[spot][dev];}return sanitizeWishes(next);}
 function diffState(before,after){const changes=[],a=before?.plan||{days:[],pool:[]},b=after?.plan||{days:[],pool:[]};
   const places=plan=>{const out=new Map();plan.pool.forEach(id=>out.set(id,{key:"pool",label:"未排入"}));plan.days.forEach((d,i)=>d.items.forEach(id=>out.set(id,{key:d.id||"day"+i,label:d.label.match(/^\S+/)?.[0]||d.label})));return out;},oldPlaces=places(a),nextPlaces=places(b);
   const name=id=>after?.customs?.[id]?.zh || before?.customs?.[id]?.zh || BY[id]?.zh || id;
+  const tBefore=before?.tagDefs||{},tAfter=after?.tagDefs||{};
+  for(const [id,d] of Object.entries(tAfter))if(JSON.stringify(d)!==JSON.stringify(tBefore[id]))changes.push(`${d.deleted?"刪除":!tBefore[id]||tBefore[id].deleted?"新增":"修改"}分類「${d.name}」`);
+  for(const [id,d] of Object.entries(tBefore))if(!tAfter[id])changes.push(`刪除分類「${d.name}」`);
   const cBefore=before?.customs||{}, cAfter=after?.customs||{};
   for(const [id,spot] of Object.entries(cAfter)){
     if(!cBefore[id]) changes.push(`新增自訂景點：${spot.zh}`);
@@ -937,18 +968,18 @@ let flushTimer,refreshing=false;
 function persistSync(){localStorage.setItem("kyushuPlanner.sync",JSON.stringify({scope:scope(),rev:sync.rev,current:sync.current,queue:sync.queue,stage:sync.stage}));}
 function cacheWishes(){localStorage.setItem(WISHKEY,JSON.stringify(WISH));}
 function cachePlan(){localStorage.setItem(KEY,JSON.stringify(S));}
-function renderAll(){if(dragging){renderQueued=true;return;}renderQueued=false;renderList();renderDays();renderMap();renderWishes();renderDetail();renderNearby();renderSync();if(historyPreview)renderHistoryPreview();}
+function renderAll(){if(dragging){renderQueued=true;return;}renderQueued=false;renderTagChips();renderCustomTags();renderList();renderDays();renderMap();renderWishes();renderDetail();renderNearby();renderSync();if(historyPreview)renderHistoryPreview();}
 function renderSync(){const pill=document.getElementById("syncStatus");pill.className="status";let text;if(!shared()){text="📴 本機模式・版本紀錄存於此裝置";pill.classList.add("local");}else if(sync.offline){text="⚠️ 離線，變更會在連線後上傳";pill.classList.add("off");}else{const p=sync.current,time=p?.at?new Intl.DateTimeFormat("zh-TW",{timeZone:"Asia/Taipei",hour:"2-digit",minute:"2-digit",hour12:false}).format(p.at):"";text=p?.by?`🟢 共享中・第 ${p.rev} 版・${p.by} ${time}`:"🟢 共享中・等待同步";}
   const span=pill.querySelector?.(".status-text");if(span)span.textContent=text;else pill.textContent=text+" 🕘";
   document.getElementById("refreshBtn").hidden=!shared();document.getElementById("beforeShareBtn").hidden=!localStorage.getItem(KEY+".beforeShare");document.getElementById("planHint").textContent="按住 ☰ 拖曳即可排序或移到別天；也可以用右側選單直接換天。"+(shared()?"目前與家人共享，修改會自動同步並保留版本紀錄。":"行程會自動存在這支手機（localStorage），保留最近 100 個版本。");}
-function markChange(planChanged=false,summary=""){if(!sync.stage)sync.stage={before:clone(sync.head),baseRev:sync.rev,planChanged:false,summary:"",state:null};sync.stage.planChanged ||= planChanged;if(summary)sync.stage.summary=summary;sync.stage.state=snapshot();sync.head=snapshot();cachePlan();cacheWishes();cacheCustoms();persistSync();scheduleFlush();}
+function markChange(planChanged=false,summary=""){if(!sync.stage)sync.stage={before:clone(sync.head),baseRev:sync.rev,planChanged:false,summary:"",state:null};sync.stage.planChanged ||= planChanged;if(summary)sync.stage.summary=summary;sync.stage.state=snapshot();sync.head=snapshot();cachePlan();cacheWishes();cacheCustoms();cacheTagDefs();persistSync();scheduleFlush();}
 function markPlan(summary=""){markChange(true,summary);}
 function queueWish(){markChange(false);}
 function scheduleFlush(){clearTimeout(flushTimer);flushTimer=setTimeout(flushPending,600);}
 function offline(){sync.offline=true;renderSync();}
-function acceptState(raw){const state=normalLiveState(raw);if(!state)return;if(dragging||sync.busy||sync.stage||sync.queue.length){if(!sync.deferred||state.rev>=sync.deferred.rev)sync.deferred=state;renderQueued=true;return;}if(state.rev<sync.rev)return;setCustoms(state.customs||{},false);sync.current=state;sync.rev=state.rev;S=clone(state.plan);WISH=clone(state.wishes);sync.head=snapshot();sync.offline=false;cachePlan();cacheWishes();cacheCustoms();persistSync();renderAll();}
+function acceptState(raw){const state=normalLiveState(raw);if(!state)return;if(dragging||sync.busy||sync.stage||sync.queue.length){if(!sync.deferred||state.rev>=sync.deferred.rev)sync.deferred=state;renderQueued=true;return;}if(state.rev<sync.rev)return;setTagDefs(state.tagDefs||{},false);setCustoms(state.customs||{},false);sync.current=state;sync.rev=state.rev;S=clone(state.plan);WISH=clone(state.wishes);sync.head=snapshot();sync.offline=false;cachePlan();cacheWishes();cacheCustoms();cacheTagDefs();persistSync();renderAll();}
 function acceptMirror(){const state=sync.deferred||sync.current;sync.deferred=null;if(state)acceptState(state);else renderAll();}
-function conflict(remote){const drafts=stored("kyushuPlanner.conflicts",[]);for(const batch of sync.queue)drafts.push({...clone(batch.state),at:Date.now(),by:ME.nick,byId:ME.id,summary:batch.summary,scope:scope(),id:deviceId()});if(sync.stage)drafts.push({...clone(sync.stage.state),at:Date.now(),by:ME.nick,byId:ME.id,summary:sync.stage.summary||summarize(diffState(sync.stage.before,sync.stage.state)),scope:scope(),id:deviceId()});localStorage.setItem("kyushuPlanner.conflicts",JSON.stringify(drafts));clearTimeout(flushTimer);sync.queue=[];sync.stage=null;sync.current=remote;sync.rev=remote?.rev||0;sync.deferred=null;setCustoms(remote?.customs||{},false);S=remote?clone(remote.plan):blank();WISH=remote?clone(remote.wishes):{};sync.head=snapshot();cachePlan();cacheWishes();cacheCustoms();persistSync();toast("其他人剛修改了行程，已載入最新版本；你的變更可在「版本紀錄」找到或重做");}
+function conflict(remote){const drafts=stored("kyushuPlanner.conflicts",[]);for(const batch of sync.queue)drafts.push({...clone(batch.state),at:Date.now(),by:ME.nick,byId:ME.id,summary:batch.summary,scope:scope(),id:deviceId()});if(sync.stage)drafts.push({...clone(sync.stage.state),at:Date.now(),by:ME.nick,byId:ME.id,summary:sync.stage.summary||summarize(diffState(sync.stage.before,sync.stage.state)),scope:scope(),id:deviceId()});localStorage.setItem("kyushuPlanner.conflicts",JSON.stringify(drafts));clearTimeout(flushTimer);sync.queue=[];sync.stage=null;sync.current=remote;sync.rev=remote?.rev||0;sync.deferred=null;setTagDefs(remote?.tagDefs||{},false);setCustoms(remote?.customs||{},false);S=remote?clone(remote.plan):blank();WISH=remote?clone(remote.wishes):{};sync.head=snapshot();cachePlan();cacheWishes();cacheCustoms();cacheTagDefs();persistSync();toast("其他人剛修改了行程，已載入最新版本；你的變更可在「版本紀錄」找到或重做");}
 async function refreshShared(){if(refreshing||sync.busy)return;refreshing=true;try{const {state}=await adapter.load();sync.offline=false;
   if(!sync.ready){const joined=stored("kyushuPlanner.joined",{}),first=shared()&&!joined[scope()];if(first&&state&&fp(S)!==fp(sample())&&fp(S)!==fp(state.plan)){localStorage.setItem(KEY+".beforeShare",JSON.stringify(S));toast("加入前的本機行程已備份，可用還原按鈕載入");}
     sync.ready=true;if(!sync.stage&&!sync.queue.length){sync.current=state;sync.rev=state?.rev||0;if(shared()&&!state){markPlan(`建立共享行程（由 ${ME.nick||"家人"} 的本機行程上傳）`);}else if(shared()&&state)acceptState(state);else{sync.head=snapshot();persistSync();}}
@@ -960,14 +991,15 @@ async function flushPending(){clearTimeout(flushTimer);
   if(sync.busy||dragging||!ME.nick)return;if(!sync.ready){await refreshShared();if(!sync.ready)return;}if(!sync.queue.length)return;sync.busy=true;
   try{let retries=0;while(sync.queue.length){const batch=sync.queue[0];if(batch.stalePlan){conflict(sync.current);break;}
       const baseRev=batch.baseRev??sync.rev;
-      if(!batch.planChanged&&sync.current&&(batch.baseRev===null||batch.baseRev===sync.rev)){batch.state={plan:clone(sync.current.plan),wishes:applyWishOps(sync.current.wishes,batch.ops),customs:clone(sync.current.customs||{})};batch.summary=summarize(diffState(sync.current,batch.state));}
+      if(!batch.planChanged&&sync.current&&(batch.baseRev===null||batch.baseRev===sync.rev)){batch.state={plan:clone(sync.current.plan),wishes:applyWishOps(sync.current.wishes,batch.ops),customs:clone(sync.current.customs||{}),tagDefs:clone(sync.current.tagDefs||{})};batch.summary=summarize(diffState(sync.current,batch.state));}
       if(shared()&&baseRev===0)batch.summary=`建立共享行程（由 ${ME.nick} 的本機行程上傳）`;
       const desired={...clone(batch.state),by:ME.nick,byId:ME.id,summary:batch.summary};
       if(!desired.customs||!Object.keys(desired.customs).length)delete desired.customs;
+      if(!desired.tagDefs||!Object.keys(desired.tagDefs).length)delete desired.tagDefs;
       let result=await adapter.save(baseRev,desired);
       // A response can be lost after the server commits. Recognize that exact snapshot on retry.
-      if(result.conflict&&result.state?.rev===baseRev+1&&result.state.byId===ME.id&&result.state.summary===desired.summary&&fp(result.state.plan)===fp(desired.plan)&&!Object.keys(wishOps(result.state.wishes,desired.wishes)).length&&JSON.stringify(result.state.customs||{})===JSON.stringify(desired.customs||{}))result={ok:true,state:result.state};
-      if(result.conflict){if(batch.planChanged){conflict(result.state);break;}const latest=result.state||{rev:0,plan:blank(),wishes:{},customs:{}};batch.state={plan:clone(latest.plan),wishes:applyWishOps(latest.wishes,batch.ops),customs:clone(latest.customs||{})};batch.baseRev=latest.rev;batch.summary=summarize(diffState(latest,batch.state));sync.current=result.state;sync.rev=latest.rev;for(const later of sync.queue.slice(1))if(later.planChanged)later.stalePlan=true;if(sync.stage?.planChanged)sync.stage.stalePlan=true;persistSync();if(++retries>=5){scheduleFlush();break;}continue;}
+      if(result.conflict&&result.state?.rev===baseRev+1&&result.state.byId===ME.id&&result.state.summary===desired.summary&&fp(result.state.plan)===fp(desired.plan)&&!Object.keys(wishOps(result.state.wishes,desired.wishes)).length&&JSON.stringify(result.state.customs||{})===JSON.stringify(desired.customs||{})&&JSON.stringify(result.state.tagDefs||{})===JSON.stringify(desired.tagDefs||{}))result={ok:true,state:result.state};
+      if(result.conflict){if(batch.planChanged){conflict(result.state);break;}const latest=result.state||{rev:0,plan:blank(),wishes:{},customs:{},tagDefs:{}};batch.state={plan:clone(latest.plan),wishes:applyWishOps(latest.wishes,batch.ops),customs:clone(latest.customs||{}),tagDefs:clone(latest.tagDefs||{})};batch.baseRev=latest.rev;batch.summary=summarize(diffState(latest,batch.state));sync.current=result.state;sync.rev=latest.rev;for(const later of sync.queue.slice(1))if(later.planChanged)later.stalePlan=true;if(sync.stage?.planChanged)sync.stage.stalePlan=true;persistSync();if(++retries>=5){scheduleFlush();break;}continue;}
       sync.current=result.state;sync.rev=result.state.rev;sync.queue.shift();persistSync();sync.offline=false;
     }
   }catch{offline();scheduleRetry();}finally{sync.busy=false;if(!sync.queue.length&&!sync.stage){const state=sync.deferred&&sync.deferred.rev>sync.rev?sync.deferred:sync.current;sync.deferred=null;if(state)acceptState(state);}else renderSync();}
@@ -1001,7 +1033,7 @@ function renderHistoryPreview(){if(!historyPreview)return;const entry=historyPre
   document.getElementById("historyBody").innerHTML=`<button class="btn alt" data-history-list>← 返回版本紀錄</button><h2>${entry.draft?"本機衝突備份":"第 "+Number(entry.rev)+" 版"}</h2><p class="hint">${esc(taipeiTime(entry.at))} ${historyWho(entry)}</p><p>${esc(entry.summary)}</p><button class="btn" data-history-restore>${entry.draft?"↩️ 載入這份本機變更":"↩️ 還原到這個版本"}</button><h3>與目前行程比較（還原後的變更）</h3>${diff.length?`<ul>${diff.map(s=>`<li>${esc(s)}</li>`).join("")}</ul>`:'<p class="hint">行程與許願相同</p>'}<h3>行程快照</h3>${entry.plan.days.map(d=>`<section class="history-day"><b>${esc(d.label)}</b><p>${spots(d.items)}</p></section>`).join("")}<section class="history-day"><b>未排入</b><p>${spots(entry.plan.pool)}</p></section><h3>許願人數</h3>${wishRows?`<ul>${wishRows}</ul>`:'<p class="hint">尚無許願</p>'}`;
 }
 document.getElementById("syncStatus").onclick=openHistory;document.getElementById("historyClose").onclick=closeHistory;
-document.getElementById("historyBody").onclick=async e=>{const target=e.target.closest("button");if(!target)return;if(target.hasAttribute("data-history-list")){historyList();return;}if(target.dataset.version){previewVersion(Number(target.dataset.version));return;}if(target.dataset.draft){const draft=stored("kyushuPlanner.conflicts",[]).find(d=>d.id===target.dataset.draft&&d.scope===scope());if(draft){historyRequest++;historyPending=null;historyPreview={...clone(draft),draft:true};renderHistoryPreview();}return;}if(target.hasAttribute("data-history-restore")&&historyPreview){const entry=clone(historyPreview);if(!confirm(entry.draft?"載入這份本機變更並建立新版本？" : `還原至第 ${entry.rev} 版？這會建立新版本${shared()?"，並改變所有人看到的行程與許願":""}。`))return;setCustoms(entry.customs||{},false);S=clone(entry.plan);WISH=clone(entry.wishes);update(entry.draft?"載入衝突時的本機變更":`還原至第 ${entry.rev} 版`);fit();closeHistory();toast("已載入快照，將另存為新版本");}};
+document.getElementById("historyBody").onclick=async e=>{const target=e.target.closest("button");if(!target)return;if(target.hasAttribute("data-history-list")){historyList();return;}if(target.dataset.version){previewVersion(Number(target.dataset.version));return;}if(target.dataset.draft){const draft=stored("kyushuPlanner.conflicts",[]).find(d=>d.id===target.dataset.draft&&d.scope===scope());if(draft){historyRequest++;historyPending=null;historyPreview={...clone(draft),draft:true};renderHistoryPreview();}return;}if(target.hasAttribute("data-history-restore")&&historyPreview){const entry=clone(historyPreview);if(!confirm(entry.draft?"載入這份本機變更並建立新版本？" : `還原至第 ${entry.rev} 版？這會建立新版本${shared()?"，並改變所有人看到的行程與許願":""}。`))return;setTagDefs(entry.tagDefs||{},false);setCustoms(entry.customs||{},false);S=clone(entry.plan);WISH=clone(entry.wishes);update(entry.draft?"載入衝突時的本機變更":`還原至第 ${entry.rev} 版`);fit();closeHistory();toast("已載入快照，將另存為新版本");}};
 window.addEventListener("resize",positionHistory);
 
 function save(summary=""){cachePlan();markPlan(summary);}
@@ -1018,14 +1050,15 @@ const AREAS=[...new Set(ATTR.map(a=>a.area))];
 const F={q:"",area:"",age:"",cat:"",tags:new Set(),only:false};
 const areaSel=document.getElementById("area");
 areaSel.innerHTML='<option value="">地區：全部</option>'+AREAS.map(a=>`<option>${esc(a)}</option>`).join("");
-document.getElementById("tagChips").innerHTML=TAGS.map(t=>`<button class="chip" data-tag="${esc(t)}">${esc(t)}</button>`).join("");
-document.getElementById("tagChips").onclick=e=>{const t=e.target.dataset.tag;if(!t)return;F.tags.has(t)?F.tags.delete(t):F.tags.add(t);e.target.classList.toggle("on");renderList();};
+function renderTagChips(){document.getElementById("tagChips").innerHTML=plannerTags().map(t=>`<button class="chip${F.tags.has(t)?" on":""}" data-tag="${esc(t)}" aria-pressed="${F.tags.has(t)}">${esc(t)}</button>`).join("");}
+renderTagChips();
+document.getElementById("tagChips").onclick=e=>{if(suppressTagClick(e))return;const t=e.target.dataset.tag;if(!t)return;F.tags.has(t)?F.tags.delete(t):F.tags.add(t);renderTagChips();renderList();};
 document.getElementById("q").oninput=e=>{F.q=e.target.value.trim().toLowerCase();renderList();};
 areaSel.onchange=e=>{F.area=e.target.value;renderList();};
 document.getElementById("age").onchange=e=>{F.age=e.target.value;renderList();};
 document.getElementById("cat").onchange=e=>{F.cat=e.target.value;renderList();};
 document.getElementById("onlySel").onclick=e=>{F.only=!F.only;e.target.classList.toggle("on",F.only);renderList();};
-document.getElementById("clearF").onclick=()=>{F.q="";F.area="";F.age="";F.cat="";document.getElementById("cat").value="";F.tags.clear();F.only=false;document.getElementById("q").value="";areaSel.value="";document.getElementById("age").value="";document.querySelectorAll(".filters .chip.on").forEach(c=>c.classList.remove("on"));renderList();};
+document.getElementById("clearF").onclick=()=>{F.q="";F.area="";F.age="";F.cat="";document.getElementById("cat").value="";F.tags.clear();F.only=false;document.getElementById("q").value="";areaSel.value="";document.getElementById("age").value="";renderTagChips();renderList();};
 const stars=n=>n==null?"—":"★".repeat(n)+"☆".repeat(3-n);
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 function renderList(){
@@ -1110,9 +1143,9 @@ function openModal(title,text,onOk){pushOverlay("modal",{title,text,onOk});}
 document.getElementById("mCancel").onclick=()=>closeOverlay("modal");
 document.getElementById("mCopy").onclick=()=>{const t=document.getElementById("mText");t.select();try{navigator.clipboard.writeText(t.value);}catch(e){document.execCommand("copy");}toast("已複製");};
 document.getElementById("mOk").onclick=()=>{if(modalOk&&modalOk(document.getElementById("mText").value)!==false)closeOverlay("modal");};
-document.getElementById("exportBtn").onclick=()=>openModal("行程 JSON（可複製保存或傳給家人）",JSON.stringify({v:2,days:S.days.map(d=>({label:d.label,items:d.items})),pool:S.pool,wishes:WISH,customs:CUSTOMS},null,1),null);
+document.getElementById("exportBtn").onclick=()=>openModal("行程 JSON（可複製保存或傳給家人）",JSON.stringify({v:2,days:S.days.map(d=>({label:d.label,items:d.items})),pool:S.pool,wishes:WISH,customs:CUSTOMS,tagDefs:TAGDEFS},null,1),null);
 document.getElementById("importBtn").onclick=()=>openModal("貼上 JSON 後按「確定」","",txt=>importJSON(txt));
-function importJSON(txt){try{const o=JSON.parse(txt);if(!o||!Array.isArray(o.days)||o.days.length>30)throw 0;if(Object.hasOwn(o,"customs")){setCustoms(o.customs,false);}const next=clean(norm(o));if(next.days.length>30)throw 0;if(shared()&&!sharedConfirm(""))return false;S=next;if(Object.hasOwn(o,"wishes")){WISH=sanitizeWishes(o.wishes);cacheWishes();}update("匯入 JSON");fit();toast("匯入成功");return true;}catch(e){alert("JSON 格式不正確（最多 30 天）");return false;}}
+function importJSON(txt){try{const o=JSON.parse(txt);if(!o||!Array.isArray(o.days)||o.days.length>30)throw 0;if(Object.hasOwn(o,"tagDefs"))setTagDefs(o.tagDefs,false);if(Object.hasOwn(o,"customs")){setCustoms(o.customs,false);}const next=clean(norm(o));if(next.days.length>30)throw 0;if(shared()&&!sharedConfirm(""))return false;S=next;if(Object.hasOwn(o,"wishes")){WISH=sanitizeWishes(o.wishes);cacheWishes();}update("匯入 JSON");fit();toast("匯入成功");return true;}catch(e){alert("JSON 格式不正確（最多 30 天）");return false;}}
 
 // ===== 許願池與景點詳情 =====
 function wishButtons(id){if(!canPlan(id))return "";const mine=WISH[id]?.[ME.id]?.pool;return `<div class="wish-buttons" aria-label="景點許願">${Object.entries(POOLS).map(([pool,label])=>`<button type="button" class="wish-btn${mine===pool?" on":""}" data-wish="${pool}" data-spot="${esc(id)}" aria-pressed="${mine===pool}">${label}</button>`).join("")}</div><div class="wish-names">${Object.keys(POOLS).map(pool=>{const names=Object.values(WISH[id]||{}).filter(w=>w.pool===pool).map(w=>esc(w.nick));return names.length?`${POOLS[pool].split(" ")[0]} ${names.join("、")}`:"";}).filter(Boolean).join("　")||"還沒有人許願"}</div>`;}
@@ -1422,17 +1455,60 @@ function deleteCustomSpot(id){
 }
 document.getElementById("addCustomSpotBtn").onclick=e=>openCustomForm(null,e.currentTarget);
 function customTagState(){const layer=overlayTop();return layer?.kind==="custom"?layer.state:null;}
+function openTagDefInput(){const state=customTagState();if(!state)return;state.tagDefOpen=true;state.tagDefError="";customEl("tagDefName").value="";renderCustomTags();customEl("tagDefName").focus();}
+function closeTagDefInput(){const state=customTagState();if(!state)return;state.tagDefOpen=false;state.tagDefError="";renderCustomTags();customEl("customTagPicker").querySelector("[data-tag-new]")?.focus();}
+function createTagDef(){const state=customTagState();if(!state)return null;const name=tagName(customEl("tagDefName").value),error=msg=>{state.tagDefError=msg;customEl("tagDefError").textContent=msg;return null;};
+  if(!name)return error("請輸入分類名稱。");if([...name].length>12)return error("分類名稱最多 12 個字。");if(/[\p{Cc}\p{Cf}]/u.test(name))return error("分類名稱不可包含控制或隱藏字元。");
+  const existing=plannerTags().find(t=>t.normalize("NFKC").toLowerCase()===name.toLowerCase());
+  if(existing){addCustomTags([existing]);return error(existing==="已訂"?"「已訂」為內建狀態標籤，無法選取。":state.tags.includes(existing)?`分類「${existing}」已存在，已選取。`:`分類「${existing}」已存在；最多可選 8 個標籤，請先取消一個再選。`);}
+  if(Object.values(TAGDEFS).filter(d=>!d.deleted).length>=50)return error("自訂分類最多 50 個，請先刪除一個分類。");
+  if(Object.keys(TAGDEFS).length>=200)return error("分類紀錄已達上限，暫時無法新增。");
+  if(!ME.nick){openNick();return null;}
+  let id;do{id="t_"+deviceId().toLowerCase();}while(TAGDEFS[id]);
+  TAGDEFS[id]={name,by:ME.nick,byId:ME.id,at:Date.now()};state.tagDefOpen=false;state.tagDefError="";cacheTagDefs();renderTagChips();markChange(true,`新增分類「${name}」`);addCustomTags([name]);return id;
+}
+function deleteTagDef(id){const def=TAGDEFS[id];if(!def||def.deleted)return;const name=def.name;
+  TAGDEFS[id]={...def,deleted:true,deletedAt:Date.now(),deletedBy:ME.nick};
+  for(const spot of Object.values(CUSTOMS))if(spot.tags.includes(name)){spot.tags=spot.tags.filter(t=>t!==name);spot.tagVersion=1;}
+  F.tags.delete(name);for(const layer of overlayStack)if(layer.kind==="custom")layer.state.tags=layer.state.tags.filter(t=>t!==name);
+  setCustoms(CUSTOMS,false);renderAll();markChange(true,`刪除分類「${name}」`);
+}
+function requestTagDelete(name){if(TAGS.includes(name)){toast("內建分類無法刪除");return;}const id=Object.keys(TAGDEFS).find(id=>!TAGDEFS[id].deleted&&TAGDEFS[id].name===name);if(!id)return;
+  const count=ATTR.filter(a=>a.tags.includes(name)).length;
+  pushOverlay("modal",{title:`刪除分類「${name}」`,text:`有 ${count} 個景點在這個分類，確定要刪除嗎？刪除不影響現存景點，只會刪除分類標籤。`,tagConfirm:true,onOk:()=>deleteTagDef(id)});
+}
+function tagChipName(target){const chip=target.closest?.("[data-tag],[data-tag-toggle]");if(!chip)return "";return chip.dataset.tag??pickerTags()[Number(chip.dataset.tagToggle)]??"";}
+let tagPress=null,tagClickName="",tagClickUntil=0;
+function cancelTagPress(){if(tagPress)clearTimeout(tagPress.timer);tagPress=null;}
+function endTagPress(){cancelTagPress();if(tagClickUntil===Infinity)tagClickUntil=Date.now()+1200;}
+function suppressTagClick(e){if(Date.now()<tagClickUntil&&tagChipName(e.target)===tagClickName){e.preventDefault?.();e.stopPropagation?.();return true;}return false;}
+// The release after a long-press can land on the confirm backdrop that just opened under the finger; swallow that one click anywhere.
+let tagSwallow=false;document.addEventListener("click",e=>{if(tagSwallow&&Date.now()<tagClickUntil){tagSwallow=false;e.preventDefault();e.stopPropagation();}},true);document.addEventListener("pointerdown",()=>{tagSwallow=false;},true);
+function bindTagPress(host){host.addEventListener("pointerdown",e=>{cancelTagPress();tagClickUntil=0;const name=tagChipName(e.target);if(!name||!["touch","pen"].includes(e.pointerType))return;
+    const press={name,x:e.clientX,y:e.clientY,id:e.pointerId};press.timer=setTimeout(()=>{if(tagPress!==press)return;tagPress=null;tagClickName=name;tagClickUntil=Infinity;tagSwallow=true;requestTagDelete(name);},550);tagPress=press;
+  });
+  host.addEventListener("pointermove",e=>{if(tagPress&&e.pointerId===tagPress.id&&Math.hypot(e.clientX-tagPress.x,e.clientY-tagPress.y)>10)cancelTagPress();});
+  for(const event of ["pointerup","pointercancel","lostpointercapture"])host.addEventListener(event,endTagPress);
+  host.addEventListener("contextmenu",e=>{const name=tagChipName(e.target);if(!name)return;e.preventDefault();const holding=!!tagPress;cancelTagPress();if(tagClickName===name&&Date.now()<tagClickUntil)return;tagClickName=name;tagClickUntil=holding?Infinity:Date.now()+1200;requestTagDelete(name);});
+  host.addEventListener("click",e=>suppressTagClick(e),true);
+}
+bindTagPress(customEl("customTagPicker"));bindTagPress(customEl("tagChips"));
+document.addEventListener("scroll",cancelTagPress,true);
+document.addEventListener("pointerup",endTagPress,true);document.addEventListener("pointercancel",endTagPress,true);
+customEl("tagDefSave").onclick=createTagDef;customEl("tagDefName").addEventListener("input",()=>{const state=customTagState();if(state&&state.tagDefError){state.tagDefError="";customEl("tagDefError").textContent="";}});customEl("tagDefCancel").onclick=closeTagDefInput;
+customEl("tagDefName").addEventListener("keydown",e=>{if(e.isComposing)return;if(e.key==="Enter"){e.preventDefault();createTagDef();}else if(e.key==="Escape"){e.preventDefault();e.stopPropagation();closeTagDefInput();}});
 function renderCustomTags(){const state=customTagState();if(!state)return;state.tags=normalizeCustomTags(state.tags);
-  customEl("customTagPicker").innerHTML=CUSTOM_TAGS.map((t,i)=>`<button type="button" class="chip${state.tags.includes(t)?" on":""}" data-tag-toggle="${i}" aria-pressed="${state.tags.includes(t)}">${esc(t)}</button>`).join("");
-  customEl("customTagHint").textContent=`已選 ${state.tags.length} / 8 個標籤；點選可加入或取消。`;
+  customEl("customTagPicker").innerHTML=pickerTags().map((t,i)=>`<button type="button" class="chip${state.tags.includes(t)?" on":""}" data-tag-toggle="${i}" aria-pressed="${state.tags.includes(t)}">${esc(t)}</button>`).join("")+'<button type="button" class="chip" data-tag-new aria-label="新增分類">＋ 新增分類</button>';
+  customEl("tagDefRow").hidden=!state.tagDefOpen;customEl("tagDefError").textContent=state.tagDefError||"";
+  customEl("customTagHint").textContent=`已選 ${state.tags.length} / 8 個標籤；點選可加入或取消，長按自訂分類可刪除。`;
 }
 function addCustomTags(values){const state=customTagState();if(!state)return;const tags=normalizeCustomTags(values),exceeded=state.tags.length+tags.filter(t=>!state.tags.includes(t)).length>8;
   state.tags=normalizeCustomTags([...state.tags,...tags]);renderCustomTags();
   if(exceeded){customEl("customTagHint").textContent="最多可選 8 個標籤，請先取消一個再選。";toast("最多可選 8 個標籤");}
 }
-customEl("customForm").addEventListener("click",e=>{const toggle=e.target.closest("[data-tag-toggle]"),add=e.target.closest("[data-tag-add]"),state=customTagState();if(!state)return;
-  if(toggle){const tag=CUSTOM_TAGS[Number(toggle.dataset.tagToggle)];if(!tag)return;if(state.tags.includes(tag)){state.tags=state.tags.filter(t=>t!==tag);renderCustomTags();}else addCustomTags([tag]);
-    customEl("customTagPicker").querySelector(`[data-tag-toggle="${CUSTOM_TAGS.indexOf(tag)}"]`)?.focus({preventScroll:true});
+customEl("customForm").addEventListener("click",e=>{if(suppressTagClick(e))return;if(e.target.closest("[data-tag-new]")){openTagDefInput();return;}const toggle=e.target.closest("[data-tag-toggle]"),add=e.target.closest("[data-tag-add]"),state=customTagState();if(!state)return;
+  if(toggle){const tag=pickerTags()[Number(toggle.dataset.tagToggle)];if(!tag)return;if(state.tags.includes(tag)){state.tags=state.tags.filter(t=>t!==tag);renderCustomTags();}else addCustomTags([tag]);
+    customEl("customTagPicker").querySelector(`[data-tag-toggle="${pickerTags().indexOf(tag)}"]`)?.focus({preventScroll:true});
   }else if(add)addCustomTags([add.dataset.tagAdd]);
 });
 document.getElementById("customCancel").onclick=()=>closeOverlay("custom");
@@ -1687,7 +1763,8 @@ function showOverlay(){let layer=overlayTop();while(layer&&((layer.kind==="detai
   if(kind==="nearby")mountNearby(layer);
   if(kind==="custom"){document.getElementById("customModalTitle").textContent=state.title;customFields.forEach((id,i)=>{document.getElementById(id).value=state.fields[i];document.getElementById(id).dataset.edited=state.edited?.[i]||"";});if(["正在查詢地圖資料…","正在用地點名稱查詢座標…"].includes(state.suggestHint))state.suggestHint="查詢已取消，重新貼上連結可再查詢。";updateCoordsPreview();renderCustomTags();renderCustomSuggestions();}
   if(kind==="nick")document.getElementById("nickInput").value=state.value;
-  if(kind==="modal"){document.getElementById("mTitle").textContent=state.title;document.getElementById("mText").value=state.text;modalOk=state.onOk;document.getElementById("mOk").style.display=modalOk?"":"none";}
+  if(kind==="modal"){document.getElementById("mTitle").textContent=state.title;document.getElementById("mText").value=state.text;modalOk=state.onOk;document.getElementById("mOk").style.display=modalOk?"":"none";
+    document.getElementById("mText").hidden=!!state.tagConfirm;document.getElementById("mCopy").hidden=!!state.tagConfirm;document.getElementById("mMessage").hidden=!state.tagConfirm;document.getElementById("mMessage").textContent=state.tagConfirm?state.text:"";panel.setAttribute("aria-describedby",state.tagConfirm?"mMessage":"");document.getElementById("mOk").textContent=state.tagConfirm?"刪除":"確定";document.getElementById("mCancel").textContent=state.tagConfirm?"取消":"關閉";}
   if(kind==="documents"){renderDocuments(state.group);state.expanded?.forEach(([id,open])=>document.getElementById(id).open=open);}
   if(kind==="history"){positionHistory();historyPreview=state.preview||null;document.getElementById("historyBody").innerHTML=state.html||"";if(historyPreview)renderHistoryPreview();if(state.pending){const ready=state.pending.list?historyList():previewVersion(state.pending.rev);ready.then(()=>{if(overlayTop()===layer)document.getElementById(body).scrollTop=layer.scroll||0;});}}
   panel.classList.toggle("sheet-expanded",layer.expanded);const scroll=document.getElementById(body);scroll.scrollTop=layer.scroll||0;layer.scroll=scroll.scrollTop||0;

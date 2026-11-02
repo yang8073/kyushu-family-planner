@@ -1,6 +1,19 @@
 // PHP 不在工作環境內；靜態檢查不可取代部署前的語法及實際跳轉驗證。
 const fs=require('fs'),path=require('path'),assert=require('assert/strict');
 function testResolver(){
+ const api=fs.readFileSync(path.join(__dirname,'server/api.php'),'utf8');
+ assert(api.includes("fieldsValid($state, ['rev','at','by','byId','summary','plan','wishes','customs','tagDefs'])"));
+ const tagDefs=api.slice(api.indexOf("if (property_exists($state, 'tagDefs'))"),api.indexOf('if (isset($state->customs))'));
+ for(const check of [
+  '!objectValid($state->tagDefs)', 'count(get_object_vars($state->tagDefs)) > 200',
+  'foreach (get_object_vars($state->tagDefs) as $id => $def)', '!idValid($id)', '!objectValid($def)',
+  "!fieldsValid($def, ['name','by','byId','at','deleted','deletedAt','deletedBy'])",
+  '!is_string($def->name ?? null)', "trim($def->name) === ''", 'textLength($def->name) > 12',
+  "preg_match('/[\\p{Cc}\\p{Cf}]/u', $def->name)", '!nickValid($def->by ?? null)', '!deviceValid($def->byId ?? null)',
+  '!is_int($def->at ?? null)', '$def->at < 0', "property_exists($def, 'deleted') && $def->deleted !== true",
+  "property_exists($def, 'deletedAt') && (!is_int($def->deletedAt) || $def->deletedAt < 0)",
+  "property_exists($def, 'deletedBy') && !nickValid($def->deletedBy)"
+ ])assert(tagDefs.includes(check),check);
  const php=fs.readFileSync(path.join(__dirname,'resolver/resolve-maps-link.php'),'utf8');
  assert.match(php,/if \(\$host === 'maps\.google\.com' && \$path === '\/'\) return 'maps';/);
  for(const pattern of [/REQUEST_METHOD.*!== 'GET'/,/is_string\(\$url\).*strlen\(\$url\) > 300.*urlKind\(\$url\) !== 'short'/,/CURLOPT_FOLLOWLOCATION => false/,/CURLOPT_PROTOCOLS => CURLPROTO_HTTPS/,/CURLOPT_REDIR_PROTOCOLS => CURLPROTO_HTTPS/,/CURLOPT_CONNECTTIMEOUT => 5/,/CURLOPT_TIMEOUT => 5/,/CURLOPT_SSL_VERIFYPEER => true/,/CURLOPT_SSL_VERIFYHOST => 2/,/\$hop <= 5/,/\$hop >= 5/,/urlKind\(\$next\) === ''/,/CURLOPT_WRITEFUNCTION.*\$body.*strlen\(\$body\)/,/CURLOPT_HEADERFUNCTION/,/Location:/,/urlKind\(\$next\) === 'maps'/,/consentTarget\(\$url\)/,/consent\.google\.com/,/isset\(\$p\['user'\]\)/,/isset\(\$p\['pass'\]\)/,/\$p\['port'\] !== 443/,/\^\/maps\(\?:\/\|\$\)/,/strpos\(\$path, '\/maps\/'\) === 0/,/REMOTE_ADDR/,/count'\] > 30/,/LOCK_EX/,/flock\(\$file, LOCK_UN\)/,/Cache-Control: public, max-age=86400/,/Cache-Control: no-store/,/Vary: Origin/])assert.match(php,pattern);

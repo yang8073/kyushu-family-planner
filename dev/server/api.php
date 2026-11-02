@@ -47,7 +47,7 @@ function fieldsValid(stdClass $object, array $allowed): bool {
     return !array_diff(array_keys(get_object_vars($object)), $allowed);
 }
 function validateState(mixed $state): bool {
-    if (!objectValid($state) || !fieldsValid($state, ['rev','at','by','byId','summary','plan','wishes','customs']) || !nickValid($state->by ?? null) || !deviceValid($state->byId ?? null)) return false;
+    if (!objectValid($state) || !fieldsValid($state, ['rev','at','by','byId','summary','plan','wishes','customs','tagDefs']) || !nickValid($state->by ?? null) || !deviceValid($state->byId ?? null)) return false;
     if (!is_string($state->summary ?? null) || textLength($state->summary) < 1 || textLength($state->summary) > 2000) return false;
     $plan = $state->plan ?? null;
     if (!objectValid($plan) || !fieldsValid($plan, ['days','pool']) || !is_array($plan->days ?? null) || count($plan->days) > 30 || !is_array($plan->pool ?? null)) return false;
@@ -71,6 +71,18 @@ function validateState(mixed $state): bool {
         if (!idValid($spot) || !objectValid($users)) return false;
         foreach (get_object_vars($users) as $device => $wish) {
             if (!deviceValid($device) || !objectValid($wish) || !fieldsValid($wish, ['pool','nick','at']) || !in_array($wish->pool ?? null, ['want','maybe','meh'], true) || !nickValid($wish->nick ?? null) || !is_int($wish->at ?? null) || $wish->at < 0) return false;
+        }
+    }
+    // 自訂分類保留刪除標記，讓其他裝置同步刪除。
+    if (property_exists($state, 'tagDefs')) {
+        if (!objectValid($state->tagDefs) || count(get_object_vars($state->tagDefs)) > 200) return false;
+        foreach (get_object_vars($state->tagDefs) as $id => $def) {
+            if (!idValid($id) || !objectValid($def) || !fieldsValid($def, ['name','by','byId','at','deleted','deletedAt','deletedBy'])) return false;
+            if (!is_string($def->name ?? null) || trim($def->name) === '' || textLength($def->name) > 12 || preg_match('/[\p{Cc}\p{Cf}]/u', $def->name)) return false;
+            if (!nickValid($def->by ?? null) || !deviceValid($def->byId ?? null) || !is_int($def->at ?? null) || $def->at < 0) return false;
+            if (property_exists($def, 'deleted') && $def->deleted !== true) return false;
+            if (property_exists($def, 'deletedAt') && (!is_int($def->deletedAt) || $def->deletedAt < 0)) return false;
+            if (property_exists($def, 'deletedBy') && !nickValid($def->deletedBy)) return false;
         }
     }
     if (isset($state->customs)) {
