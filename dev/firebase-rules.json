@@ -12,6 +12,7 @@
         "byId": {},
         "summary": {},
         "customs": {},
+        "tagDefs": {},
         "$other": {
           ".validate": false
         },
@@ -66,6 +67,7 @@
           "byId": {},
           "summary": {},
           "customs": {},
+          "tagDefs": {},
           "$other": {
             ".validate": false
           },
@@ -121,6 +123,7 @@
           "byId": {},
           "summary": {},
           "customs": {},
+          "tagDefs": {},
           "$other": {
             ".validate": false
           },

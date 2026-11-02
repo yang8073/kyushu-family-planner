@@ -146,6 +146,7 @@ const initial=async p=>{await waitFor(()=>p.run('sync.ready'));await p.run('flus
  assert(!/住宿（暫定）/.test(html));
  for(const privateValue of ['189,520','189520','1791493524','6222338535','60626719'])assert(!html.includes(privateValue));
  await require('./test-tags.cjs')({html,page,initial,sleep,leaflet,Database,JsonfileDatabase});
+ await require('./test-tagdefs.cjs')({html,page,initial,sleep,leaflet,Database,JsonfileDatabase});
  await require('./test-modalstack.cjs')({html,page,initial,sleep,leaflet});
  await require('./test-hotel-pluscodes.cjs')({page,initial,sleep,leaflet,Database,JsonfileDatabase});
  await require('./test-nearbysearch.cjs')({html,page,initial,sleep,leaflet});
