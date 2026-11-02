@@ -86,7 +86,7 @@ module.exports=async function({html,page,initial,sleep,leaflet}){
   scrollTo(p.els[scroll],1);assert(expanded(p));scrollTo(p.els[scroll],0);swipe(head,48);assert(!expanded(p));assert(!swipe(head,-80).defaultPrevented);assert(expanded(p));p.els[scroll].scrollTop=0;assert(!swipe(head,80).defaultPrevented);assert(!expanded(p));assert.equal(depth(p),1);p.run('closeAllOverlays()');await sleep(10);
  }
  // Lock body/root while stacked; restore their previous styles and page offset.
- const bodyStyle={overflow:'auto',position:'relative',top:'2px',left:'3px',right:'4px',width:'98%'};Object.assign(p.context.document.body.style,bodyStyle);p.context.document.documentElement.style.overflow='clip';p.context.scrollY=318;
+ const bodyStyle={overflow:'auto',position:'relative',top:'2px',left:'3px',right:'4px',width:'98%',height:'96%'};Object.assign(p.context.document.body.style,bodyStyle);p.context.document.documentElement.style.overflow='clip';p.context.scrollY=318;
  const scrolls=[];p.context.scrollTo=(x,y)=>scrolls.push([x,y]);p.run('openDetail("canal");openNearby("canal")');assert.equal(p.context.document.body.style.position,'fixed');assert.equal(p.context.document.body.style.top,'-318px');assert.equal(p.context.document.documentElement.style.overflow,'hidden');assert(p.context.document.body.classes.has('sheet-open'));
  p.els.nearbyClose.onclick();assert.equal(p.context.document.body.style.position,'fixed');p.els.detailClose.onclick();assert.deepEqual(p.context.document.body.style,bodyStyle);assert.equal(p.context.document.documentElement.style.overflow,'clip');assert(!p.context.document.body.classes.has('sheet-open'));assert.deepEqual(scrolls,[[0,318]]);
  // 只接受表面本身的 transform 結束事件；重複事件與備援計時器只更新一次地圖。
