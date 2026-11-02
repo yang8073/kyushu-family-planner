@@ -666,7 +666,7 @@ function parseGoogleMapsLink(str){const out={kind:"none",lat:null,lng:null,name:
   for(const key of ["q","query","ll"]){const q=url.searchParams.get(key);if(!q)continue;const pair=parseCoordsPair(q);if(pair&&out.lat===null)Object.assign(out,pair,{precise:key!=="ll"});else if(key!=="ll"&&!pair&&!/^place_id:/.test(q)){out.placeText=out.placeText||placeText(q);out.name=out.name||out.placeText;}}
   if(out.lat===null){const at=data.match(/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/);if(at){const pair=parseCoordsPair(at[1]+","+at[2]);if(pair)Object.assign(out,pair);}}
   for(const key of ["query_place_id","place_id"])if(url.searchParams.get(key))out.placeId=url.searchParams.get(key);
-  const ftid=data.match(/!1s(0x[0-9a-f]+:0x[0-9a-f]+)/i);if(ftid)out.ftid=ftid[1];
+  const ftid=data.match(/!1s(0x[0-9a-f]+:0x[0-9a-f]+)/i)||url.searchParams.get("ftid")?.match(/^0x[0-9a-f]+:0x[0-9a-f]+$/i);if(ftid)out.ftid=ftid[1]||ftid[0];
   const cid=url.searchParams.get("cid");if(/^\d+$/.test(cid||""))out.cid=cid;return out;
 }
 function coordsInfo(str){if(typeof str!=="string"||!str.trim())return null;const maps=parseGoogleMapsLink(str);if(hasCoords(maps))return {...maps,source:"Google 地圖連結",warning:maps.precise?"":"此座標為地圖視野中心，請確認圖釘位置。"};let text=str.normalize("NFKC").trim();try{text=decodeURIComponent(text);}catch{}
@@ -1160,7 +1160,7 @@ const mapsResolved=new Map();
 async function resolveMapsLink(text,signal){const url=mapsLinkURL(text);if(!shortMapsURL(url))return null;if(mapsResolved.has(url.href))return mapsResolved.get(url.href);if(mapsResolverCoolingDown())return null;
   const controller=new AbortController(),abort=()=>controller.abort();if(signal?.aborted)return null;signal?.addEventListener("abort",abort,{once:true});const timer=setTimeout(abort,6000);
   try{if(url.href.length>300)throw Error();const response=await fetch(MAPS_RESOLVER_URL+"?url="+encodeURIComponent(url.href),{signal:controller.signal});if(!response.ok)throw Error();const data=await response.json(),final=mapsLinkURL(data.url);
-    if(!data.ok||typeof data.url!=="string"||!allowedMapsURL(final)||final.href!==data.url)throw Error();const result=parseGoogleMapsLink(data.url);mapsResolved.set(url.href,result);return result;
+    if(!data.ok||typeof data.url!=="string"||!allowedMapsURL(final)||final.href!==data.url.replace(/^(https:\/\/maps\.google\.com)(?=[?#]|$)/,"$1/"))throw Error();const result=parseGoogleMapsLink(data.url);mapsResolved.set(url.href,result);return result;
   }catch{if(!signal?.aborted)mapsResolverFailed=Date.now()+30000;return null;}finally{clearTimeout(timer);signal?.removeEventListener("abort",abort);}
 }
 function looseMapsName(a,b){const norm=s=>String(s||"").normalize("NFKC").toLowerCase().replace(/[\s\p{P}\p{S}]/gu,"");a=norm(a);b=norm(b);if(!a||!b)return false;if(a.includes(b)||b.includes(a))return true;const x=new Set(a),y=new Set(b);return [...x].filter(c=>y.has(c)).length/Math.max(x.size,y.size)>=.5;}
