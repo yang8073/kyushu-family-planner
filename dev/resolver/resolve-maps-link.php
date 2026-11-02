@@ -27,6 +27,7 @@ function urlKind(string $url): string {
     $path = $p['path'] ?? '/';
     if ($host === 'maps.app.goo.gl' && $path !== '/') return 'short';
     if ($host === 'goo.gl' && strpos($path, '/maps/') === 0) return 'short';
+    if ($host === 'maps.google.com' && $path === '/') return 'maps';
     if (in_array($host, ['www.google.com', 'google.com', 'maps.google.com', 'www.google.co.jp', 'www.google.com.tw'], true) && preg_match('~^/maps(?:/|$)~', $path)) return 'maps';
     if ($host === 'consent.google.com') return 'consent';
     return '';

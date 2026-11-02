@@ -9,6 +9,7 @@ module.exports=async function({html,page,initial,sleep,leaflet}){
   ['https://www.google.com/maps/place/33.59%2C130.42/@33.59,130.42,17z',{name:'',lat:33.59,precise:false}],
   ['https://www.google.com/maps/?q=33.59%2C130.42',{lat:33.59,lng:130.42,precise:true}],
   ['https://maps.google.com/?q=Cafe+ABC',{kind:'full',name:'Cafe ABC',lat:null,lng:null}],
+  ['https://www.google.com?q=Cafe+ABC',{kind:'none',name:''}],
   ['https://maps.google.com/?query=33.59,130.42',{lat:33.59,lng:130.42}],
   ['https://maps.google.com/?ll=33.59,130.42',{lat:33.59,lng:130.42,precise:false}],
   ['https://www.google.com/maps/@-33.59,-130.42,12z',{lat:-33.59,lng:-130.42,precise:false}],
@@ -25,7 +26,10 @@ module.exports=async function({html,page,initial,sleep,leaflet}){
   ['https://goo.gl/elsewhere',{kind:'none'}],['文字',{kind:'none'}]
  ]){const result=parse(url);for(const [key,value]of Object.entries(expected))assert.equal(result[key],value,url+' / '+key);if(result.lat!==null)assert.equal(json(p,'planner.parseCoords('+JSON.stringify(url)+')').lat,result.lat);}
  const noCoordsURL="https://www.google.com/maps/place/%E5%9C%8B%E7%94%A2%E7%89%9B%E5%90%83%E5%88%B0%E9%A3%BD+%E3%83%AF%E3%83%B3%E3%82%AB%E3%83%AB%E3%83%93PREMIUM+%E5%A4%A9%E7%A5%9E%E3%83%AB%E3%83%BC%E3%83%81%E3%82%A7+6F+2+Chome-3-24+Tenjin,+Chuo+Ward,+Fukuoka,+810-0001%E6%97%A5%E6%9C%AC/data=!4m2!3m1!1s0x35419185ae5efda5:0xba94bf789f0e7b35!18m1!1e1?utm_source=mstt_1&entry=gps&coh=192189&g_ep=CAESBzI2LjQzLjAYACCenQoqxwEsMTAwODQ3NDExLDk0MjY3NzI3LDk0MjkyMTk1LDk0Mjk5NTMyLDEwMDc5NjQ5OCwxMDA3OTc3NjEsMTAwNzk2NTM1LDk0MjgwNTc2LDk0MjA3Mzk0LDk0MjA3NTA2LDk0MjA4NTA2LDk0MjE4NjUzLDk0MjI5ODM5LDk0Mjc1MTY4LDk0Mjc5NjE5LDEwMDg0ODEwMiwxMDA4MjAyMzcsMTAwODIyNDk0LDEwMDgyNzk3NSwxMDA4MzgzNTksMTIxODE2NDYxQgJUVw%3D%3D&skid=f568271f-29b9-438f-ae3b-e2124610eb99&g_st=ac",placeText="國產牛吃到飽 ワンカルビPREMIUM 天神ルーチェ 6F 2 Chome-3-24 Tenjin, Chuo Ward, Fukuoka, 810-0001",shortURL='https://maps.app.goo.gl/3DAQAypGXrrhtHQt8?g_st=ac';
- const parsedPlace=parse(noCoordsURL);assert.equal(parsedPlace.placeText,placeText);assert.equal(parsedPlace.ftid,'0x35419185ae5efda5:0xba94bf789f0e7b35');assert.equal(parsedPlace.lat,null);assert.equal(parsedPlace.lng,null);
+ const noPathURL='https://maps.google.com?q=%E5%9C%8B%E7%94%A2%E7%89%9B%E5%90%83%E5%88%B0%E9%A3%BD+%E3%83%AF%E3%83%B3%E3%82%AB%E3%83%AB%E3%83%93PREMIUM+%E5%A4%A9%E7%A5%9E%E3%83%AB%E3%83%BC%E3%83%81%E3%82%A7+6F+2+Chome-3-24+Tenjin,+Chuo+Ward,+Fukuoka,+810-0001%E6%97%A5%E6%9C%AC&ftid=0x35419185ae5efda5:0xba94bf789f0e7b35&entry=gps&shh=CAE&lucs=,94297699,100826479&g_ep=CAISEjI2LjQzLjEuMDAxOTUxMTAxMBgAIMi8BypxLDk0&skid=e83fa6fa-1e85-4573-85b5-a35718c5507b&g_st=il',iosShortURL='https://maps.app.goo.gl/39j8rkf58Za7BxNd8?g_st=il';
+ const resolvedPathURL=noPathURL.replace('https://maps.google.com?','https://www.google.com/maps?');
+ for(const url of [noCoordsURL,noPathURL,resolvedPathURL]){const parsedPlace=parse(url);assert.equal(parsedPlace.kind,'full');assert.equal(parsedPlace.name,placeText);assert.equal(parsedPlace.placeText,placeText);assert.equal(parsedPlace.ftid,'0x35419185ae5efda5:0xba94bf789f0e7b35');assert.equal(parsedPlace.lat,null);assert.equal(parsedPlace.lng,null);}
+ for(const ftid of ['0xABC:0xDEF','invalid','0xabc:0xdef-extra','prefix-0xabc:0xdef','0xabc:'])assert.equal(parse('https://maps.google.com?q=Cafe&ftid='+encodeURIComponent(ftid)).ftid,ftid==='0xABC:0xDEF'?ftid:undefined);
  for(const suffix of [' trailing words','。','）。','！',';',' trailing words!']){const shared='店名\n'+shortURL+suffix;assert.equal(parse(shared).kind,'short');assert.equal(parse(shared).name,'店名');assert.equal(p.run('mapsLinkURL('+JSON.stringify(shared)+').href'),shortURL);}
  for(const key of ['q','query'])assert.equal(parse('https://maps.google.com/?'+key+'='+encodeURIComponent(placeText+' Japan')+'&g_st=ac').placeText,placeText);
  assert.deepEqual(json(p,'mapsPlaceCandidates('+JSON.stringify(placeText)+')'),['2 Chome-3-24 Tenjin, Chuo Ward, Fukuoka, 810-0001','810-0001',placeText]);
@@ -205,18 +209,18 @@ module.exports=async function({html,page,initial,sleep,leaflet}){
  console.log('PASS 日文 OSM 地址：丁目／全形數字／市區及町村、Google 即時替換與全部套用、原值追蹤及編輯保護、跳脫、單次逆查／日文參數／Referer／序列節流、失敗／逾時／取消備援');
  console.log('PASS Google Places：查詢門檻／手動按鈕／防重複／逾時、名稱優先、保護手寫及清空欄位、結果選擇、類型、跳脫、額度提示與 OSM 備援');
  // 無座標連結：完整 resolver → OSM → Google 流程，Google 座標優先，並保護手寫欄位。
- for(const mode of ['success','full-link','query','edited','capped','empty','no-osm','unavailable','old-server']){
+ for(const mode of ['success','ios','full-link','query','edited','capped','empty','no-osm','unavailable','old-server']){
   const view=page();await initial(view);const calls=[],point={lat:33.588,lng:130.397},precise={...googleResult,name:'Google 店名',lat:33.589123,lng:130.398456,distance_m:null};
   let osmAttempt=0;
   view.context.fetch=async(url,opts)=>{calls.push({url,opts,at:Date.now()});
-   if(url.includes('resolve-maps-link.php'))return {ok:true,json:async()=>({ok:true,url:noCoordsURL})};
+   if(url.includes('resolve-maps-link.php')){assert.equal(new URL(url).searchParams.get('url'),mode==='ios'?iosShortURL:shortURL);return {ok:true,json:async()=>({ok:true,url:mode==='ios'?noPathURL:noCoordsURL})};}
    if(url.includes('places-lookup.php'))return {ok:!['capped','unavailable','old-server'].includes(mode),status:mode==='capped'?429:mode==='old-server'?400:200,json:async()=>mode==='capped'?{ok:false,error:'monthly_quota_reached',remaining:0}:['unavailable','old-server'].includes(mode)?{ok:false,error:'bad_request'}:{ok:true,results:mode==='empty'?[]:[precise]}};
    if(url.includes('/reverse?'))return {ok:true,json:async()=>({address:{city:'福岡市',suburb:'中央区',quarter:'天神',postcode:'810-0001'}})};
-   const u=new URL(url);if(!u.searchParams.has('bounded')){osmAttempt++;return {ok:true,json:async()=>['no-osm','unavailable','old-server'].includes(mode)||mode==='edited'&&osmAttempt===1?[]:[{lat:String(point.lat),lon:String(point.lng)}]};}
+   const u=new URL(url);if(!u.searchParams.has('bounded')){if(mode==='ios'){assert.equal(view.els.customZh.value,[...placeText].slice(0,60).join(''));assert.equal(view.run('overlayTop().state.resolved.value.ftid'),'0x35419185ae5efda5:0xba94bf789f0e7b35');}osmAttempt++;return {ok:true,json:async()=>['no-osm','unavailable','old-server'].includes(mode)||mode==='edited'&&osmAttempt===1?[]:[{lat:String(point.lat),lon:String(point.lng)}]};}
    return {ok:true,json:async()=>[]};
   };
   view.run('openCustomForm()');if(mode==='edited'){view.els.customZh.value='我的名稱';view.els.customZh.oninput();view.els.customAddr.value='手寫地址';view.els.customAddr.oninput();}
-  view.els.customCoords.onpaste({clipboardData:{getData:()=>mode==='full-link'?noCoordsURL:mode==='query'?'https://www.google.com/maps/?q='+encodeURIComponent(placeText):'分享名稱\n'+shortURL+' trailing words。'},preventDefault(){}});
+  view.els.customCoords.onpaste({clipboardData:{getData:()=>mode==='ios'?iosShortURL:mode==='full-link'?noCoordsURL:mode==='query'?'https://www.google.com/maps/?q='+encodeURIComponent(placeText):'分享名稱\n'+shortURL+' trailing words。'},preventDefault(){}});
   await until(()=>calls.some(r=>r.url.includes('places-lookup.php')));
   const query=new URL(calls.find(r=>r.url.includes('places-lookup.php')).url).searchParams,estimates=calls.filter(r=>r.url.includes('/search?')&&!new URL(r.url).searchParams.has('bounded'));
   assert.equal(query.get('name'),[...placeText].slice(0,120).join(''));assert.equal(estimates.length,['no-osm','unavailable','old-server'].includes(mode)?3:mode==='edited'?2:1,'首筆命中即停止');for(const r of estimates){const q=new URL(r.url).searchParams;assert.equal(q.get('countrycodes'),'jp');assert.equal(q.get('limit'),'3');}
@@ -252,6 +256,6 @@ module.exports=async function({html,page,initial,sleep,leaflet}){
  mapped.run('openModal("子層","",null)');assert(mini.removed);mapped.els.modalClose.onclick();const restored=L.maps.at(-1);assert.notEqual(restored,mini);assert.equal(mapped.els.customCoords.value,'33.59,130.418');mapped.els.customClose.onclick();assert(restored.removed);await sleep(340);assert.equal(restored.invalidations,undefined);
  mapped.run('S.days.forEach(d=>d.items=[]);openCustomForm()');assert.deepEqual(Array.from(L.maps.at(-1).view.point),json(mapped,'[HOTEL.lat,HOTEL.lng]'));mapped.run('closeAllOverlays()');
  const form=html.slice(html.indexOf('<form class="box" id="customForm"'),html.indexOf('</form>',html.indexOf('id="customForm"')));assert(form.indexOf('id="customPlanMap"')<form.indexOf('label for="customZh"'));assert(!form.includes('customCoordsMap'));assert.match(html,/#customPlanMap\{[^}]*touch-action:none/);assert.match(html,/closest\("#nearbyMap,\.leaflet-container,input/);
- const sw=fs.readFileSync(path.join(__dirname,'../sw.js'),'utf8'),scope={};vm.runInNewContext(sw.slice(0,sw.indexOf('function cacheable')),Object.assign(scope,{self:{registration:{scope:'https://example.test/'}},URL}));for(const url of ['https://trip.yi-jia-zi.com/resolve-maps-link.php','https://trip.yi-jia-zi.com/places-lookup.php?name=Cafe&lat=33&lng=130','https://nominatim.openstreetmap.org/search?q=test'])assert(scope.excluded({method:'GET'},new URL(url)));assert(!scope.excluded({method:'GET'},new URL('https://a.tile.openstreetmap.org/1/1/1.png')));assert.match(sw,/kfp-v8-20261102/);
+ const sw=fs.readFileSync(path.join(__dirname,'../sw.js'),'utf8'),scope={};vm.runInNewContext(sw.slice(0,sw.indexOf('function cacheable')),Object.assign(scope,{self:{registration:{scope:'https://example.test/'}},URL}));for(const url of ['https://trip.yi-jia-zi.com/resolve-maps-link.php','https://trip.yi-jia-zi.com/places-lookup.php?name=Cafe&lat=33&lng=130','https://nominatim.openstreetmap.org/search?q=test'])assert(scope.excluded({method:'GET'},new URL(url)));assert(!scope.excluded({method:'GET'},new URL('https://a.tile.openstreetmap.org/1/1/1.png')));assert.match(sw,/kfp-v9-20261102/);
  console.log('PASS 地圖自動填入：網址向量、名稱及距離匹配、類型建議、不覆寫、跳脫、解析器成功／失敗記憶／逾時、OSM 請求節流／防抖／取消、日別圖釘／最近三處／草稿與清理、SW 排除');
 };

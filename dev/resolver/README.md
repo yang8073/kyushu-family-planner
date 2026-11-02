@@ -83,4 +83,6 @@ cat ~/kyushu-trip-private/places-state/usage-2026-11.json
 
 ## 短網址解析器的既有行為
 
+地圖白名單接受既有 Google 主機的 `/maps` 路徑，以及 `maps.google.com` 的根路徑（包含 iPhone 分享的無路徑 `https://maps.google.com?q=...&ftid=...`）；一般地圖跳轉仍須取得 2xx 回應才成功。
+
 `resolve-maps-link.php` 保留既有行為：每一跳重新驗證 HTTPS 主機／路徑白名單、不轉送頁面本文，最多五次跳轉，每跳連線／總逾時各 5 秒；前端等待上限為 6 秒，失敗後冷卻 30 秒再允許重試，避免一次暫時性錯誤停用整個工作階段。Google 同意頁僅解出通過白名單的 continue。成功回應快取一天，以 `Vary: Origin` 分流；錯誤不快取。該端點仍允許精確的 `https://yang8073.github.io` 及 `http://localhost`；此開發來源不適用 Places 端點。解析器限流為每 IP 每分鐘 30 次，使用系統暫存目錄；可排程清除一天以上的 `kfp-maps-*.json`。
