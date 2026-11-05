@@ -72,6 +72,7 @@ section.pane.on{display:block}
 .it .h{cursor:grab;touch-action:none;font-size:20px;color:#9fb0c8;padding:2px 6px;user-select:none}
 .it .n{width:22px;height:22px;border-radius:50%;color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;flex:none;font-weight:700}
 .it .t{flex:1;min-width:0;font-size:14px}
+.it .stay{display:block;margin:4px 0;color:#2f6ea8;font-size:12px;line-height:1.5;overflow-wrap:anywhere}
 .it .t small{display:block;color:var(--sub);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .it select{font-size:12px;border:1px solid var(--line);border-radius:8px;padding:3px;max-width:78px;background:#fff;color:var(--ink)}
 .it .x{border:0;background:none;color:#c77;font-size:18px;padding:0 4px}
@@ -1095,13 +1096,27 @@ document.getElementById("cards").addEventListener("change",e=>{
 
 // ===== 行程 =====
 let sortables=[];
+// Reuse the detail sheet's recommendation without adding scheduling data to shared plans.
+function suggestedStay(a){const value=DETAIL[a.id]?.time??a.time;return typeof value==="string"&&value.trim()?value.trim():"待補";}
+function stayLabel(a){
+  const source=suggestedStay(a);
+  if(a.id==="fukair")return "依航班安排";
+  const durations=[...source.matchAll(/(\d+(?:\.\d+)?)(?:\s*[–—~-]\s*(\d+(?:\.\d+)?))?\s*(小時|分鐘|分)/g)].map(([,min,max,unit])=>{
+    const factor=unit==="小時"?1:1/60,hours=n=>String(Number((Number(n)*factor).toFixed(2)));
+    return hours(min)+(max?"–"+hours(max):"");
+  });
+  if(!durations.length)return "待補";
+  // Keep the alternatives in existing recommendations, rather than choosing one for the family.
+  const labels={markis:["遊玩","逛街"],jigoku:["海地獄","7處"],kinrin:["湖畔","含街道"]}[a.id];
+  return (labels?labels.map((label,i)=>label+" "+durations[i]).join("／"):durations[0])+" hr";
+}
 function dayBlock(title,color,idx,items,isPool){
   return `<div class="day" data-idx="${idx}"><h3 style="background:${color}"><span class="lbl">${esc(title)}</span>
   <span style="font-size:12px;opacity:.9">${items.length} 個</span>
   ${isPool?"":`<button data-ren="${idx}">✎</button><button data-del="${idx}">✕</button>`}</h3>
   <ul data-idx="${idx}">${items.map((id,i)=>{const a=BY[id];return `<li class="it" data-id="${esc(id)}">
     <span class="h">☰</span><span class="n" style="background:${isPool?"#a9b6c9":color}">${isPool?"•":i+1}</span>
-    <span class="t">${esc(a.zh)} <span class="info">ⓘ</span><small>${esc(a.area)}・${esc(a.note||a.ja)}</small>${customTagsHTML(a)}</span>
+    <span class="t">${esc(a.zh)} <span class="info">ⓘ</span><span class="stay" role="note" aria-label="建議停留：${esc(stayLabel(a))}。${esc(suggestedStay(a))}" title="${esc(suggestedStay(a))}"><span aria-hidden="true">🕒</span> ${esc(stayLabel(a))}</span><small>${esc(a.area)}・${esc(a.note||a.ja)}</small>${customTagsHTML(a)}</span>
     <select aria-label="移動 ${esc(a.zh)}" data-mv="${esc(id)}"><option value="-1"${isPool?" selected":""}>未排入</option>${S.days.map((d,j)=>`<option value="${j}"${j===idx?" selected":""}>${esc(d.label)}</option>`).join("")}</select>
     <button class="x" data-rm="${esc(id)}" title="移除">×</button></li>`;}).join("")}</ul></div>`;
 }

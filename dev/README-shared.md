@@ -75,3 +75,5 @@ KYUSHU_DATA_DIR=/tmp/kyushu-api-test php -S 127.0.0.1:8899 -t dev/server
 只有頁面 hostname 為 `localhost` 或 `127.0.0.1` 才會接受 `?backend=firebase|jsonfile&db=<url>`；正式網站忽略這些覆寫參數。本機分享連結仍只複製頁面 URL，測試時請自行使用完整參數網址。
 
 語法檢查：抽出 inline script 執行 `node --check`、`php -l dev/server/api.php`、`python3 -m py_compile dev/mock-rtdb.py`。API smoke test 應涵蓋第 1 版、過期版號 409、history、version，再確認還原會建立新版本。
+
+行程建議停留測試：`node dev/test-planner.cjs` 會執行 `test-stay.cjs`，涵蓋既有資料、小時換算、自訂景點待補與共享格式相容。已啟動上面的本機前後端後，可使用 `playwright-core` 執行 `node dev/test-stay-browser.cjs`；以 `CHROME` 指定瀏覽器、`URL` 指定完整本機 jsonfile 網址。瀏覽器測試只接受本機前後端，攔截正式 API 請求並停用 service worker，檢查桌面及 390／320px 手機畫面、移日／刪除／重新載入；畫面預設存於 `.qa/screenshots`（可用 `SCREENSHOTS` 覆寫）。
