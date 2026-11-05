@@ -6,6 +6,16 @@ module.exports=async function({html,page,initial,sleep,leaflet}){
  function top(p,kind,id){assert.equal(p.run('overlayTop()?.kind'),kind);assert.equal(p.run('detailId'),kind==='detail'?id:null);assert.equal(p.run('nearbyId'),kind==='nearby'?id:null);assert.equal(panels.filter(k=>p.els[k].classes.has('on')).length,kind?1:0);if(kind)assert.equal(p.els[kind+'Back'].hidden,depth(p)<2);}
  function key(p,key){const event={key,target:p.context.document.activeElement||p.els.cards,preventDefault(){this.defaultPrevented=true;}};for(const cb of p.owner.docListeners.keydown)cb(event);return event;}
  function nearbyDetail(p,id){const button={dataset:{nearDetail:id},closest(){return this;}};p.run('handleNearbyClick')({target:button,preventDefault(){},stopPropagation(){}});}
+ // Forward first enters a stale overlay entry, then cleanup traverses back asynchronously.
+ // Subscribe before traversal so an already-idle base entry cannot satisfy the wait early.
+ function forwardToBase(p){return new Promise((resolve,reject)=>{
+  const listeners=p.owner.eventListeners.popstate;
+  const cleanup=()=>{clearTimeout(timer);const i=listeners.indexOf(onPop);if(i>=0)listeners.splice(i,1);};
+  const onPop=()=>{if(p.owner.history.index===0&&p.run('overlayHistoryDepth')===0&&!p.run('overlayHistoryPending')){cleanup();resolve();}};
+  const timer=setTimeout(()=>{cleanup();reject(Error('Forward did not return to the base history entry within 1000ms'));},1000);
+  listeners.push(onPop);
+  try{p.context.history.forward();}catch(error){cleanup();reject(error);}
+ });}
  const p=page({search:'?view=family&test=1',hash:'#itinerary'});await initial(p);const url=p.context.location.href,before=p.run('JSON.stringify(snapshot())'),baseState={view:'family',foreign:{value:7}};p.context.history.replaceState(baseState,'');p.els.cards.focus();
  p.run('openDetail("canal")');top(p,'detail','canal');assert.equal(depth(p),1);p.els.detailBody.scrollTop=143;
  p.run('openNearby("canal")');top(p,'nearby','canal');p.els.nearbyBody.scrollTop=725;
@@ -28,7 +38,7 @@ module.exports=async function({html,page,initial,sleep,leaflet}){
  p.run('openDetail("canal");openNearby("canal");popOverlay();popOverlay();openDetail("zoo")');await settle();top(p,'detail','zoo');assert.equal(depth(p),1);assert.equal(p.owner.history.index,1);
  p.els.overlayBackdrop.onclick();await settle();assert.equal(depth(p),0);assert.equal(p.owner.history.index,0);
  // Re-entering a closed entry with Forward does not resurrect stale layers.
- p.context.history.forward();await settle();assert.equal(depth(p),0);assert.equal(p.owner.history.index,0);
+ await forwardToBase(p);assert.equal(depth(p),0);assert.equal(p.owner.history.index,0);
  assert.equal(p.context.location.href,url);assert.equal(p.run('JSON.stringify(snapshot())'),before);
  // Documents, generic modals, nicknames, history previews and custom drafts also nest.
  p.run('openDocuments("lodging",document.getElementById("hotelDocsBtn"))');p.els.documentsBody.scrollTop=234;
