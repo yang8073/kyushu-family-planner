@@ -30,7 +30,7 @@ const SYNC_CFG = { type: "firebase", url: "https://<project>-default-rtdb.asia-s
 
 ### PHP jsonfile
 
-使用 Namecheap 的 PHP 8.4 與網站根目錄外的 JSON 檔案。部署提案、目錄權限、CORS、限流與備份方式見 [server/README.md](server/README.md)，目前尚未部署。
+使用 Namecheap 的 PHP 8.4 與網站根目錄外的 JSON 檔案。更新交通與時間功能時，先更新相容的 PHP API，再發布 GitHub Pages。上傳順序、目錄權限與備份方式見 [server/README.md](server/README.md)。
 
 ```js
 const SYNC_CFG = { type: "jsonfile", url: "https://trip.yi-jia-zi.com/api.php", path: "kyushu2027" };
@@ -40,7 +40,7 @@ const SYNC_CFG = { type: "jsonfile", url: "https://trip.yi-jia-zi.com/api.php", 
 
 ## 儲存、衝突與還原
 
-每次行程變動、許願或還原都一起存成 `{rev,at,by,byId,summary,plan:{days,pool},wishes}`，600 ms 內連續編輯合為一版。摘要由前後快照比較產生。共享歷史永久保留，本機模式才有 100 版上限。
+每次行程變動、許願或還原都一起存成 `{rev,at,by,byId,summary,plan:{days,pool},wishes}`，600 ms 內連續編輯合為一版。景點時間隨景點移動，移除景點時一併清除。交通記錄綁定同一天的兩個相鄰景點，調整順序或日期讓兩站分開時會清除。時間與交通包含在版本快照及 JSON 匯出。摘要由前後快照比較產生。共享歷史永久保留，本機模式才有 100 版上限。
 
 「🕘 版本紀錄」顯示台北時間、暱稱、裝置 ID 前 4 碼及摘要；點選可預覽每天景點、未排入項目、許願人數與相對目前狀態的差異。還原會確認並**建立新版本**「還原至第 N 版」，不覆寫或刪除舊歷史。JSON 匯入、載入預設、清空、v1 載入也會建立版本。
 
@@ -77,3 +77,5 @@ KYUSHU_DATA_DIR=/tmp/kyushu-api-test php -S 127.0.0.1:8899 -t dev/server
 語法檢查：抽出 inline script 執行 `node --check`、`php -l dev/server/api.php`、`python3 -m py_compile dev/mock-rtdb.py`。API smoke test 應涵蓋第 1 版、過期版號 409、history、version，再確認還原會建立新版本。
 
 行程建議停留測試：`node dev/test-planner.cjs` 會執行 `test-stay.cjs`，涵蓋既有資料、小時換算、自訂景點待補與共享格式相容。已啟動上面的本機前後端後，可使用 `playwright-core` 執行 `node dev/test-stay-browser.cjs`；以 `CHROME` 指定瀏覽器、`URL` 指定完整本機 jsonfile 網址。瀏覽器測試只接受本機前後端，攔截正式 API 請求並停用 service worker，檢查桌面及 390／320px 手機畫面、移日／刪除／重新載入；畫面預設存於 `.qa/screenshots`（可用 `SCREENSHOTS` 覆寫）。
+
+交通與時間可用 `node dev/test-schedule-browser.cjs` 驗證。用同一組 `playwright-core`、`URL`、`CHROME` 與 `SCREENSHOTS` 設定，並為 PHP 服務指定全新的本機測試資料目錄。測試使用 390 × 844 與 1366 × 900 的獨立瀏覽器工作階段，驗證設定、同步、重新載入、拖曳排序與移日。
