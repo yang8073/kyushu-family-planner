@@ -78,8 +78,10 @@ section.pane.on{display:block}
 .visit-time svg{width:15px;height:15px;flex:none}
 .visit-time.has-time{background:#eaf5ff;border-color:#c9e2f7;color:#20587f;font-weight:700;font-variant-numeric:tabular-nums}
 .visit-time:focus-visible,.plan-leg-button:focus-visible,.plan-leg-map:focus-visible{outline:2px solid #316aac;outline-offset:2px}
-.plan-leg{position:relative;display:flex;align-items:center;gap:6px;min-height:40px;padding:1px 0 5px 43px}
+.plan-leg,.plan-start,.plan-end{position:relative;display:flex;align-items:center;gap:6px;min-height:40px;padding:1px 0 5px 43px}
 .plan-leg::before{content:"";position:absolute;left:27px;top:-5px;bottom:0;border-left:2px dotted #9eabc1}
+.plan-end{padding-bottom:0}
+.plan-boundary-label{font-size:12px;color:#45607e;line-height:1.4}
 .plan-leg-button{min-width:0;text-align:left;border-style:dashed}
 .plan-leg-button.has-mode{border-style:solid;background:#f4efff;color:#62478c}
 .plan-leg-button .leg-text{min-width:0;overflow-wrap:anywhere}
@@ -1295,23 +1297,47 @@ function googleMapsDirections(from,to,mode){
   }
   return url.href;
 }
+function planNavigationLink(from,to,mode,label="導航"){
+  const action="Google Maps "+label+"："+from.zh+" 到 "+to.zh;
+  return `<a class="plan-leg-map" href="${esc(googleMapsDirections(from,to,mode))}" target="_blank" rel="noopener noreferrer" aria-label="${esc(action)}" title="在 Google Maps 開啟路線"><span aria-hidden="true">↗</span>${esc(label)}</a>`;
+}
 function planLegHTML(day,from,to){
   const leg=transportBetween(day,from,to),route=BY[from].zh+" 到 "+BY[to].zh;
   const action=(leg?"編輯":"新增")+"交通方式："+route;
   return `<li class="plan-leg">
     <button type="button" class="plan-leg-button${leg?" has-mode":""}" data-leg-from="${esc(from)}" data-leg-to="${esc(to)}" aria-label="${esc(action)}"${leg?` aria-description="${esc(transportText(leg))}"`:""}><span aria-hidden="true">${leg?TRANSPORT_ICONS[leg.mode]:"＋"}</span><span class="leg-text">${leg?esc(transportText(leg)):"交通方式"}</span></button>
-    <a class="plan-leg-map" href="${esc(googleMapsDirections(BY[from],BY[to],leg?.mode))}" target="_blank" rel="noopener noreferrer" aria-label="${esc("Google Maps 導航："+route)}" title="在 Google Maps 開啟路線"><span aria-hidden="true">↗</span>導航</a>
+    ${planNavigationLink(BY[from],BY[to],leg?.mode)}
   </li>`;
 }
+function planBoundaryRow(position,description,from,to){
+  const label=position==="end"?"回飯店":"導航";
+  return `<li class="plan-${position}"><span class="plan-boundary-label">${esc(description)}</span>${planNavigationLink(from,to,undefined,label)}</li>`;
+}
+function planBoundaryRoutes(title,items,dayIndex){
+  if(!items.length)return ["",""];
+  const hotel=BY.hotel,airport=BY.fukair,first=BY[items[0]],last=BY[items.at(-1)];
+  const date=title.match(/^\s*(?:2027[/-])?(\d{1,2})[/-](\d{1,2})(?!\d)/);
+  // Date labels can be renamed. A leading airport stop still suggests arrival unless the day says return.
+  const arrivalDay=date?Number(date[1])===2&&Number(date[2])===8:
+    /\bCI116\b/i.test(title)||(dayIndex===0&&first===airport&&!/回程|\bCI117\b/i.test(title));
+  const airportFirst=arrivalDay&&first===airport;
+  const airportOnly=airportFirst&&items.length===1;
+  const start=airportOnly?"":planBoundaryRow("start",
+    airportFirst?"機場 → 飯店（可選）":arrivalDay?"機場 → 第一站":"飯店 → 第一站",
+    arrivalDay?airport:hotel,airportFirst?hotel:first);
+  const end=planBoundaryRow("end",airportOnly?"機場 → 飯店":"最後一站 → 飯店",last,hotel);
+  return [start,end];
+}
 function dayBlock(title,color,idx,items,isPool){
+  const [start,end]=isPool?["",""]:planBoundaryRoutes(title,items,idx);
   return `<div class="day" data-idx="${idx}"><h3 style="background:${color}"><span class="lbl">${esc(title)}</span>
   <span style="font-size:12px;opacity:.9">${items.length} 個</span>
   ${isPool?"":`<button data-ren="${idx}">✎</button><button data-del="${idx}">✕</button>`}</h3>
-  <ul data-idx="${idx}">${items.map((id,i)=>{const a=BY[id];return (!isPool&&i?planLegHTML(S.days[idx],items[i-1],id):"")+`<li class="it" data-id="${esc(id)}">
+  <ul data-idx="${idx}">${start}${items.map((id,i)=>{const a=BY[id];return (!isPool&&i?planLegHTML(S.days[idx],items[i-1],id):"")+`<li class="it" data-id="${esc(id)}">
     <span class="h">☰</span><span class="n" style="background:${isPool?"#a9b6c9":color}">${isPool?"•":i+1}</span>
     <span class="t">${esc(a.zh)} <span class="info">ⓘ</span>${isPool?"":visitTimesHTML(id)}<span class="stay" role="note" aria-label="建議停留：${esc(stayLabel(a))}。${esc(suggestedStay(a))}" title="${esc(suggestedStay(a))}"><span aria-hidden="true">🕒</span> ${esc(stayLabel(a))}</span><small>${esc(a.area)}・${esc(a.note||a.ja)}</small>${customTagsHTML(a)}</span>
     <select aria-label="移動 ${esc(a.zh)}" data-mv="${esc(id)}"><option value="-1"${isPool?" selected":""}>未排入</option>${S.days.map((d,j)=>`<option value="${j}"${j===idx?" selected":""}>${esc(d.label)}</option>`).join("")}</select>
-    <button class="x" data-rm="${esc(id)}" title="移除">×</button></li>`;}).join("")}</ul></div>`;
+    <button class="x" data-rm="${esc(id)}" title="移除">×</button></li>`;}).join("")}${end}</ul></div>`;
 }
 function renderDays(){
   sortables.forEach(s=>s.destroy());sortables=[];
