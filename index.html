@@ -73,6 +73,16 @@ section.pane.on{display:block}
 .it .n{width:22px;height:22px;border-radius:50%;color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;flex:none;font-weight:700}
 .it .t{flex:1;min-width:0;font-size:14px}
 .it .stay{display:block;margin:4px 0;color:#2f6ea8;font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+.visit-times{display:flex;gap:4px 6px;flex-wrap:wrap;margin:4px 0}
+.visit-time,.plan-leg-button{display:inline-flex;align-items:center;gap:5px;min-height:36px;padding:3px 7px;border:1px solid var(--line);border-radius:8px;background:#fff;color:#45607e;font:inherit;font-size:12px;line-height:1.35}
+.visit-time svg{width:15px;height:15px;flex:none}
+.visit-time.has-time{background:#eaf5ff;border-color:#c9e2f7;color:#20587f;font-weight:700;font-variant-numeric:tabular-nums}
+.visit-time:focus-visible,.plan-leg-button:focus-visible{outline:2px solid #316aac;outline-offset:2px}
+.plan-leg{position:relative;display:flex;align-items:center;min-height:40px;padding:1px 0 5px 43px}
+.plan-leg::before{content:"";position:absolute;left:27px;top:-5px;bottom:0;border-left:2px dotted #9eabc1}
+.plan-leg-button{max-width:100%;text-align:left;border-style:dashed}
+.plan-leg-button.has-mode{border-style:solid;background:#f4efff;color:#62478c}
+.plan-leg-button .leg-text{min-width:0;overflow-wrap:anywhere}
 .it .t small{display:block;color:var(--sub);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .it select{font-size:12px;border:1px solid var(--line);border-radius:8px;padding:3px;max-width:78px;background:#fff;color:var(--ink)}
 .it .x{border:0;background:none;color:#c77;font-size:18px;padding:0 4px}
@@ -115,6 +125,17 @@ section.pane.on{display:block}
 .nearby-source{width:34px;height:34px;background:#d94e57;border:3px solid #fff;border-radius:50%;color:#fff;font-size:21px;text-align:center;line-height:28px;box-shadow:0 2px 6px #0005}
 @media(max-width:699px){#nearbyPanel{padding:0;align-items:flex-end}#nearbyPanel .box{border-radius:20px 20px 0 0;padding-bottom:env(safe-area-inset-bottom)}}
 .modal textarea{width:100%;height:46vh;font-family:ui-monospace,Menlo,monospace;font-size:12px;border:1px solid var(--line);border-radius:10px;padding:8px}
+#scheduleModal .box{max-width:440px;max-height:90vh;max-height:90dvh;padding:0;display:flex;flex-direction:column;overflow:hidden}
+#scheduleBody{padding:12px;overflow:auto;overscroll-behavior:contain}
+#scheduleBody p{overflow-wrap:anywhere}
+#scheduleContext{margin:0 0 8px;font-weight:700}
+#scheduleBody label{display:block;font-size:14px;font-weight:700;margin:6px 0 3px}
+#scheduleBody input,#scheduleBody select{display:block;min-width:0;width:100%;min-height:42px;padding:7px 8px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);font:inherit}
+.schedule-time-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,130px),1fr));gap:6px 10px}
+.schedule-time-grid button{margin-top:4px}
+.schedule-actions{justify-content:flex-end;margin-top:12px}
+#scheduleError{color:#a33044;font-size:13px;margin:8px 0 0}
+@media(max-width:699px){#scheduleModal .box{padding-bottom:env(safe-area-inset-bottom)}}
 #customModal .box{max-width:440px;max-height:85vh;overflow-y:auto}
 #customForm label{display:block;font-weight:700;font-size:13px;margin:8px 0 3px}
 #customForm input,#customForm select,#customForm textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:8px 10px;font:inherit;font-size:14px;color:var(--ink);background:#fff;box-sizing:border-box}
@@ -284,7 +305,7 @@ body.sheet-open{overscroll-behavior:none}
       </div>
     </div>
   </div>
-  <p class="hint" id="planHint">按住 ☰ 拖曳即可排序或移到別天；也可以用右側選單直接換天。行程會自動存在這支手機（localStorage）。</p>
+  <p class="hint" id="planHint">按住 ☰ 可排序或換天。點景點上的「抵達／離開」填時間，點兩個景點之間的「＋ 交通方式」安排交通。</p>
   <div id="days"></div>
 </section>
 
@@ -301,6 +322,28 @@ body.sheet-open{overscroll-behavior:none}
 </main>
 
 <div id="overlayBackdrop" aria-hidden="true"></div>
+<div class="modal" id="scheduleModal" role="dialog" aria-modal="true" aria-labelledby="scheduleTitle" aria-describedby="scheduleContext">
+  <form class="box" id="scheduleForm">
+    <div class="overlay-tools"><button type="button" class="btn alt overlay-back" id="scheduleBack" hidden>← 返回</button><h3 id="scheduleTitle">行程安排</h3><button type="button" class="detail-close" id="scheduleClose" aria-label="關閉浮窗">✕</button></div>
+    <div id="scheduleBody">
+      <p id="scheduleContext"></p>
+      <div id="scheduleTimes" hidden>
+        <p class="hint">使用日本當地時間，抵達與離開可分開填寫。</p>
+        <div class="schedule-time-grid">
+          <div><label for="planArrival">抵達時間</label><input type="time" id="planArrival"><button type="button" class="btn alt" id="clearPlanArrival">清除抵達時間</button></div>
+          <div><label for="planDeparture">離開時間</label><input type="time" id="planDeparture"><button type="button" class="btn alt" id="clearPlanDeparture">清除離開時間</button></div>
+        </div>
+      </div>
+      <div id="scheduleTransport" hidden>
+        <p class="hint">交通方式會記在這兩個相鄰景點之間。若它們不再相鄰，這段交通會移除。</p>
+        <label for="planMode">交通方式</label><select id="planMode"></select>
+        <label for="planTransportNote">交通備註（選填）</label><input type="text" id="planTransportNote" maxlength="200" placeholder="例如：JR 鹿兒島本線，約 20 分鐘">
+      </div>
+      <p id="scheduleError" role="status" hidden></p>
+      <div class="row schedule-actions"><button type="button" class="btn warn" id="removePlanTransport" hidden>移除交通方式</button><button type="button" class="btn alt" id="scheduleCancel">取消</button><button type="submit" class="btn">儲存</button></div>
+    </div>
+  </form>
+</div>
 <div class="modal" id="documentsPanel" role="dialog" aria-modal="true" aria-labelledby="documentsTitle" aria-describedby="documentsHint">
   <div class="box">
     <div class="detail-head"><button type="button" class="btn alt overlay-back" id="documentsBack" hidden>← 返回</button><h2 id="documentsTitle">📂 旅行文件</h2><button type="button" class="detail-close" id="documentsClose" aria-label="關閉旅行文件">×</button></div>
@@ -850,8 +893,74 @@ const SAMPLE = [
 const SAMPLE_POOL = ["kinrin","miffy","snoopy","hyotan"];
 // 先前版本的預設行程：使用者沒改過的話，自動換成新的建議行程（改過的不動）
 const OLD_DEFAULTS = ["[[[\"2/8(一) 華航下午班 CI116（暫定）19:35 抵達福岡 → 約 21:00 到住宿・簡單晚餐・睡覺\",[\"fukair\"]],[\"2/9(二) 太宰府\",[\"dazaifu\",\"kyuhaku\",\"yuenchi\",\"tenjinsanrio\"]],[\"2/10(三) Harmonyland 一日來回（單程約 2–2.5 小時）\",[\"harmony\"]],[\"2/11(四・日本國定假日) 海之中道（水族館＋海濱公園）｜雨天改：麵包超人博物館 或 福岡塔・百道\",[\"marine\",\"umino\"]],[\"2/12(五) 博多・中洲輕鬆日（麵包超人＋運河城噴水秀・拉麵競技場）\",[\"anpanman\",\"canal\",\"sanriogal\",\"kushida\"]],[\"2/13(六) 退房 → 博多站（屋頂・阪急 Sanrio・寶可夢）→ 東平尾公園 → 華航晚班 CI117（暫定），建議 17:30 前到機場（含退稅）\",[\"rooftop\",\"hankyu\",\"pokemon\",\"higashihirao\"]]],[\"kinrin\",\"miffy\",\"snoopy\",\"hyotan\"]]", "[[[\"2/8(一) 華航早班（暫定）抵達福岡約 10:00 → 行李先寄飯店 → 博多站・運河城\",[\"fukair\",\"rooftop\",\"hankyu\",\"canal\"]],[\"2/9(二) 太宰府\",[\"dazaifu\",\"kyuhaku\",\"yuenchi\",\"tenjinsanrio\"]],[\"2/10(三) Harmonyland 一日來回（單程約 2–2.5 小時）\",[\"harmony\"]],[\"2/11(四・日本國定假日) 海之中道（水族館＋海濱公園）｜雨天改：麵包超人博物館 或 福岡塔・百道\",[\"marine\",\"umino\"]],[\"2/12(五) 博多・中洲（室內為主）\",[\"anpanman\",\"sanriogal\",\"kushida\"]],[\"2/13(六) 退房 → 寶可夢中心 → 機場寄行李 → 東平尾公園 → 華航晚班（暫定），建議 17:30 前到機場（含退稅）\",[\"pokemon\",\"higashihirao\"]]],[\"kinrin\",\"miffy\",\"snoopy\",\"hyotan\"]]", "[[[\"2/8(一) 抵達福岡機場（時間待定）・入住博多站周邊\",[\"fukair\",\"rooftop\",\"hankyu\"]],[\"2/9(二) 太宰府\",[\"dazaifu\",\"kyuhaku\",\"yuenchi\",\"tenjinsanrio\"]],[\"2/10(三) Harmonyland 一日來回（單程約 2–2.5 小時）\",[\"harmony\"]],[\"2/11(四・日本國定假日) 海之中道（水族館＋海濱公園）｜雨天改：麵包超人博物館 或 福岡塔・百道\",[\"marine\",\"umino\"]],[\"2/12(五) 博多・中洲（室內為主）\",[\"anpanman\",\"canal\",\"sanriogal\",\"kushida\"]],[\"2/13(六) 退房 → 博多・機場周邊 → 福岡機場回台（時間待定）\",[\"pokemon\",\"higashihirao\"]]],[\"kinrin\",\"miffy\",\"snoopy\",\"hyotan\"]]", "[[[\"2/7(日) 抵達福岡機場（時間待定）\",[\"fukair\",\"rooftop\",\"hankyu\"]],[\"2/8(一) 福岡市區・百道\",[\"science\",\"tower\",\"momochi\",\"yatai\"]],[\"2/9(二) 太宰府\",[\"dazaifu\",\"kyuhaku\",\"yuenchi\",\"tenjinsanrio\"]],[\"2/10(三) 博多・中洲\",[\"anpanman\",\"canal\",\"sanriogal\",\"kushida\"]],[\"2/11(四) 由布院 → 別府（住一晚）\",[\"kinrin\",\"miffy\",\"snoopy\",\"hyotan\"]],[\"2/12(五) Harmonyland → 回福岡\",[\"harmony\"]],[\"2/13(六) 博多・機場周邊，從福岡機場回台（時間待定）\",[\"pokemon\",\"higashihirao\"]]],[]]", "[[[\"2/8(一) 抵達福岡機場（時間待定）\",[\"fukair\",\"rooftop\",\"hankyu\"]],[\"2/9(二) 太宰府\",[\"dazaifu\",\"kyuhaku\",\"yuenchi\",\"tenjinsanrio\"]],[\"2/10(三) 博多・中洲\",[\"anpanman\",\"canal\",\"sanriogal\",\"kushida\"]],[\"2/11(四・日本國定假日) 由布院 → 別府（住一晚）\",[\"kinrin\",\"miffy\",\"snoopy\",\"hyotan\"]],[\"2/12(五) Harmonyland → 回福岡\",[\"harmony\"]],[\"2/13(六) 博多・機場周邊，從福岡機場回台（時間待定）\",[\"pokemon\",\"higashihirao\"]]],[]]"];
-function fp(s){return JSON.stringify([s.days.map(d=>[d.label,d.items]),s.pool]);}
+function fp(s){
+  const order=[s.days.map(d=>[d.label,d.items]),s.pool];
+  if(s.times||s.transport)order.push(s.times||{},s.transport||{});
+  return JSON.stringify(order);
+}
+function sameSavedPlan(a,b){
+  return fp(a)===fp(b)&&a.scheduleVersion===b.scheduleVersion&&a.days.every((day,i)=>day.id===b.days[i].id);
+}
 const uid = () => "d"+Math.random().toString(36).slice(2,8);
+const TRANSPORT_LABELS={
+  walk:"步行", train:"電車／JR", shinkansen:"新幹線", subway:"地鐵", bus:"巴士",
+  car:"自駕", charter:"包車", taxi:"計程車", ferry:"渡輪", other:"其他"
+};
+function validDayId(id){
+  return typeof id==="string"&&id.length>=1&&id.length<=64&&!/[^A-Za-z0-9_-]/.test(id)&&!["__proto__","constructor","prototype"].includes(id);
+}
+function validClockTime(value){
+  return typeof value==="string"&&value.length===5&&/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value);
+}
+function validTransportNote(value){return typeof value==="string"&&[...value].length<=100;}
+function visitTimes(id,plan=S){return plan.times?.[id]||{};}
+function transportBetween(day,from,to,plan=S){
+  const leg=plan.transport?.[day.id]?.[from];
+  return leg?.to===to?leg:null;
+}
+function setVisitTimes(dayId,id,arrival,departure){
+  const day=S.days.find(d=>d.id===dayId);
+  if(!day?.items.includes(id)||(arrival!==""&&!validClockTime(arrival))||(departure!==""&&!validClockTime(departure)))return false;
+  if(arrival||departure)(S.times??={})[id]={...(arrival?{arrival}:{}),...(departure?{departure}:{})};
+  else if(S.times)delete S.times[id];
+  return true;
+}
+function setTransport(dayId,from,to,mode,note=""){
+  const day=S.days.find(d=>d.id===dayId),index=day?.items.indexOf(from)??-1;
+  if(index<0||day.items[index+1]!==to)return false;
+  if(mode===""){
+    if(S.transport?.[dayId])delete S.transport[dayId][from];
+    return true;
+  }
+  if(!Object.hasOwn(TRANSPORT_LABELS,mode)||typeof note!=="string")return false;
+  note=note.trim();
+  if(!validTransportNote(note))return false;
+  ((S.transport??={})[dayId]??={})[from]={to,mode,...(note?{note}:{})};
+  return true;
+}
+function cleanSchedule(plan){
+  const times={},transport={};
+  for(const id of [...plan.days.flatMap(day=>day.items),...plan.pool]){
+    const {arrival,departure}=visitTimes(id,plan);
+    const entry={};
+    if(validClockTime(arrival))entry.arrival=arrival;
+    if(validClockTime(departure))entry.departure=departure;
+    if(Object.keys(entry).length)times[id]=entry;
+  }
+  for(const day of plan.days){
+    for(let i=1;i<day.items.length;i++){
+      const from=day.items[i-1],to=day.items[i],leg=transportBetween(day,from,to,plan);
+      if(!leg||!Object.hasOwn(TRANSPORT_LABELS,leg.mode))continue;
+      const note=validTransportNote(leg.note)?leg.note.trim():"";
+      (transport[day.id]??={})[from]={to,mode:leg.mode,...(note?{note}:{})};
+    }
+  }
+  if(Object.keys(times).length)plan.times=times;else delete plan.times;
+  if(Object.keys(transport).length)plan.transport=transport;else delete plan.transport;
+  if(plan.scheduleVersion===1||plan.times||plan.transport)plan.scheduleVersion=1;
+  else delete plan.scheduleVersion;
+  return plan;
+}
 function blank(){return {days:DEFAULT_LABELS.map(l=>({id:uid(),label:l,items:[]})),pool:[]};}
 function sample(){const s=blank();s.days.forEach((d,i)=>d.items=[...SAMPLE[i]]);s.pool=[...SAMPLE_POOL];return s;}
 // 舊版存檔／舊 JSON：只保留 2/8–2/13 的天數，其他日期的景點移回「未排入」
@@ -866,7 +975,19 @@ try{S=JSON.parse(localStorage.getItem(KEY));}catch(e){}
 if(!valid(S)) S=sample();
 else{try{if(OLD_DEFAULTS.includes(fp(S)))S=sample();}catch(e){}}
 function valid(s){return s&&Array.isArray(s.days)&&Array.isArray(s.pool)&&s.days.every(d=>Array.isArray(d.items));}
-function clean(s, byLookup=BY){const seen=new Set();const f=ids=>ids.filter(id=>typeof id==="string"&&canPlan(id,byLookup)&&!seen.has(id)&&seen.add(id));s.days.forEach(d=>{d.items=f(d.items);if(typeof d.id!=="string"||!/^[A-Za-z0-9_-]{1,64}$/.test(d.id))d.id=uid();const label=String(d.label||"新的一天");d.label=(Object.hasOwn(LABEL_UPGRADES,label)?LABEL_UPGRADES[label]:label).slice(0,2000);});s.pool=f(s.pool);return s;}
+function clean(s,byLookup=BY){
+  const seen=new Set(),dayIds=new Set();
+  const filter=ids=>ids.filter(id=>typeof id==="string"&&canPlan(id,byLookup)&&!seen.has(id)&&seen.add(id));
+  for(const day of s.days){
+    day.items=filter(day.items);
+    while(!validDayId(day.id)||dayIds.has(day.id))day.id=uid();
+    dayIds.add(day.id);
+    const label=String(day.label||"新的一天");
+    day.label=(Object.hasOwn(LABEL_UPGRADES,label)?LABEL_UPGRADES[label]:label).slice(0,2000);
+  }
+  s.pool=filter(s.pool);
+  return cleanSchedule(s);
+}
 S=clean(S);
 // ===== 裝置、版本化共享與離線快取 =====
 const UIKEY="kyushuPlanner.ui",MEKEY="kyushuPlanner.me",WISHKEY="kyushuPlanner.wishes",HISTORYKEY="kyushuPlanner.history";
@@ -879,14 +1000,19 @@ if(["localhost","127.0.0.1"].includes(location.hostname)){const params=new URLSe
 const shared=()=>["firebase","jsonfile"].includes(backendCfg.type)&&!!backendCfg.url;
 const scope=()=>shared()?backendCfg.type+":"+backendCfg.url+":"+(backendCfg.path||"kyushu2027"):"local";
 function sanitizeWishes(raw, byLookup=BY){const out={};if(!raw||typeof raw!=="object")return out;Object.entries(raw).forEach(([spot,users])=>{if(!canPlan(spot,byLookup)||!users||typeof users!=="object")return;Object.entries(users).forEach(([dev,v])=>{if(!/^[A-Za-z0-9_-]{1,64}$/.test(dev)||["__proto__","constructor","prototype"].includes(dev)||!v||!Object.hasOwn(POOLS,v.pool)||typeof v.nick!=="string"||!v.nick.trim())return;(out[spot]??={})[dev]={pool:v.pool,nick:nickname(v.nick),at:Number(v.at)||0};});});Object.keys(out).forEach(id=>{if(!Object.keys(out[id]).length)delete out[id];});return out;}
-function normalPlan(p, byLookup=BY){if(!p||typeof p!=="object"||!Object.hasOwn(p,"days"))return null;const list=x=>Array.isArray(x)?x:(x&&typeof x==="object"?Object.values(x):[]);return clean({days:list(p.days).filter(d=>d&&typeof d==="object").map(d=>({id:typeof d.id==="string"?d.id:uid(),label:String(d.label||"新的一天"),items:list(d.items)})),pool:list(p.pool)}, byLookup);}
+function normalPlan(p,byLookup=BY){
+  if(!p||typeof p!=="object"||!Object.hasOwn(p,"days"))return null;
+  const list=x=>Array.isArray(x)?x:(x&&typeof x==="object"?Object.values(x):[]);
+  const days=list(p.days).filter(d=>d&&typeof d==="object").map(d=>({id:d.id,label:d.label,items:list(d.items)}));
+  return clean({days,pool:list(p.pool),times:p.times,transport:p.transport,scheduleVersion:p.scheduleVersion},byLookup);
+}
+function planLookup(customs){
+  return {...Object.fromEntries(BUILTIN_ATTR.map(spot=>[spot.id,spot])),...customs};
+}
 function normalState(raw){
   if(!raw||!raw.plan)return null;
   const tagDefs=sanitizeTagDefs(raw.tagDefs),customs=sanitizeCustoms(raw.customs,tagDefs);
-  const byLookup={...BY};
-  for(const [id,c] of Object.entries(customs)){
-    if(!byLookup[id]) byLookup[id]={id,zh:c.zh,cat:c.cat,area:c.area||"",addr:c.addr||"",custom:true};
-  }
+  const byLookup=planLookup(customs);
   const plan=normalPlan(raw.plan, byLookup);
   return plan?{rev:Number(raw.rev)||0,at:Number(raw.at)||0,by:nickname(raw.by),byId:String(raw.byId||""),summary:String(raw.summary||""),plan,wishes:sanitizeWishes(raw.wishes, byLookup),customs,tagDefs}:null;
 }
@@ -908,6 +1034,21 @@ function applyWishOps(wishes,ops){const next=clone(wishes||{});for(const [path,v
 function diffState(before,after){const changes=[],a=before?.plan||{days:[],pool:[]},b=after?.plan||{days:[],pool:[]};
   const places=plan=>{const out=new Map();plan.pool.forEach(id=>out.set(id,{key:"pool",label:"未排入"}));plan.days.forEach((d,i)=>d.items.forEach(id=>out.set(id,{key:d.id||"day"+i,label:d.label.match(/^\S+/)?.[0]||d.label})));return out;},oldPlaces=places(a),nextPlaces=places(b);
   const name=id=>after?.customs?.[id]?.zh || before?.customs?.[id]?.zh || BY[id]?.zh || id;
+  for(const id of new Set([...Object.keys(a.times||{}),...Object.keys(b.times||{})])){
+    const prev=visitTimes(id,a),next=visitTimes(id,b);
+    for(const [key,label] of [["arrival","抵達"],["departure","離開"]]){
+      if(prev[key]!==next[key])changes.push(next[key]?`設定 ${name(id)} ${label} ${next[key]}`:`清除 ${name(id)} 的${label}時間`);
+    }
+  }
+  for(const dayId of new Set([...Object.keys(a.transport||{}),...Object.keys(b.transport||{})])){
+    const prev=a.transport?.[dayId]||{},next=b.transport?.[dayId]||{};
+    for(const from of new Set([...Object.keys(prev),...Object.keys(next)])){
+      const old=prev[from],leg=next[from];
+      if(JSON.stringify(old)===JSON.stringify(leg))continue;
+      if(old&&(!leg||old.to!==leg.to))changes.push(`移除 ${name(from)} → ${name(old.to)} 的交通`);
+      if(leg)changes.push(`設定 ${name(from)} → ${name(leg.to)} 的交通：${TRANSPORT_LABELS[leg.mode]}${leg.note?`（${leg.note}）`:""}`);
+    }
+  }
   const tBefore=before?.tagDefs||{},tAfter=after?.tagDefs||{};
   for(const [id,d] of Object.entries(tAfter))if(JSON.stringify(d)!==JSON.stringify(tBefore[id]))changes.push(`${d.deleted?"刪除":!tBefore[id]||tBefore[id].deleted?"新增":"修改"}分類「${d.name}」`);
   for(const [id,d] of Object.entries(tBefore))if(!tAfter[id])changes.push(`刪除分類「${d.name}」`);
@@ -972,7 +1113,7 @@ function cachePlan(){localStorage.setItem(KEY,JSON.stringify(S));}
 function renderAll(){if(dragging){renderQueued=true;return;}renderQueued=false;renderTagChips();renderCustomTags();renderList();renderDays();renderMap();renderWishes();renderDetail();renderNearby();renderSync();if(historyPreview)renderHistoryPreview();}
 function renderSync(){const pill=document.getElementById("syncStatus");pill.className="status";let text;if(!shared()){text="📴 本機模式・版本紀錄存於此裝置";pill.classList.add("local");}else if(sync.offline){text="⚠️ 離線，變更會在連線後上傳";pill.classList.add("off");}else{const p=sync.current,time=p?.at?new Intl.DateTimeFormat("zh-TW",{timeZone:"Asia/Taipei",hour:"2-digit",minute:"2-digit",hour12:false}).format(p.at):"";text=p?.by?`🟢 共享中・第 ${p.rev} 版・${p.by} ${time}`:"🟢 共享中・等待同步";}
   const span=pill.querySelector?.(".status-text");if(span)span.textContent=text;else pill.textContent=text+" 🕘";
-  document.getElementById("refreshBtn").hidden=!shared();document.getElementById("beforeShareBtn").hidden=!localStorage.getItem(KEY+".beforeShare");document.getElementById("planHint").textContent="按住 ☰ 拖曳即可排序或移到別天；也可以用右側選單直接換天。"+(shared()?"目前與家人共享，修改會自動同步並保留版本紀錄。":"行程會自動存在這支手機（localStorage），保留最近 100 個版本。");}
+  document.getElementById("refreshBtn").hidden=!shared();document.getElementById("beforeShareBtn").hidden=!localStorage.getItem(KEY+".beforeShare");document.getElementById("planHint").textContent="按住 ☰ 可排序或換天。點景點上的「抵達／離開」填時間，點兩個景點之間的「＋ 交通方式」安排交通。"+(shared()?"修改會與家人同步並保留版本紀錄。":"修改會存於此裝置，保留最近 100 個版本。");}
 function markChange(planChanged=false,summary=""){if(!sync.stage)sync.stage={before:clone(sync.head),baseRev:sync.rev,planChanged:false,summary:"",state:null};sync.stage.planChanged ||= planChanged;if(summary)sync.stage.summary=summary;sync.stage.state=snapshot();sync.head=snapshot();cachePlan();cacheWishes();cacheCustoms();cacheTagDefs();persistSync();scheduleFlush();}
 function markPlan(summary=""){markChange(true,summary);}
 function queueWish(){markChange(false);}
@@ -999,7 +1140,7 @@ async function flushPending(){clearTimeout(flushTimer);
       if(!desired.tagDefs||!Object.keys(desired.tagDefs).length)delete desired.tagDefs;
       let result=await adapter.save(baseRev,desired);
       // A response can be lost after the server commits. Recognize that exact snapshot on retry.
-      if(result.conflict&&result.state?.rev===baseRev+1&&result.state.byId===ME.id&&result.state.summary===desired.summary&&fp(result.state.plan)===fp(desired.plan)&&!Object.keys(wishOps(result.state.wishes,desired.wishes)).length&&JSON.stringify(result.state.customs||{})===JSON.stringify(desired.customs||{})&&JSON.stringify(result.state.tagDefs||{})===JSON.stringify(desired.tagDefs||{}))result={ok:true,state:result.state};
+      if(result.conflict&&result.state?.rev===baseRev+1&&result.state.byId===ME.id&&result.state.summary===desired.summary&&sameSavedPlan(result.state.plan,desired.plan)&&!Object.keys(wishOps(result.state.wishes,desired.wishes)).length&&JSON.stringify(result.state.customs||{})===JSON.stringify(desired.customs||{})&&JSON.stringify(result.state.tagDefs||{})===JSON.stringify(desired.tagDefs||{}))result={ok:true,state:result.state};
       if(result.conflict){if(batch.planChanged){conflict(result.state);break;}const latest=result.state||{rev:0,plan:blank(),wishes:{},customs:{},tagDefs:{}};batch.state={plan:clone(latest.plan),wishes:applyWishOps(latest.wishes,batch.ops),customs:clone(latest.customs||{}),tagDefs:clone(latest.tagDefs||{})};batch.baseRev=latest.rev;batch.summary=summarize(diffState(latest,batch.state));sync.current=result.state;sync.rev=latest.rev;for(const later of sync.queue.slice(1))if(later.planChanged)later.stalePlan=true;if(sync.stage?.planChanged)sync.stage.stalePlan=true;persistSync();if(++retries>=5){scheduleFlush();break;}continue;}
       sync.current=result.state;sync.rev=result.state.rev;sync.queue.shift();persistSync();sync.offline=false;
     }
@@ -1030,14 +1171,25 @@ async function historyList(){const request=++historyRequest,body=document.getEle
 }catch{if(request===historyRequest)body.innerHTML='<p>目前無法讀取版本紀錄，請連線後重試。</p><button class="btn" data-history-list>重新載入</button>';}finally{if(request===historyRequest)historyPending=null;}}
 async function previewVersion(rev){const request=++historyRequest;historyPending={rev};document.getElementById("historyBody").textContent="讀取快照…";try{const entry=await adapter.version(rev);if(request!==historyRequest)return;if(!entry)throw new Error("不存在");historyPreview={...entry,draft:false};renderHistoryPreview();}catch{if(request===historyRequest)document.getElementById("historyBody").innerHTML='<p>無法讀取這個版本。</p><button class="btn" data-history-list>返回版本紀錄</button>';}finally{if(request===historyRequest)historyPending=null;}}
 function renderHistoryPreview(){if(!historyPreview)return;const entry=historyPreview,diff=diffState(snapshot(),entry),name=id=>esc(entry?.customs?.[id]?.zh||BY[id]?.zh||id),spots=ids=>ids.length?ids.map(name).join(" → "):"（尚未安排）";
+  const daySpots=d=>{
+    const items=d.items.map((id,i)=>({id,times:visitTimeText(id,entry.plan),leg:i?transportBetween(d,d.items[i-1],id,entry.plan):null}));
+    if(!items.some(({times,leg})=>times||leg))return `<p>${spots(d.items)}</p>`;
+    return `<ul>${items.map(({id,times,leg})=>`<li>${leg?`<small>↳ ${esc(transportText(leg))}<br></small>`:""}${name(id)}${times?"（"+esc(times)+"）":""}</li>`).join("")}</ul>`;
+  };
   const wishRows=Object.entries(entry.wishes||{}).map(([id,users])=>`<li>${name(id)}：${Object.entries(POOLS).map(([pool,label])=>`${label} ${Object.values(users).filter(w=>w.pool===pool).length}`).join("／")}</li>`).join("");
-  document.getElementById("historyBody").innerHTML=`<button class="btn alt" data-history-list>← 返回版本紀錄</button><h2>${entry.draft?"本機衝突備份":"第 "+Number(entry.rev)+" 版"}</h2><p class="hint">${esc(taipeiTime(entry.at))} ${historyWho(entry)}</p><p>${esc(entry.summary)}</p><button class="btn" data-history-restore>${entry.draft?"↩️ 載入這份本機變更":"↩️ 還原到這個版本"}</button><h3>與目前行程比較（還原後的變更）</h3>${diff.length?`<ul>${diff.map(s=>`<li>${esc(s)}</li>`).join("")}</ul>`:'<p class="hint">行程與許願相同</p>'}<h3>行程快照</h3>${entry.plan.days.map(d=>`<section class="history-day"><b>${esc(d.label)}</b><p>${spots(d.items)}</p></section>`).join("")}<section class="history-day"><b>未排入</b><p>${spots(entry.plan.pool)}</p></section><h3>許願人數</h3>${wishRows?`<ul>${wishRows}</ul>`:'<p class="hint">尚無許願</p>'}`;
+  document.getElementById("historyBody").innerHTML=`<button class="btn alt" data-history-list>← 返回版本紀錄</button><h2>${entry.draft?"本機衝突備份":"第 "+Number(entry.rev)+" 版"}</h2><p class="hint">${esc(taipeiTime(entry.at))} ${historyWho(entry)}</p><p>${esc(entry.summary)}</p><button class="btn" data-history-restore>${entry.draft?"↩️ 載入這份本機變更":"↩️ 還原到這個版本"}</button><h3>與目前行程比較（還原後的變更）</h3>${diff.length?`<ul>${diff.map(s=>`<li>${esc(s)}</li>`).join("")}</ul>`:'<p class="hint">行程與許願相同</p>'}<h3>行程快照</h3>${entry.plan.days.map(d=>`<section class="history-day"><b>${esc(d.label)}</b>${daySpots(d)}</section>`).join("")}<section class="history-day"><b>未排入</b><p>${spots(entry.plan.pool)}</p></section><h3>許願人數</h3>${wishRows?`<ul>${wishRows}</ul>`:'<p class="hint">尚無許願</p>'}`;
 }
 document.getElementById("syncStatus").onclick=openHistory;document.getElementById("historyClose").onclick=closeHistory;
 document.getElementById("historyBody").onclick=async e=>{const target=e.target.closest("button");if(!target)return;if(target.hasAttribute("data-history-list")){historyList();return;}if(target.dataset.version){previewVersion(Number(target.dataset.version));return;}if(target.dataset.draft){const draft=stored("kyushuPlanner.conflicts",[]).find(d=>d.id===target.dataset.draft&&d.scope===scope());if(draft){historyRequest++;historyPending=null;historyPreview={...clone(draft),draft:true};renderHistoryPreview();}return;}if(target.hasAttribute("data-history-restore")&&historyPreview){const entry=clone(historyPreview);if(!confirm(entry.draft?"載入這份本機變更並建立新版本？" : `還原至第 ${entry.rev} 版？這會建立新版本${shared()?"，並改變所有人看到的行程與許願":""}。`))return;setTagDefs(entry.tagDefs||{},false);setCustoms(entry.customs||{},false);S=clone(entry.plan);WISH=clone(entry.wishes);update(entry.draft?"載入衝突時的本機變更":`還原至第 ${entry.rev} 版`);fit();closeHistory();toast("已載入快照，將另存為新版本");}};
 window.addEventListener("resize",positionHistory);
 
-function save(summary=""){cachePlan();markPlan(summary);}
+function save(summary=""){
+  // Keep the marker when clearing or restoring an older snapshot so the API can
+  // distinguish an intentional removal from a write by a previous client.
+  if(sync.head.plan.scheduleVersion===1||sync.current?.plan.scheduleVersion===1)S.scheduleVersion=1;
+  cleanSchedule(S);
+  markPlan(summary);
+}
 function selected(){const s=new Set(S.pool);S.days.forEach(d=>d.items.forEach(i=>s.add(i)));return s;}
 function where(id){if(S.pool.includes(id))return -1;return S.days.findIndex(d=>d.items.includes(id));}
 function removeId(id){S.pool=S.pool.filter(x=>x!==id);S.days.forEach(d=>d.items=d.items.filter(x=>x!==id));}
@@ -1110,13 +1262,32 @@ function stayLabel(a){
   const labels={markis:["遊玩","逛街"],jigoku:["海地獄","7處"],kinrin:["湖畔","含街道"]}[a.id];
   return (labels?labels.map((label,i)=>label+" "+durations[i]).join("／"):durations[0])+" hr";
 }
+const TRANSPORT_ICONS={walk:"🚶",train:"🚃",shinkansen:"🚄",subway:"🚇",bus:"🚌",car:"🚗",charter:"🚐",taxi:"🚕",ferry:"⛴️",other:"↪"};
+function transportText(leg){return TRANSPORT_LABELS[leg.mode]+(leg.note?"・"+leg.note:"");}
+const VISIT_FIELDS={arrival:"抵達",departure:"離開"};
+const VISIT_PATHS={arrival:"M13 4h6v16h-6 M3 12h12 m-4-4 4 4-4 4",departure:"M11 4H5v16h6 M9 12h12 m-4-4 4 4-4 4"};
+function visitTimeText(id,plan=S){
+  const times=visitTimes(id,plan);
+  return Object.entries(VISIT_FIELDS).filter(([key])=>times[key]).map(([key,label])=>label+" "+times[key]).join("／");
+}
+function visitTimesHTML(id){
+  const times=visitTimes(id),name=BY[id].zh;
+  return `<span class="visit-times">${Object.entries(VISIT_FIELDS).map(([key,label])=>{
+    const time=times[key],action=(time?"編輯":"設定")+label+"時間："+name;
+    return `<button type="button" class="visit-time${time?" has-time":""}" data-visit-time="${key}" aria-label="${esc(action)}"${time?` aria-description="${esc(label+" "+time)}"`:""} title="${esc(time?label+" "+time:action)}"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${VISIT_PATHS[key]}"/></svg><span>${time||label}</span></button>`;
+  }).join("")}</span>`;
+}
+function planLegHTML(day,from,to){
+  const leg=transportBetween(day,from,to),action=(leg?"編輯":"新增")+"交通方式："+BY[from].zh+" 到 "+BY[to].zh;
+  return `<li class="plan-leg"><button type="button" class="plan-leg-button${leg?" has-mode":""}" data-leg-from="${esc(from)}" data-leg-to="${esc(to)}" aria-label="${esc(action)}"${leg?` aria-description="${esc(transportText(leg))}"`:""}><span aria-hidden="true">${leg?TRANSPORT_ICONS[leg.mode]:"＋"}</span><span class="leg-text">${leg?esc(transportText(leg)):"交通方式"}</span></button></li>`;
+}
 function dayBlock(title,color,idx,items,isPool){
   return `<div class="day" data-idx="${idx}"><h3 style="background:${color}"><span class="lbl">${esc(title)}</span>
   <span style="font-size:12px;opacity:.9">${items.length} 個</span>
   ${isPool?"":`<button data-ren="${idx}">✎</button><button data-del="${idx}">✕</button>`}</h3>
-  <ul data-idx="${idx}">${items.map((id,i)=>{const a=BY[id];return `<li class="it" data-id="${esc(id)}">
+  <ul data-idx="${idx}">${items.map((id,i)=>{const a=BY[id];return (!isPool&&i?planLegHTML(S.days[idx],items[i-1],id):"")+`<li class="it" data-id="${esc(id)}">
     <span class="h">☰</span><span class="n" style="background:${isPool?"#a9b6c9":color}">${isPool?"•":i+1}</span>
-    <span class="t">${esc(a.zh)} <span class="info">ⓘ</span><span class="stay" role="note" aria-label="建議停留：${esc(stayLabel(a))}。${esc(suggestedStay(a))}" title="${esc(suggestedStay(a))}"><span aria-hidden="true">🕒</span> ${esc(stayLabel(a))}</span><small>${esc(a.area)}・${esc(a.note||a.ja)}</small>${customTagsHTML(a)}</span>
+    <span class="t">${esc(a.zh)} <span class="info">ⓘ</span>${isPool?"":visitTimesHTML(id)}<span class="stay" role="note" aria-label="建議停留：${esc(stayLabel(a))}。${esc(suggestedStay(a))}" title="${esc(suggestedStay(a))}"><span aria-hidden="true">🕒</span> ${esc(stayLabel(a))}</span><small>${esc(a.area)}・${esc(a.note||a.ja)}</small>${customTagsHTML(a)}</span>
     <select aria-label="移動 ${esc(a.zh)}" data-mv="${esc(id)}"><option value="-1"${isPool?" selected":""}>未排入</option>${S.days.map((d,j)=>`<option value="${j}"${j===idx?" selected":""}>${esc(d.label)}</option>`).join("")}</select>
     <button class="x" data-rm="${esc(id)}" title="移除">×</button></li>`;}).join("")}</ul></div>`;
 }
@@ -1124,21 +1295,69 @@ function renderDays(){
   sortables.forEach(s=>s.destroy());sortables=[];
   const el=document.getElementById("days");
   el.innerHTML=dayBlock("🧺 未排入行程（已勾選）","#a9b6c9",-1,S.pool,true)+S.days.map((d,i)=>dayBlock(d.label,COLORS[i%COLORS.length],i,d.items,false)).join("");
-  if(window.Sortable) el.querySelectorAll("ul").forEach(ul=>sortables.push(Sortable.create(ul,{group:"plan",handle:".h",animation:150,delay:0,touchStartThreshold:4,fallbackOnBody:true,forceFallback:true,onStart:()=>{dragging=true;},onEnd:syncFromDom})));
+  // Route rows are derived from the order of stops; only the stops can be dragged.
+  if(window.Sortable) el.querySelectorAll("ul").forEach(ul=>sortables.push(Sortable.create(ul,{group:"plan",draggable:".it",handle:".h",animation:150,delay:0,touchStartThreshold:4,fallbackOnBody:true,forceFallback:true,onStart:()=>{dragging=true;},onEnd:syncFromDom})));
 }
 function syncFromDom(){
   const queued=renderQueued;
-  document.querySelectorAll("#days ul").forEach(ul=>{const idx=+ul.dataset.idx;const ids=[...ul.querySelectorAll("li")].map(li=>li.dataset.id);if(idx<0)S.pool=ids;else S.days[idx].items=ids;});
+  document.querySelectorAll("#days ul").forEach(ul=>{const idx=+ul.dataset.idx;const ids=[...ul.querySelectorAll(":scope > .it")].map(li=>li.dataset.id);if(idx<0)S.pool=ids;else S.days[idx].items=ids;});
   dragging=false;update();if(queued)acceptMirror();
 }
 document.getElementById("days").addEventListener("change",e=>{const id=e.target.dataset.mv;if(id){moveTo(id,+e.target.value);update();}});
 document.getElementById("days").addEventListener("click",e=>{
   const t=e.target;
+  const visit=t.closest("[data-visit-time]"),leg=t.closest("[data-leg-from]");
+  if(visit||leg){const day=S.days[Number(t.closest("ul").dataset.idx)];if(!day)return;
+    if(visit){const id=visit.closest(".it").dataset.id;pushOverlay("schedule",{dayId:day.id,id,field:visit.dataset.visitTime,times:{...visitTimes(id)}},visit);}
+    else{const {legFrom:from,legTo:to}=leg.dataset;pushOverlay("schedule",{dayId:day.id,from,to,leg:transportBetween(day,from,to)},leg);}
+    return;}
   const item=t.closest(".it");if(item&&!t.closest(".h,select,button")){openDetail(item.dataset.id,item);return;}
   if(t.dataset.rm){removeId(t.dataset.rm);update();}
   else if(t.dataset.ren!=null){const i=+t.dataset.ren;const v=prompt("這一天的名稱",S.days[i].label);if(v){S.days[i].label=v.slice(0,2000);update();}}
   else if(t.dataset.del!=null){const i=+t.dataset.del;if(shared()&&S.days.length===1){toast("共享行程至少需保留一天");return;}if(confirm(`刪除「${S.days[i].label}」？當天景點會移回「未排入」`)){S.pool.push(...S.days[i].items);S.days.splice(i,1);update();}}
 });
+const planInput=id=>document.getElementById(id);
+planInput("planMode").innerHTML='<option value="">選擇交通方式</option>'+Object.entries(TRANSPORT_LABELS).map(([mode,label])=>`<option value="${mode}">${TRANSPORT_ICONS[mode]} ${label}</option>`).join("");
+function mountSchedule(state){
+  const forTimes=!!state.id,day=S.days.find(d=>d.id===state.dayId);
+  planInput("scheduleTitle").textContent=forTimes?"抵達與離開時間":"景點間交通";
+  planInput("scheduleContext").textContent=(day?day.label+"・":"")+(forTimes?BY[state.id]?.zh:`${BY[state.from]?.zh} → ${BY[state.to]?.zh}`);
+  planInput("scheduleTimes").hidden=!forTimes;
+  planInput("scheduleTransport").hidden=forTimes;
+  planInput("planArrival").value=state.times?.arrival||"";
+  planInput("planDeparture").value=state.times?.departure||"";
+  planInput("planMode").value=state.leg?.mode||"";
+  planInput("planMode").disabled=forTimes;
+  planInput("planMode").required=!forTimes;
+  planInput("planTransportNote").value=state.leg?.note||"";
+  planInput("planTransportNote").setCustomValidity("");
+  planInput("removePlanTransport").hidden=forTimes||!state.leg;
+  planInput("scheduleError").hidden=true;
+}
+function scheduleError(message){const error=planInput("scheduleError");error.textContent=message;error.hidden=false;}
+function saveSchedule(remove=false){
+  const layer=overlayTop();if(layer?.kind!=="schedule")return;
+  const state=layer.state,day=S.days.find(d=>d.id===state.dayId);
+  if(!day){scheduleError("這天的安排已變更，請關閉後重新選取。");return;}
+  let saved;
+  if(state.id){
+    const now=visitTimes(state.id);
+    if(now.arrival!==state.times.arrival||now.departure!==state.times.departure){scheduleError("這個景點的時間已更新，請關閉後重新開啟。");return;}
+    saved=setVisitTimes(day.id,state.id,planInput("planArrival").value,planInput("planDeparture").value);
+  }else{
+    const now=transportBetween(day,state.from,state.to);
+    if(now?.mode!==state.leg?.mode||now?.note!==state.leg?.note){scheduleError("這段交通已更新，請關閉後重新開啟。");return;}
+    saved=setTransport(day.id,state.from,state.to,remove?"":planInput("planMode").value,remove?"":planInput("planTransportNote").value);
+  }
+  if(!saved){scheduleError("景點安排已變更，請關閉後重新選取。");return;}
+  update();closeOverlay("schedule");
+}
+planInput("planTransportNote").oninput=e=>e.target.setCustomValidity([...e.target.value.trim()].length>100?"交通備註請填 100 字以內。":"");
+planInput("clearPlanArrival").onclick=()=>{planInput("planArrival").value="";};
+planInput("clearPlanDeparture").onclick=()=>{planInput("planDeparture").value="";};
+planInput("removePlanTransport").onclick=()=>saveSchedule(true);
+planInput("scheduleCancel").onclick=()=>closeOverlay("schedule");
+planInput("scheduleForm").onsubmit=e=>{e.preventDefault();saveSchedule();};
 document.getElementById("addDay").onclick=()=>{if(S.days.length>=30){toast("最多可安排 30 天");return;}S.days.push({id:uid(),label:`第 ${S.days.length+1} 天`,items:[]});update();toast("已新增一天");};
 document.getElementById("sampleBtn").onclick=()=>{if(sharedConfirm("載入預設行程？會覆蓋目前的安排")){S=sample();update("載入預設行程");fit();}};
 (function(){let old=null;try{old=JSON.parse(localStorage.getItem(OLDKEY));}catch(e){}
@@ -1147,7 +1366,11 @@ document.getElementById("sampleBtn").onclick=()=>{if(sharedConfirm("載入預設
 document.getElementById("clearBtn").onclick=()=>{if(sharedConfirm("清空所有已選景點與天數？")){S=blank();update("清空行程");}};
 function planText(){
   let out="九州親子行程 2027 春節\n✈️ 華航（已訂）：2/8 CI116 桃園T2 16:25→福岡國際線航廈 19:35；2/13 CI117 福岡國際線航廈 20:35→桃園T2 22:20\n🏨 住宿（已訂）：博多東急REI飯店（博多東急REIホテル，博多駅前1-2-23，博多口步行3分，☎ +81-92-451-0109，入住15:00／退房10:00，2/8–2/13 五晚・2間；2/13 10:00 前退房，行李寄放櫃台）\n";
-  S.days.forEach(d=>{out+=`\n【${d.label}】\n`;if(!d.items.length)out+="  （尚未安排）\n";d.items.forEach((id,i)=>{const a=BY[id];out+=`  ${i+1}. ${a.zh}（${a.ja}）\n     ${gmap(a)}\n`;});});
+  S.days.forEach(d=>{out+=`\n【${d.label}】\n`;if(!d.items.length)out+="  （尚未安排）\n";d.items.forEach((id,i)=>{
+    const a=BY[id],times=visitTimeText(id),leg=i?transportBetween(d,d.items[i-1],id):null;
+    if(leg)out+=`     ${TRANSPORT_ICONS[leg.mode]} ${transportText(leg)}\n`;
+    out+=`  ${i+1}. ${a.zh}（${a.ja}）\n${times?`     ${times}（日本時間）\n`:""}     ${gmap(a)}\n`;
+  });});
   if(S.pool.length){out+="\n【未排入】\n";S.pool.forEach(id=>out+=`  ・${BY[id].zh}\n`);}
   return out;
 }
@@ -1158,9 +1381,28 @@ function openModal(title,text,onOk){pushOverlay("modal",{title,text,onOk});}
 document.getElementById("mCancel").onclick=()=>closeOverlay("modal");
 document.getElementById("mCopy").onclick=()=>{const t=document.getElementById("mText");t.select();try{navigator.clipboard.writeText(t.value);}catch(e){document.execCommand("copy");}toast("已複製");};
 document.getElementById("mOk").onclick=()=>{if(modalOk&&modalOk(document.getElementById("mText").value)!==false)closeOverlay("modal");};
-document.getElementById("exportBtn").onclick=()=>openModal("行程 JSON（可複製保存或傳給家人）",JSON.stringify({v:2,days:S.days.map(d=>({label:d.label,items:d.items})),pool:S.pool,wishes:WISH,customs:CUSTOMS,tagDefs:TAGDEFS},null,1),null);
+document.getElementById("exportBtn").onclick=()=>openModal("行程 JSON（可複製保存或傳給家人）",JSON.stringify({v:3,...S,wishes:WISH,customs:CUSTOMS,tagDefs:TAGDEFS},null,1),null);
 document.getElementById("importBtn").onclick=()=>openModal("貼上 JSON 後按「確定」","",txt=>importJSON(txt));
-function importJSON(txt){try{const o=JSON.parse(txt);if(!o||!Array.isArray(o.days)||o.days.length>30)throw 0;if(Object.hasOwn(o,"tagDefs"))setTagDefs(o.tagDefs,false);if(Object.hasOwn(o,"customs")){setCustoms(o.customs,false);}const next=clean(norm(o));if(next.days.length>30)throw 0;if(shared()&&!sharedConfirm(""))return false;S=next;if(Object.hasOwn(o,"wishes")){WISH=sanitizeWishes(o.wishes);cacheWishes();}update("匯入 JSON");fit();toast("匯入成功");return true;}catch(e){alert("JSON 格式不正確（最多 30 天）");return false;}}
+function importJSON(txt){
+  try{
+    const o=JSON.parse(txt);
+    if(!o||!Array.isArray(o.days)||o.days.length>30)throw 0;
+    const hasDefs=Object.hasOwn(o,"tagDefs"),hasCustoms=Object.hasOwn(o,"customs");
+    const nextDefs=hasDefs?sanitizeTagDefs(o.tagDefs):TAGDEFS;
+    const nextCustoms=sanitizeCustoms(hasCustoms?o.customs:CUSTOMS,nextDefs);
+    const byLookup=planLookup(nextCustoms);
+    // Current exports carry day IDs to keep transport linked to the same day.
+    const next=o.v===3?normalPlan(o,byLookup):clean(norm(o),byLookup);
+    if(next.days.length>30)throw 0;
+    if(shared()&&!next.days.length){alert("共享行程至少需保留一天");return false;}
+    if(shared()&&!sharedConfirm(""))return false;
+    if(hasDefs)setTagDefs(nextDefs,false);
+    if(hasCustoms)setCustoms(nextCustoms,false);
+    S=next;
+    if(Object.hasOwn(o,"wishes")){WISH=sanitizeWishes(o.wishes);cacheWishes();}
+    update("匯入 JSON");fit();toast("匯入成功");return true;
+  }catch(e){alert("JSON 格式不正確（最多 30 天）");return false;}
+}
 
 // ===== 許願池與景點詳情 =====
 function wishButtons(id){if(!canPlan(id))return "";const mine=WISH[id]?.[ME.id]?.pool;return `<div class="wish-buttons" aria-label="景點許願">${Object.entries(POOLS).map(([pool,label])=>`<button type="button" class="wish-btn${mine===pool?" on":""}" data-wish="${pool}" data-spot="${esc(id)}" aria-pressed="${mine===pool}">${label}</button>`).join("")}</div><div class="wish-names">${Object.keys(POOLS).map(pool=>{const names=Object.values(WISH[id]||{}).filter(w=>w.pool===pool).map(w=>esc(w.nick));return names.length?`${POOLS[pool].split(" ")[0]} ${names.join("、")}`:"";}).filter(Boolean).join("　")||"還沒有人許願"}</div>`;}
@@ -1725,7 +1967,7 @@ document.getElementById("flightDocsBtn").onclick=e=>openDocuments("flights",e.cu
 document.getElementById("documentsClose").onclick=closeDocuments;
 // ===== 共用浮窗堆疊：DOM 只呈現最上層，歷史記錄不改動網址 =====
 const overlayStack=[],overlaySession=deviceId(),customFields=["customId","customZh","customCat","customArea","customAddr","customCoords","customNote","customUrl"];
-const overlayPanels={detail:["detailPanel","detailBody","detailClose"],nearby:["nearbyPanel","nearbyBody","nearbyClose"],documents:["documentsPanel","documentsBody","documentsClose"],history:["historyPanel","historyBody","historyClose"],custom:["customModal","customBody","customClose"],nick:["nickModal","nickBody","nickClose"],modal:["modal","mText","modalClose"]};
+const overlayPanels={detail:["detailPanel","detailBody","detailClose"],nearby:["nearbyPanel","nearbyBody","nearbyClose"],documents:["documentsPanel","documentsBody","documentsClose"],history:["historyPanel","historyBody","historyClose"],custom:["customModal","customBody","customClose"],nick:["nickModal","nickBody","nickClose"],modal:["modal","mText","modalClose"],schedule:["scheduleModal","scheduleBody","scheduleClose"]};
 let overlayHistoryDepth=0,overlayHistoryPending=false,overlayHistoryEnabled=true,overlayBodyStyle=null,overlayRootOverflow="",overlayPageY=0,overlayRestoreY=null,overlayScrollRestoration=null,overlayRestoreFrame=0,sheetAnimation=null,sheetTouch=null,sheetRestoringFocus=false;
 const overlayTop=()=>overlayStack[overlayStack.length-1];
 // dy 為手指目前 Y 減起點 Y；只切換滿版狀態，不攔截捲動或關閉浮窗。
@@ -1787,12 +2029,14 @@ function showOverlay(){let layer=overlayTop();while(layer&&((layer.kind==="detai
   if(kind==="nearby")mountNearby(layer);
   if(kind==="custom"){document.getElementById("customModalTitle").textContent=state.title;customFields.forEach((id,i)=>{document.getElementById(id).value=state.fields[i];document.getElementById(id).dataset.edited=state.edited?.[i]||"";});if(["正在查詢地圖資料…","正在用地點名稱查詢座標…"].includes(state.suggestHint))state.suggestHint="查詢已取消，重新貼上連結可再查詢。";updateCoordsPreview();renderCustomTags();renderCustomSuggestions();}
   if(kind==="nick")document.getElementById("nickInput").value=state.value;
+  if(kind==="schedule")mountSchedule(state);
   if(kind==="modal"){document.getElementById("mTitle").textContent=state.title;document.getElementById("mText").value=state.text;modalOk=state.onOk;document.getElementById("mOk").style.display=modalOk?"":"none";
     document.getElementById("mText").hidden=!!state.tagConfirm;document.getElementById("mCopy").hidden=!!state.tagConfirm;document.getElementById("mMessage").hidden=!state.tagConfirm;document.getElementById("mMessage").textContent=state.tagConfirm?state.text:"";panel.setAttribute("aria-describedby",state.tagConfirm?"mMessage":"");document.getElementById("mOk").textContent=state.tagConfirm?"刪除":"確定";document.getElementById("mCancel").textContent=state.tagConfirm?"取消":"關閉";}
   if(kind==="documents"){renderDocuments(state.group);state.expanded?.forEach(([id,open])=>document.getElementById(id).open=open);}
   if(kind==="history"){positionHistory();historyPreview=state.preview||null;document.getElementById("historyBody").innerHTML=state.html||"";if(historyPreview)renderHistoryPreview();if(state.pending){const ready=state.pending.list?historyList():previewVersion(state.pending.rev);ready.then(()=>{if(overlayTop()===layer)document.getElementById(body).scrollTop=layer.scroll||0;});}}
   panel.classList.toggle("sheet-expanded",layer.expanded);const scroll=document.getElementById(body);scroll.scrollTop=layer.scroll||0;layer.scroll=scroll.scrollTop||0;
-  const focus=layer.focus?.isConnected&&panel.contains(layer.focus)?layer.focus:document.getElementById(kind==="custom"?"customZh":kind==="nick"?"nickInput":close);sheetRestoringFocus=true;try{focus.focus({preventScroll:true});}finally{sheetRestoringFocus=false;}
+  const focusId=kind==="custom"?"customZh":kind==="nick"?"nickInput":kind==="schedule"?(state.id?(state.field==="departure"?"planDeparture":"planArrival"):"planMode"):close;
+  const focus=layer.focus?.isConnected&&panel.contains(layer.focus)?layer.focus:document.getElementById(focusId);sheetRestoringFocus=true;try{focus.focus({preventScroll:true});}finally{sheetRestoringFocus=false;}
 }
 function syncOverlayHistory(){if(overlayHistoryPending)return;if(!overlayHistoryEnabled){restoreOverlayScroll();return;}const depth=overlayStack.length;
   try{if(depth<overlayHistoryDepth){overlayHistoryPending=true;window.history.go(depth-overlayHistoryDepth);return;}
@@ -1802,6 +2046,9 @@ function syncOverlayHistory(){if(overlayHistoryPending)return;if(!overlayHistory
 }
 function restoreOverlayFocus(opener){if(opener?.isConnected&&typeof opener.focus==="function"){opener.focus({preventScroll:true});return;}
   let target=opener?.id?document.getElementById(opener.id):null;
+  const {visitTime,legFrom,legTo}=opener?.dataset||{};
+  if(visitTime){const id=opener.closest(".it")?.dataset.id;if(id)target=document.querySelector(`#days .it[data-id="${CSS.escape(id)}"] [data-visit-time="${CSS.escape(visitTime)}"]`);}
+  if(legFrom&&legTo)target=document.querySelector(`#days [data-leg-from="${CSS.escape(legFrom)}"][data-leg-to="${CSS.escape(legTo)}"]`);
   for(const [key,attr]of [["detail","data-detail"],["nearby","data-nearby"],["id","data-id"]]){const value=opener?.dataset?.[key];if(!target&&typeof value==="string"&&/^[A-Za-z0-9_-]+$/.test(value))target=document.querySelector(`[${attr}="${value}"]`);}
   (target||document.querySelector("nav.tabs button.on"))?.focus({preventScroll:true});
 }
@@ -1817,11 +2064,11 @@ window.addEventListener("popstate",e=>{const marker=e.state?.kfpOverlay,depth=ma
   syncOverlayHistory();
 });
 Object.entries(overlayPanels).forEach(([kind,[id]])=>{document.getElementById(kind+"Back").onclick=popOverlay;if(kind!=="detail"&&kind!=="history")document.getElementById(id).onclick=e=>{if(e.target===e.currentTarget)closeAllOverlays();};});
-["custom","nick","modal"].forEach(kind=>document.getElementById(kind+"Close").onclick=()=>closeOverlay(kind));
+["custom","nick","modal","schedule"].forEach(kind=>document.getElementById(kind+"Close").onclick=()=>closeOverlay(kind));
 document.getElementById("overlayBackdrop").onclick=closeAllOverlays;
 document.addEventListener("keydown",e=>{const layer=overlayTop();if(!layer)return;if(e.key==="Escape"){e.preventDefault();popOverlay();return;}if(e.key!=="Tab")return;
   const panel=document.getElementById(overlayPanels[layer.kind][0]),selector=layer.kind==="documents"?'button:not([hidden]),summary,details[open] a[href]':'button:not(:disabled):not([hidden]),a[href],input:not([type="hidden"]),textarea,select,[tabindex="0"]';
-  const items=[...panel.querySelectorAll(selector)],first=items[0],last=items[items.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus();}else if(!items.includes(document.activeElement)||(!e.shiftKey&&document.activeElement===last)){e.preventDefault();first?.focus();}
+  const items=[...panel.querySelectorAll(selector)].filter(item=>!item.closest("[hidden]")),first=items[0],last=items[items.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last?.focus();}else if(!items.includes(document.activeElement)||(!e.shiftKey&&document.activeElement===last)){e.preventDefault();first?.focus();}
 });
 
 // 離線提示獨立於原有同步狀態；不重新整理，以保留尚未同步的編輯。

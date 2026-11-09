@@ -17,7 +17,46 @@
           ".validate": false
         },
         "plan": {
-          ".validate": "newData.hasChildren(['days'])",
+          ".validate": "newData.hasChildren(['days']) && ((!newData.hasChild('times') && !newData.hasChild('transport')) || newData.child('scheduleVersion').val() === 1)",
+          "scheduleVersion": {
+            ".validate": "newData.val() === 1"
+          },
+          "times": {
+            ".validate": "newData.hasChildren()",
+            "$spot": {
+              ".validate": "$spot.matches(/^[a-z0-9_]{1,40}$/) && $spot !== '__proto__' && $spot !== 'constructor' && $spot !== 'prototype' && (newData.hasChild('arrival') || newData.hasChild('departure'))",
+              "arrival": {
+                ".validate": "newData.isString() && newData.val().matches(/^([01][0-9]|2[0-3]):[0-5][0-9]$/)"
+              },
+              "departure": {
+                ".validate": "newData.isString() && newData.val().matches(/^([01][0-9]|2[0-3]):[0-5][0-9]$/)"
+              },
+              "$other": {
+                ".validate": false
+              }
+            }
+          },
+          "transport": {
+            ".validate": "newData.hasChildren()",
+            "$dayId": {
+              ".validate": "newData.hasChildren() && $dayId.matches(/^[A-Za-z0-9_-]{1,64}$/) && $dayId !== '__proto__' && $dayId !== 'constructor' && $dayId !== 'prototype'",
+              "$from": {
+                ".validate": "$from.matches(/^[a-z0-9_]{1,40}$/) && $from !== '__proto__' && $from !== 'constructor' && $from !== 'prototype' && newData.hasChildren(['to','mode'])",
+                "to": {
+                  ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9_]{1,40}$/) && newData.val() !== $from && newData.val() !== '__proto__' && newData.val() !== 'constructor' && newData.val() !== 'prototype'"
+                },
+                "mode": {
+                  ".validate": "newData.isString() && newData.val().matches(/^(walk|train|shinkansen|subway|bus|car|charter|taxi|ferry|other)$/)"
+                },
+                "note": {
+                  ".validate": "newData.isString() && newData.val().matches(/^[\\s\\S]{1,100}$/)"
+                },
+                "$other": {
+                  ".validate": false
+                }
+              }
+            }
+          },
           "days": {
             "$day": {
               ".validate": "newData.hasChildren(['id','label']) && newData.child('id').isString() && newData.child('label').isString() && newData.child('label').val().length >= 1 && newData.child('label').val().length <= 2000",
@@ -56,7 +95,7 @@
             }
           }
         },
-        ".write": "newData.exists() && ((!data.exists() && newData.child('rev').val() === 1) || (data.exists() && newData.child('rev').val() === data.child('rev').val() + 1))"
+        ".write": "newData.exists() && (!data.child('plan').hasChild('scheduleVersion') || newData.child('plan').child('scheduleVersion').val() === 1) && ((!data.exists() && newData.child('rev').val() === 1) || (data.exists() && newData.child('rev').val() === data.child('rev').val() + 1))"
       },
       "history": {
         "$rev": {
@@ -72,7 +111,46 @@
             ".validate": false
           },
           "plan": {
-            ".validate": "newData.hasChildren(['days'])",
+            ".validate": "newData.hasChildren(['days']) && ((!newData.hasChild('times') && !newData.hasChild('transport')) || newData.child('scheduleVersion').val() === 1)",
+            "scheduleVersion": {
+              ".validate": "newData.val() === 1"
+            },
+            "times": {
+              ".validate": "newData.hasChildren()",
+              "$spot": {
+                ".validate": "$spot.matches(/^[a-z0-9_]{1,40}$/) && $spot !== '__proto__' && $spot !== 'constructor' && $spot !== 'prototype' && (newData.hasChild('arrival') || newData.hasChild('departure'))",
+                "arrival": {
+                  ".validate": "newData.isString() && newData.val().matches(/^([01][0-9]|2[0-3]):[0-5][0-9]$/)"
+                },
+                "departure": {
+                  ".validate": "newData.isString() && newData.val().matches(/^([01][0-9]|2[0-3]):[0-5][0-9]$/)"
+                },
+                "$other": {
+                  ".validate": false
+                }
+              }
+            },
+            "transport": {
+              ".validate": "newData.hasChildren()",
+              "$dayId": {
+                ".validate": "newData.hasChildren() && $dayId.matches(/^[A-Za-z0-9_-]{1,64}$/) && $dayId !== '__proto__' && $dayId !== 'constructor' && $dayId !== 'prototype'",
+                "$from": {
+                  ".validate": "$from.matches(/^[a-z0-9_]{1,40}$/) && $from !== '__proto__' && $from !== 'constructor' && $from !== 'prototype' && newData.hasChildren(['to','mode'])",
+                  "to": {
+                    ".validate": "newData.isString() && newData.val().matches(/^[a-z0-9_]{1,40}$/) && newData.val() !== $from && newData.val() !== '__proto__' && newData.val() !== 'constructor' && newData.val() !== 'prototype'"
+                  },
+                  "mode": {
+                    ".validate": "newData.isString() && newData.val().matches(/^(walk|train|shinkansen|subway|bus|car|charter|taxi|ferry|other)$/)"
+                  },
+                  "note": {
+                    ".validate": "newData.isString() && newData.val().matches(/^[\\s\\S]{1,100}$/)"
+                  },
+                  "$other": {
+                    ".validate": false
+                  }
+                }
+              }
+            },
             "days": {
               "$day": {
                 ".validate": "newData.hasChildren(['id','label']) && newData.child('id').isString() && newData.child('label').isString() && newData.child('label').val().length >= 1 && newData.child('label').val().length <= 2000",

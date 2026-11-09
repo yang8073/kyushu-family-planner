@@ -46,11 +46,61 @@ function deviceValid(mixed $value): bool {
 function fieldsValid(stdClass $object, array $allowed): bool {
     return !array_diff(array_keys(get_object_vars($object)), $allowed);
 }
+function validateSchedule(stdClass $plan, array $selected, array $adjacent): bool {
+    if (!property_exists($plan, 'scheduleVersion')) {
+        return !property_exists($plan, 'times') && !property_exists($plan, 'transport');
+    }
+    if ($plan->scheduleVersion !== 1) return false;
+    if (property_exists($plan, 'times')) {
+        if (!objectValid($plan->times)) return false;
+        foreach (get_object_vars($plan->times) as $id => $times) {
+            if (!isset($selected[$id]) || !objectValid($times) || !fieldsValid($times, ['arrival','departure']) || !get_object_vars($times)) return false;
+            foreach (get_object_vars($times) as $time) {
+                if (!is_string($time) || !preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d$/D', $time)) return false;
+            }
+        }
+    }
+    if (property_exists($plan, 'transport')) {
+        if (!objectValid($plan->transport)) return false;
+        $modes = ['walk','train','shinkansen','subway','bus','car','charter','taxi','ferry','other'];
+        foreach (get_object_vars($plan->transport) as $dayId => $legs) {
+            if (!isset($adjacent[$dayId]) || !objectValid($legs) || !get_object_vars($legs)) return false;
+            foreach (get_object_vars($legs) as $from => $leg) {
+                if (!isset($adjacent[$dayId][$from]) || !objectValid($leg) || !fieldsValid($leg, ['to','mode','note']) || ($leg->to ?? null) !== $adjacent[$dayId][$from] || !in_array($leg->mode ?? null, $modes, true)) return false;
+                if (property_exists($leg, 'note') && (!is_string($leg->note) || trim($leg->note) === '' || textLength($leg->note) > 100)) return false;
+            }
+        }
+    }
+    return true;
+}
+function preserveLegacySchedule(stdClass $plan, ?stdClass $previous): void {
+    // Older open pages save full snapshots. Retain timing for selected spots and
+    // preserve each route only if the same ordered pair is still adjacent that day.
+    if (property_exists($plan, 'scheduleVersion') || ($previous->scheduleVersion ?? null) !== 1) return;
+    $plan->scheduleVersion = 1;
+    $times = new stdClass();
+    $transport = new stdClass();
+    foreach ($plan->pool as $id) {
+        if (isset($previous->times->{$id})) $times->{$id} = $previous->times->{$id};
+    }
+    foreach ($plan->days as $day) {
+        foreach ($day->items as $index => $id) {
+            if (isset($previous->times->{$id})) $times->{$id} = $previous->times->{$id};
+            $leg = $previous->transport->{$day->id}->{$id} ?? null;
+            if ($leg !== null && ($day->items[$index+1] ?? null) === $leg->to) {
+                $transport->{$day->id} ??= new stdClass();
+                $transport->{$day->id}->{$id} = $leg;
+            }
+        }
+    }
+    if (get_object_vars($times)) $plan->times = $times;
+    if (get_object_vars($transport)) $plan->transport = $transport;
+}
 function validateState(mixed $state): bool {
     if (!objectValid($state) || !fieldsValid($state, ['rev','at','by','byId','summary','plan','wishes','customs','tagDefs']) || !nickValid($state->by ?? null) || !deviceValid($state->byId ?? null)) return false;
     if (!is_string($state->summary ?? null) || textLength($state->summary) < 1 || textLength($state->summary) > 2000) return false;
     $plan = $state->plan ?? null;
-    if (!objectValid($plan) || !fieldsValid($plan, ['days','pool']) || !is_array($plan->days ?? null) || count($plan->days) > 30 || !is_array($plan->pool ?? null)) return false;
+    if (!objectValid($plan) || !fieldsValid($plan, ['days','pool','scheduleVersion','times','transport']) || !is_array($plan->days ?? null) || count($plan->days) > 30 || !is_array($plan->pool ?? null)) return false;
     $seen = [];
     $checkItems = function (mixed $items) use (&$seen): bool {
         if (!is_array($items)) return false;
@@ -60,12 +110,15 @@ function validateState(mixed $state): bool {
         }
         return true;
     };
-    $dayIds = [];
+    $adjacent = [];
     foreach ($plan->days as $day) {
-        if (!objectValid($day) || !fieldsValid($day, ['id','label','items']) || !deviceValid($day->id ?? null) || isset($dayIds[$day->id]) || !is_string($day->label ?? null) || trim($day->label) === '' || textLength($day->label) > 2000 || !$checkItems($day->items ?? null)) return false;
-        $dayIds[$day->id] = true;
+        if (!objectValid($day) || !fieldsValid($day, ['id','label','items']) || !deviceValid($day->id ?? null) || isset($adjacent[$day->id]) || !is_string($day->label ?? null) || trim($day->label) === '' || textLength($day->label) > 2000 || !$checkItems($day->items ?? null)) return false;
+        $adjacent[$day->id] = [];
+        for ($i = 1; $i < count($day->items); $i++) {
+            $adjacent[$day->id][$day->items[$i-1]] = $day->items[$i];
+        }
     }
-    if (!$checkItems($plan->pool)) return false;
+    if (!$checkItems($plan->pool) || !validateSchedule($plan, $seen, $adjacent)) return false;
     if (!objectValid($state->wishes ?? null)) return false;
     foreach (get_object_vars($state->wishes) as $spot => $users) {
         if (!idValid($spot) || !objectValid($users)) return false;
@@ -228,6 +281,7 @@ try {
     $rev = $current->rev ?? 0;
     if ($body->baseRev !== $rev) respond(409, ['conflict'=>true,'state'=>$current]);
     $entry = $body->state;
+    preserveLegacySchedule($entry->plan, $current->plan ?? null);
     $entry->rev = $rev + 1;
     $entry->at = (int) floor(microtime(true) * 1000);
     dailyBackup($dir);

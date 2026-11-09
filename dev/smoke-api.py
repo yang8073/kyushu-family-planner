@@ -21,7 +21,7 @@ def request(op, body=None, origin=None, method=None):
         cmd += ['-X', method]
     if body is not None:
         cmd += ['-H', 'Content-Type: application/json', '--data-binary', '@-']
-    result = subprocess.run(cmd, input=json.dumps(body, ensure_ascii=False) if body is not None else None, text=True, capture_output=True, check=True)
+    result = subprocess.run(cmd, input=json.dumps(body, ensure_ascii=False) if body is not None else None, encoding='utf-8', capture_output=True, check=True)
     value, status = result.stdout.rsplit('\n', 1)
     return int(status), json.loads(value) if value else None
 
@@ -127,15 +127,61 @@ def main():
                 assert request('version&rev=4') == (200, pending)
                 assert not (data / 'transaction.json').exists()
                 assert request('rev')[1]['rev'] == 4
-                assert data.stat().st_mode & 0o777 == 0o700
-                assert history_file.stat().st_mode & 0o777 == 0o600
+                if os.name == 'posix':
+                    assert data.stat().st_mode & 0o777 == 0o700
+                    assert history_file.stat().st_mode & 0o777 == 0o600
+                # A pre-feature tab can still write after a new tab adds timing.
+                legacy = copy.deepcopy(state)
+                legacy['plan']['days'][0]['items'] = ['dazaifu', 'tower', 'canal']
+                legacy['plan']['pool'] = []
+                scheduled = copy.deepcopy(legacy)
+                scheduled['plan'].update(
+                    scheduleVersion=1,
+                    times={'tower': {'arrival': '00:00', 'departure': '23:59'}},
+                    transport={'day1': {'dazaifu': {'to': 'tower', 'mode': 'train', 'note': 'JR 轉乘🚆'}}}
+                )
+                status, response = request('save', {'baseRev': 4, 'state': scheduled})
+                assert status == 200 and response['state']['plan'] == scheduled['plan']
+                snapshot = response['state']
+                for bad in ['missing marker', 'clock', 'removed spot', 'nonadjacent', 'mode', 'note']:
+                    invalid = copy.deepcopy(scheduled)
+                    plan = invalid['plan']
+                    leg = plan['transport']['day1']['dazaifu']
+                    if bad == 'missing marker':
+                        del plan['scheduleVersion']
+                    elif bad == 'clock':
+                        plan['times']['tower']['arrival'] = '24:00'
+                    elif bad == 'removed spot':
+                        plan['times']['unselected'] = {'departure': '10:00'}
+                    elif bad == 'nonadjacent':
+                        leg['to'] = 'canal'
+                    elif bad == 'mode':
+                        leg['mode'] = 'unsupported'
+                    elif bad == 'note':
+                        leg['note'] = '🚆' * 101
+                    assert request('save', {'baseRev': 5, 'state': invalid})[0] == 400, bad
+                legacy['plan']['days'][0]['label'] = '改名後'
+                status, response = request('save', {'baseRev': 5, 'state': legacy})
+                assert status == 200 and response['state']['plan']['times'] == scheduled['plan']['times']
+                assert response['state']['plan']['transport'] == scheduled['plan']['transport']
+                legacy['plan']['days'][0]['items'] = ['dazaifu', 'canal']
+                legacy['plan']['pool'] = ['tower']
+                status, response = request('save', {'baseRev': 6, 'state': legacy})
+                assert status == 200 and 'transport' not in response['state']['plan']
+                assert response['state']['plan']['times'] == scheduled['plan']['times']
+                legacy['plan']['scheduleVersion'] = 1
+                status, response = request('save', {'baseRev': 7, 'state': legacy})
+                assert status == 200 and response['state']['plan'] == legacy['plan']
+                assert request('state')[1]['plan'] == legacy['plan']
+                assert request('version&rev=5') == (200, snapshot)
+                print('PASS schedule: persisted times and transport, rejected invalid formats and nonadjacent legs, legacy write protection, explicit clearing and immutable history')
                 # Use a fresh fixed-window counter to check the exact 60-save limit.
                 for file in (data / 'rate').glob('*.json'):
                     file.unlink()
                 for _ in range(60):
                     assert request('save', {'baseRev': 0, 'state': state})[0] == 409
                 assert request('save', {'baseRev': 0, 'state': state})[0] == 429
-                print('PASS PHP/curl: rev1, conflict 409, history/version/rev, restore rev2, immutable files, backup, validation, CORS/OPTIONS, crash recovery, permissions, 60/min rate limit')
+                print('PASS PHP/curl: rev1, conflict 409, history/version/rev, restore rev2, immutable files, backup, validation, CORS/OPTIONS, crash recovery, 60/min rate limit' + (', POSIX permissions' if os.name == 'posix' else ''))
             except Exception:
                 log.seek(0)
                 print(log.read()[-6000:])
