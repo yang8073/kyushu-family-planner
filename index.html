@@ -74,15 +74,16 @@ section.pane.on{display:block}
 .it .t{flex:1;min-width:0;font-size:14px}
 .it .stay{display:block;margin:4px 0;color:#2f6ea8;font-size:12px;line-height:1.5;overflow-wrap:anywhere}
 .visit-times{display:flex;gap:4px 6px;flex-wrap:wrap;margin:4px 0}
-.visit-time,.plan-leg-button{display:inline-flex;align-items:center;gap:5px;min-height:36px;padding:3px 7px;border:1px solid var(--line);border-radius:8px;background:#fff;color:#45607e;font:inherit;font-size:12px;line-height:1.35}
+.visit-time,.plan-leg-button,.plan-leg-map{display:inline-flex;align-items:center;gap:5px;min-height:36px;padding:3px 7px;border:1px solid var(--line);border-radius:8px;background:#fff;color:#45607e;font:inherit;font-size:12px;line-height:1.35}
 .visit-time svg{width:15px;height:15px;flex:none}
 .visit-time.has-time{background:#eaf5ff;border-color:#c9e2f7;color:#20587f;font-weight:700;font-variant-numeric:tabular-nums}
-.visit-time:focus-visible,.plan-leg-button:focus-visible{outline:2px solid #316aac;outline-offset:2px}
-.plan-leg{position:relative;display:flex;align-items:center;min-height:40px;padding:1px 0 5px 43px}
+.visit-time:focus-visible,.plan-leg-button:focus-visible,.plan-leg-map:focus-visible{outline:2px solid #316aac;outline-offset:2px}
+.plan-leg{position:relative;display:flex;align-items:center;gap:6px;min-height:40px;padding:1px 0 5px 43px}
 .plan-leg::before{content:"";position:absolute;left:27px;top:-5px;bottom:0;border-left:2px dotted #9eabc1}
-.plan-leg-button{max-width:100%;text-align:left;border-style:dashed}
+.plan-leg-button{min-width:0;text-align:left;border-style:dashed}
 .plan-leg-button.has-mode{border-style:solid;background:#f4efff;color:#62478c}
 .plan-leg-button .leg-text{min-width:0;overflow-wrap:anywhere}
+.plan-leg-map{flex:none;white-space:nowrap;text-decoration:none;background:#eaf5ff;border-color:#c9e2f7;color:#20587f}
 .it .t small{display:block;color:var(--sub);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .it select{font-size:12px;border:1px solid var(--line);border-radius:8px;padding:3px;max-width:78px;background:#fff;color:var(--ink)}
 .it .x{border:0;background:none;color:#c77;font-size:18px;padding:0 4px}
@@ -1277,9 +1278,30 @@ function visitTimesHTML(id){
     return `<button type="button" class="visit-time${time?" has-time":""}" data-visit-time="${key}" aria-label="${esc(action)}"${time?` aria-description="${esc(label+" "+time)}"`:""} title="${esc(time?label+" "+time:action)}"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${VISIT_PATHS[key]}"/></svg><span>${time||label}</span></button>`;
   }).join("")}</span>`;
 }
+const MAPS_TRAVEL_MODE={walk:"walking",car:"driving",charter:"driving",taxi:"driving"};
+function directionsPoint(spot,useAddress=true){
+  // The trip uses the international terminal. The airport's general pin can lead to the domestic side.
+  if(spot.id==="fukair")return "福岡空港国際線ターミナル";
+  if(hasCoords(spot))return `${spot.lat},${spot.lng}`;
+  const name=spot.ja||spot.zh;
+  return useAddress?(spot.addr||DETAIL[spot.id]?.addr||name):name;
+}
+function googleMapsDirections(from,to,mode){
+  const url=new URL("https://www.google.com/maps/dir/");
+  url.search=new URLSearchParams({api:"1",origin:directionsPoint(from),destination:directionsPoint(to),travelmode:MAPS_TRAVEL_MODE[mode]||"transit"});
+  if(url.href.length>2048){
+    url.searchParams.set("origin",directionsPoint(from,false));
+    url.searchParams.set("destination",directionsPoint(to,false));
+  }
+  return url.href;
+}
 function planLegHTML(day,from,to){
-  const leg=transportBetween(day,from,to),action=(leg?"編輯":"新增")+"交通方式："+BY[from].zh+" 到 "+BY[to].zh;
-  return `<li class="plan-leg"><button type="button" class="plan-leg-button${leg?" has-mode":""}" data-leg-from="${esc(from)}" data-leg-to="${esc(to)}" aria-label="${esc(action)}"${leg?` aria-description="${esc(transportText(leg))}"`:""}><span aria-hidden="true">${leg?TRANSPORT_ICONS[leg.mode]:"＋"}</span><span class="leg-text">${leg?esc(transportText(leg)):"交通方式"}</span></button></li>`;
+  const leg=transportBetween(day,from,to),route=BY[from].zh+" 到 "+BY[to].zh;
+  const action=(leg?"編輯":"新增")+"交通方式："+route;
+  return `<li class="plan-leg">
+    <button type="button" class="plan-leg-button${leg?" has-mode":""}" data-leg-from="${esc(from)}" data-leg-to="${esc(to)}" aria-label="${esc(action)}"${leg?` aria-description="${esc(transportText(leg))}"`:""}><span aria-hidden="true">${leg?TRANSPORT_ICONS[leg.mode]:"＋"}</span><span class="leg-text">${leg?esc(transportText(leg)):"交通方式"}</span></button>
+    <a class="plan-leg-map" href="${esc(googleMapsDirections(BY[from],BY[to],leg?.mode))}" target="_blank" rel="noopener noreferrer" aria-label="${esc("Google Maps 導航："+route)}" title="在 Google Maps 開啟路線"><span aria-hidden="true">↗</span>導航</a>
+  </li>`;
 }
 function dayBlock(title,color,idx,items,isPool){
   return `<div class="day" data-idx="${idx}"><h3 style="background:${color}"><span class="lbl">${esc(title)}</span>
